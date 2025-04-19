@@ -64,6 +64,21 @@ module.exports = function (sequelize, DataTypes) {
         allowNull: true,
         unique: "sports_odds_UN",
       },
+      is_home_stop: {
+        type: DataTypes.TINYINT,
+        allowNull: true,
+        defaultValue: 0,
+      },
+      is_draw_stop: {
+        type: DataTypes.TINYINT,
+        allowNull: true,
+        defaultValue: 0,
+      },
+      is_away_stop: {
+        type: DataTypes.TINYINT,
+        allowNull: true,
+        defaultValue: 0,
+      },
     },
     {
       sequelize,

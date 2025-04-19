@@ -2,7 +2,6 @@ const axios = require("axios");
 const db = require("../../models");
 const Op = db.Sequelize.Op;
 const SportsMatches = db.sports_matches;
-const fs = require("fs");
 
 const WebSocket = require("ws");
 const moment = require("moment");
@@ -355,336 +354,196 @@ exports.getSpecialData = async () => {
 };
 
 exports.connectInplaySocket = async () => {
-  const sportsArr = [
-    "soccer",
-    "baseball",
-    "icehockey",
-    "basketball",
-    "volleyball",
-  ];
+  try {
+    const sportsArr = [
+      "soccer",
+      "baseball",
+      "icehockey",
+      "basketball",
+      "volleyball",
+    ];
 
-  await axios
-    .get(
-      `https://v6_i.api-77.com/getkey/icehockey?token=${process.env.SPORTS_TOKEN}`
-    )
-    .then((res) => {
-      const key = res.data.result.key;
-      const socket = new WebSocket(
-        `wss://v6_i.api-77.com/ws/icehockey?key=${key}`
-      ); // 외부 WS 주소
+    for await (const sports of sportsArr) {
+      await axios
+        .get(
+          `https://v6_i.api-77.com/getkey/${sports}?token=${process.env.SPORTS_TOKEN}`
+        )
+        .then((res) => {
+          const key = res.data.result.key;
+          const socket = new WebSocket(
+            `wss://v6_i.api-77.com/ws/${sports}?key=${key}`
+          );
 
-      socket.on("open", () => {
-        console.log("웹소켓 연결됨!");
-      });
+          socket.on("open", () => {
+            console.log(`실시간 ${sports} 웹소켓 연결됨`);
+          });
 
-      socket.on("message", (data) => {
-        console.log("받은 메시지:", data.toString());
-      });
+          socket.on("message", (data) => {
+            const str = data.toString("utf8");
+            const jsonData = JSON.parse(str);
+            const matchId = jsonData.g;
 
-      //   socket.on("close", () => {
-      //     console.log("연결 종료됨");
-      //   });
+            // 팀정보
+            if (jsonData.tp === 12) {
+              SportsMatches.update(
+                {
+                  inplay_team_info: JSON.stringify(jsonData.tm),
+                },
+                {
+                  where: {
+                    match_id: matchId,
+                  },
+                }
+              ).then(() => {
+                console.log(`${matchId} 실시간 팀 정보 업데이트 완료`);
+              });
+            }
 
-      //   socket.on("error", (error) => {
-      //     console.error("에러 발생:", error);
-      //   });
-    });
-};
+            // 스코어
+            if (jsonData.tp === 13) {
+              SportsMatches.update(
+                {
+                  inplay_score_info: JSON.stringify(jsonData.ss),
+                },
+                {
+                  where: {
+                    match_id: matchId,
+                  },
+                }
+              ).then(() => {
+                console.log(`${matchId} 실시간 스코어 정보 업데이트 완료`);
+              });
+            }
 
-const ms = {
-  tp: 11,
-  g: 54473017,
-  b: 173137599,
-  ut: 1744999107862,
-  gm: {
-    l: 48900,
-    ln: "Extraliga",
-    le: "Extraliga",
-    li: "https://static.vv-z.com/image/l/17/489006a8ba9.png",
-    h: 30607036,
-    hn: "Kosice",
-    he: "Kosice",
-    hi: "https://static.vv-z.com/image/t/17/3060703611fbdb.png",
-    a: 30607470,
-    an: "Nitra",
-    ae: "Nitra",
-    ai: "https://static.vv-z.com/image/t/17/306074703ec337.png",
-    c: "SK",
-    ck: "슬로바키아",
-    ci: "https://static.vv-z.com/image/c/Slovakia.png",
-  },
-  od: [
-    {
-      ut: 1744999095313,
-      m: 15503,
-      mn: "핸디캡",
-      s: 0,
-      l: [
-        {
-          n: "-1.5",
-          s: 0,
-          o: [
-            { n: "Home", v: "5.75", s: 0 },
-            { n: "Away", v: "1.14", s: 0 },
-          ],
-        },
-      ],
-    },
-    {
-      ut: 1744999095313,
-      m: 15504,
-      mn: "언더오버",
-      s: 0,
-      l: [
-        {
-          n: "1.5",
-          s: 0,
-          o: [
-            { n: "Under", v: "1.75", s: 0 },
-            { n: "Over", v: "2.05", s: 0 },
-          ],
-        },
-      ],
-    },
-    {
-      ut: 1744999095313,
-      m: 15502,
-      mn: "승패",
-      s: 0,
-      l: [
-        {
-          s: 0,
-          o: [
-            { n: "Home", v: "1.75", s: 0 },
-            { n: "Away", v: "2.05", s: 0 },
-          ],
-        },
-      ],
-    },
-    {
-      ut: 1744999095313,
-      m: 15501,
-      mn: "승무패",
-      s: 0,
-      l: [
-        {
-          s: 0,
-          o: [
-            { n: "Home", v: "3.00", s: 0 },
-            { n: "Draw", v: "2.05", s: 0 },
-            { n: "Away", v: "3.60", s: 0 },
-          ],
-        },
-      ],
-    },
-    {
-      ut: 1744999095313,
-      m: 15515,
-      mn: "핸디캡(추가기준점)",
-      s: 0,
-      l: [
-        {
-          n: "-2.5",
-          s: 0,
-          o: [
-            { n: "Home", v: "10.00", s: 0 },
-            { n: "Away", v: "1.03", s: 0 },
-          ],
-        },
-        {
-          n: "1.5",
-          s: 0,
-          o: [
-            { n: "Home", v: "1.09", s: 0 },
-            { n: "Away", v: "6.75", s: 0 },
-          ],
-        },
-        {
-          n: "-1.0",
-          s: 0,
-          o: [
-            { n: "Home", v: "5.75", s: 0 },
-            { n: "Away", v: "1.33", s: 0 },
-          ],
-        },
-        {
-          n: "2.0",
-          s: 0,
-          o: [
-            { n: "Home", v: "1.09", s: 0 },
-            { n: "Away", v: "16.00", s: 0 },
-          ],
-        },
-      ],
-    },
-    {
-      ut: 1744999095313,
-      m: 15516,
-      mn: "언더오버(추가기준점)",
-      s: 0,
-      l: [
-        {
-          n: "2.5",
-          s: 0,
-          o: [
-            { n: "Under", v: "1.18", s: 0 },
-            { n: "Over", v: "10.00", s: 0 },
-          ],
-        },
-      ],
-    },
-    {
-      ut: 1744999095313,
-      m: 15507,
-      mn: "더블찬스",
-      s: 0,
-      l: [
-        {
-          s: 0,
-          o: [
-            { n: "Home/Draw", v: "1.22", s: 0 },
-            { n: "Home/Away", v: "1.70", s: 0 },
-            { n: "Draw/Away", v: "1.33", s: 0 },
-          ],
-        },
-      ],
-    },
-    {
-      ut: 1744999095313,
-      m: 15543,
-      mn: "3피리어드 핸디캡",
-      s: 0,
-      l: [
-        {
-          n: "-0.5",
-          s: 0,
-          o: [
-            { n: "Home", v: "2.95", s: 0 },
-            { n: "Away", v: "1.35", s: 0 },
-          ],
-        },
-      ],
-    },
-    {
-      ut: 1744999095313,
-      m: 15553,
-      mn: "3피리어드 언더오버",
-      s: 0,
-      l: [
-        {
-          n: "1.5",
-          s: 0,
-          o: [
-            { n: "Under", v: "1.70", s: 0 },
-            { n: "Over", v: "2.10", s: 0 },
-          ],
-        },
-      ],
-    },
-    {
-      ut: 1744999095313,
-      m: 15517,
-      mn: "정확한 스코어",
-      s: 0,
-      l: [
-        {
-          n: "1-0",
-          s: 0,
-          o: [
-            { n: "Home", v: "2.45", s: 0 },
-            { n: "Away", v: "2.75", s: 0 },
-          ],
-        },
-        {
-          n: "2-0",
-          s: 0,
-          o: [
-            { n: "Home", v: "7.00", s: 0 },
-            { n: "Away", v: "9.00", s: 0 },
-          ],
-        },
-        {
-          n: "2-1",
-          s: 0,
-          o: [
-            { n: "Home", v: "6.00", s: 0 },
-            { n: "Away", v: "6.50", s: 0 },
-          ],
-        },
-        {
-          n: "3-0",
-          s: 0,
-          o: [
-            { n: "Home", v: "15.00", s: 0 },
-            { n: "Away", v: "20.00", s: 0 },
-          ],
-        },
-        {
-          n: "3-1",
-          s: 0,
-          o: [
-            { n: "Home", v: "23.00", s: 0 },
-            { n: "Away", v: "26.00", s: 0 },
-          ],
-        },
-        {
-          n: "3-2",
-          s: 0,
-          o: [
-            { n: "Home", v: "36.00", s: 0 },
-            { n: "Away", v: "41.00", s: 0 },
-          ],
-        },
-        {
-          n: "4-0",
-          s: 0,
-          o: [
-            { n: "Home", v: "90.00", s: 0 },
-            { n: "Away", v: "101.00", s: 0 },
-          ],
-        },
-        {
-          n: "4-1",
-          s: 0,
-          o: [
-            { n: "Home", v: "51.00", s: 0 },
-            { n: "Away", v: "81.00", s: 0 },
-          ],
-        },
-        {
-          n: "4-2",
-          s: 0,
-          o: [
-            { n: "Home", v: "151.00", s: 0 },
-            { n: "Away", v: "151.00", s: 0 },
-          ],
-        },
-        {
-          n: "5-1",
-          s: 0,
-          o: [
-            { n: "Home", v: "151.00", s: 0 },
-            { n: "Away", v: "", s: 1 },
-          ],
-        },
-      ],
-    },
-  ],
-  ss: {
-    1: { h: "0", a: "0" },
-    2: { h: "0", a: "0" },
-    3: { h: "0", a: "0" },
-    t: { h: "0", a: "0" },
-  },
-  tm: { h: { s: "0" }, a: { s: "0" }, e: {} },
-  st: {
-    m: "17",
-    ms: "17:37",
-    mi: 1057,
-    ss: "3피리어드",
-    si: 30003,
-    tt: 1,
-    sd: 0,
-    rm: 0,
-  },
+            // 배당
+            if (jsonData.tp === 14 && jsonData.od) {
+              const useInplayMarket = [
+                10501, 10506, 10511, 14501, 14502, 14504, 15501, 15503, 15504,
+                16501, 16502, 16503, 18501, 18502, 18503,
+              ];
+              const createOddsData = [];
+
+              for (const market of jsonData.od) {
+                if (!market.l) continue;
+
+                if (!useInplayMarket.includes(market.m)) continue;
+
+                for (const odds of market.l) {
+                  const oddsKey = `${matchId}_${market.m}${
+                    odds.n ? `_${odds.n}` : ""
+                  }`;
+
+                  const isUnder = odds.o[0].n === "Under";
+                  const isThreeWay = odds.o.length === 3;
+
+                  createOddsData.push({
+                    odds_key: oddsKey,
+                    match_id: matchId,
+                    market_id: market.m,
+                    is_market_stop: market.s,
+                    is_odds_stop: odds.s,
+                    odds_line: odds.n,
+                    home_odds: isUnder ? odds.o[1].v : odds.o[0].v,
+                    draw_odds: isThreeWay ? odds.o[1].v : null,
+                    away_odds: isUnder
+                      ? odds.o[0].v
+                      : isThreeWay
+                      ? odds.o[2].v
+                      : odds.o[1].v,
+                    updated_at: moment(market.ut).format("YYYY-MM-DD HH:mm:ss"),
+                    is_home_stop: isUnder ? odds.o[1].s : odds.o[0].s,
+                    is_draw_stop: isThreeWay ? odds.o[1].s : 0,
+                    is_away_stop: isUnder
+                      ? odds.o[0].s
+                      : isThreeWay
+                      ? odds.o[2].s
+                      : odds.o[1].s,
+                  });
+                }
+              }
+
+              if (createOddsData.length > 0) {
+                const oddsValues = createOddsData
+                  .map(
+                    (o) => `(
+                            '${o.odds_key}',
+                            ${o.match_id},
+                            ${o.market_id},
+                            ${o.is_market_stop},
+                            ${o.is_odds_stop},
+                            ${o.odds_line ? `'${o.odds_line}'` : "NULL"},
+                            ${o.home_odds ?? "NULL"},
+                            ${o.draw_odds ?? "NULL"},
+                            ${o.away_odds ?? "NULL"},
+                            '${o.updated_at}',
+                            ${o.is_home_stop},
+                            ${o.is_draw_stop},
+                            ${o.is_away_stop}
+                          )`
+                  )
+                  .join(",\n");
+
+                const createOddsQuery = `
+                        MERGE INTO sports_odds AS target
+                        USING (VALUES 
+                        ${oddsValues}
+                        ) AS source (
+                        odds_key, match_id, market_id, is_market_stop, is_odds_stop,
+                        odds_line, home_odds, draw_odds, away_odds, updated_at, is_home_stop, is_draw_stop, is_away_stop
+                        )
+                        ON target.odds_key = source.odds_key
+                        WHEN MATCHED AND target.is_auto = 1 THEN
+                        UPDATE SET 
+                            match_id = source.match_id,
+                            market_id = source.market_id,
+                            is_market_stop = source.is_market_stop,
+                            is_odds_stop = source.is_odds_stop,
+                            odds_line = source.odds_line,
+                            home_odds = source.home_odds,
+                            draw_odds = source.draw_odds,
+                            away_odds = source.away_odds,
+                            updated_at = source.updated_at,
+                            is_home_stop = source.is_home_stop,
+                            is_draw_stop = source.is_draw_stop,
+                            is_away_stop = source.is_away_stop
+                        WHEN NOT MATCHED THEN
+                        INSERT (
+                            odds_key, match_id, market_id, is_market_stop, is_odds_stop,
+                            odds_line, home_odds, draw_odds, away_odds, updated_at, is_home_stop, is_draw_stop, is_away_stop
+                        )
+                        VALUES (
+                            source.odds_key, source.match_id, source.market_id,
+                            source.is_market_stop, source.is_odds_stop,
+                            source.odds_line, source.home_odds,
+                            source.draw_odds, source.away_odds, source.updated_at, source.is_home_stop, source.is_draw_stop, source.is_away_stop
+                        );
+                        `;
+
+                db.sequelize.query(createOddsQuery).then(() => {
+                  console.log(`${jsonData.g} 실시간 배당 업데이트 완료`);
+                });
+              }
+            }
+
+            // 경기상태
+            if (jsonData.tp === 15) {
+              SportsMatches.update(
+                {
+                  inplay_status_info: JSON.stringify(jsonData.st),
+                },
+                {
+                  where: {
+                    match_id: matchId,
+                  },
+                }
+              ).then(() => {
+                console.log(`${matchId} 실시간 경기상태 정보 업데이트 완료`);
+              });
+            }
+          });
+        });
+    }
+  } catch (err) {
+    console.log("실시간 데이터 업데이트 실패");
+  }
 };
