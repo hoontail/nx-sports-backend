@@ -62,6 +62,7 @@ module.exports = function (sequelize, DataTypes) {
       odds_key: {
         type: DataTypes.STRING(100),
         allowNull: true,
+        unique: "sports_odds_UN",
       },
     },
     {
@@ -81,7 +82,12 @@ module.exports = function (sequelize, DataTypes) {
         },
         {
           name: "sports_odds_sports_market_id_IDX",
-          fields: [{ name: "sports_market_id" }],
+          fields: [{ name: "market_id" }],
+        },
+        {
+          name: "sports_odds_UN",
+          unique: true,
+          fields: [{ name: "odds_key" }],
         },
       ],
     }

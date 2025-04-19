@@ -30,7 +30,9 @@ db.sequelize.sync();
 app.use("/v1", userRoutes);
 app.use("/a1", adminRoutes);
 
-sportsSchedule.getSportsMatches(true);
+sportsSchedule.getPrematchData(true);
+sportsSchedule.getSpecialData();
+// sportsSchedule.connectInplaySocket();
 
 const PORT = process.env.PORT || 10010;
 

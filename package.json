@@ -22,6 +22,7 @@
     "express": "^4.18.2",
     "express-device": "^0.4.2",
     "express-rate-limit": "^2.14.2",
+    "fs": "^0.0.1-security",
     "jsonwebtoken": "^9.0.0",
     "logger": "0.0.1",
     "moment": "^2.30.1",
@@ -30,6 +31,7 @@
     "sequelize": "^6.6.5",
     "sequelize-auto": "^0.8.4",
     "socket.io-client": "^4.8.1",
-    "tedious": "^16.4.0"
+    "tedious": "^16.4.0",
+    "ws": "^8.18.1"
   }
 }
