@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { rateLimit, authJwt } = require("../../middleware");
-// const userViewController = require("../../controllers/user/view.controller");
+const sportsListController = require("../../controllers/sports/list.controller");
 
 router.use(function (req, res, next) {
   res.header(
@@ -11,11 +11,11 @@ router.use(function (req, res, next) {
   next();
 });
 
-// 정보
-// router.get(
-//   "/info",
-//   [rateLimit.apiLimiter, authJwt.userVerifyToken],
-//   userViewController.getUserInfoForUser
-// );
+// 스포츠 목록
+router.get(
+  "/",
+  [rateLimit.apiLimiter],
+  sportsListController.getSportsListForUser
+);
 
 module.exports = router;

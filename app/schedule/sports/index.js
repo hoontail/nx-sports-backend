@@ -1,7 +1,5 @@
 const axios = require("axios");
 const db = require("../../models");
-const Op = db.Sequelize.Op;
-const SportsMatches = db.sports_matches;
 
 const redisClient = require("../../helpers/redisClient");
 const WebSocket = require("ws");
@@ -460,21 +458,30 @@ const connectInplaySocketWithRedis = async (sports) => {
 
         // 전체정보
         if (jsonData.tp === 11) {
-          createTeamData();
-          createScoreData();
-          createStatusData();
+          if (jsonData.tm) {
+            createTeamData();
+          }
+
+          if (jsonData.ss) {
+            createScoreData();
+          }
+
+          if (jsonData.st) {
+            createStatusData();
+          }
+
           if (jsonData.od) {
             createOddsData();
           }
         }
 
         // 팀정보
-        if (jsonData.tp === 12) {
+        if (jsonData.tp === 12 && jsonData.tm) {
           createTeamData();
         }
 
         // 스코어
-        if (jsonData.tp === 13) {
+        if (jsonData.tp === 13 && jsonData.ss) {
           createScoreData();
         }
 
@@ -484,7 +491,7 @@ const connectInplaySocketWithRedis = async (sports) => {
         }
 
         // 경기상태
-        if (jsonData.tp === 15) {
+        if (jsonData.tp === 15 && jsonData.st) {
           createStatusData();
         }
       });

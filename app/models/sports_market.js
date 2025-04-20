@@ -20,6 +20,7 @@ module.exports = function (sequelize, DataTypes) {
       market_id: {
         type: DataTypes.INTEGER,
         allowNull: true,
+        unique: "sports_market_UN",
       },
       type: {
         type: DataTypes.STRING(50),
@@ -57,6 +58,10 @@ module.exports = function (sequelize, DataTypes) {
         type: DataTypes.TINYINT,
         allowNull: true,
       },
+      order: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
     },
     {
       sequelize,
@@ -68,6 +73,11 @@ module.exports = function (sequelize, DataTypes) {
           name: "sports_market_PK",
           unique: true,
           fields: [{ name: "id" }],
+        },
+        {
+          name: "sports_market_UN",
+          unique: true,
+          fields: [{ name: "market_id" }],
         },
       ],
     }

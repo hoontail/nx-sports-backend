@@ -46,4 +46,19 @@ Object.keys(db).forEach((modelName) => {
 db.Sequelize = Sequelize;
 db.sequelize = sequelize;
 
+db.sports_matches.hasMany(db.sports_odds, {
+  foreignKey: "match_id",
+  sourceKey: "match_id",
+});
+
+db.sports_odds.belongsTo(db.sports_matches, {
+  foreignKey: "match_id",
+  sourceKey: "match_id",
+});
+
+db.sports_odds.hasOne(db.sports_market, {
+  foreignKey: "market_id",
+  sourceKey: "market_id",
+});
+
 module.exports = db;

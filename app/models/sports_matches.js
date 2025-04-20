@@ -138,18 +138,6 @@ module.exports = function (sequelize, DataTypes) {
         type: DataTypes.DATE,
         allowNull: true,
       },
-      inplay_score_info: {
-        type: DataTypes.TEXT,
-        allowNull: true,
-      },
-      inplay_team_info: {
-        type: DataTypes.TEXT,
-        allowNull: true,
-      },
-      inplay_status_info: {
-        type: DataTypes.TEXT,
-        allowNull: true,
-      },
     },
     {
       sequelize,
