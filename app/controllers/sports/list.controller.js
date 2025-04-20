@@ -46,7 +46,7 @@ exports.getSportsListForUser = async (req, res) => {
   }
 
   try {
-    const findSportsMatches = await SportsMatches.findAll({
+    let findSportsMatches = await SportsMatches.findAll({
       include: {
         include: {
           attributes: ["type", "period", "name"],
@@ -76,6 +76,7 @@ exports.getSportsListForUser = async (req, res) => {
         "sports_name",
         "sports_name_kr",
         "status_kr",
+        "period_id",
         "period_kr",
         "league_id",
         "league_name",
@@ -97,8 +98,87 @@ exports.getSportsListForUser = async (req, res) => {
       ],
     });
 
+    const unablePeriodMap = {
+      soccer: (x) =>
+        x.status_kr === "경기중" ? ["전반전", "연장제외", "연장포함"] : [],
+      baseball: (x) => {
+        const arr = [];
+        const p = x.period_id;
+        if (p >= 201) arr.push("1이닝", "5이닝합계", "연장제외", "연장포함");
+        if (p >= 202) arr.push("2이닝");
+        if (p >= 203) arr.push("3이닝");
+        if (p >= 204) arr.push("4이닝");
+        if (p >= 205) arr.push("5이닝");
+        if (p >= 206) arr.push("6이닝");
+        if (p >= 207) arr.push("7이닝");
+        if (p >= 208) arr.push("8이닝");
+        if (p >= 209) arr.push("9이닝");
+        return arr;
+      },
+      icehockey: (x) => {
+        const arr = [];
+        const p = x.period_id;
+        if (p >= 401) arr.push("1피리어드", "연장제외", "연장포함");
+        if (p >= 402) arr.push("2피리어드");
+        if (p >= 403) arr.push("3피리어드");
+        return arr;
+      },
+      basketball: (x) => {
+        const arr = [];
+        const p = x.period_id;
+        if (p >= 301) arr.push("1쿼터", "연장제외", "연장포함");
+        if (p >= 302) arr.push("2쿼터");
+        if (p >= 303 && p !== 305) arr.push("3쿼터");
+        if (p >= 304) arr.push("4쿼터");
+        return arr;
+      },
+      volleyball: (x) => {
+        const arr = [];
+        const p = x.period_id;
+        if (p >= 501) arr.push("1세트", "연장제외", "연장포함");
+        if (p >= 502) arr.push("2세트");
+        if (p >= 503) arr.push("3세트");
+        if (p >= 504) arr.push("4세트");
+        if (p >= 505) arr.push("5세트");
+        return arr;
+      },
+    };
+
+    if (gameType === "special") {
+      findSportsMatches.forEach((match) => {
+        const { sports_name } = match;
+
+        if (sports_name === "esports") {
+          const isInvalid =
+            match.status_kr !== "경기전" ||
+            match.start_datetime < moment().format("YYYY-MM-DD HH:mm:ss");
+
+          if (isInvalid) {
+            match.setDataValue("sports_odds", []);
+            return;
+          }
+        }
+
+        const getUnablePeriods = unablePeriodMap[sports_name];
+        const unablePeriods = getUnablePeriods ? getUnablePeriods(match) : [];
+
+        match.setDataValue(
+          "sports_odds",
+          match.sports_odds.filter(
+            (odds) => !unablePeriods.includes(odds.sports_market.period)
+          )
+        );
+      });
+
+      // soccer + 경기중은 아예 제외
+      findSportsMatches = findSportsMatches.filter(
+        (x) => x.sports_name !== "soccer" || x.status_kr !== "경기중"
+      );
+    }
+
     return res.status(200).send(findSportsMatches);
   } catch (err) {
+    console.log(err);
     return res.status(500).send({
       message: "Server Error",
     });
