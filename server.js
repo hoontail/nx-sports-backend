@@ -32,7 +32,7 @@ app.use("/a1", adminRoutes);
 
 sportsSchedule.getPrematchData(true);
 sportsSchedule.getSpecialData();
-sportsSchedule.connectInplaySocket();
+sportsSchedule.getInplayData();
 
 const PORT = process.env.PORT || 10010;
 

@@ -3,6 +3,7 @@ const db = require("../../models");
 const Op = db.Sequelize.Op;
 const SportsMatches = db.sports_matches;
 
+const redisClient = require("../../helpers/redisClient");
 const WebSocket = require("ws");
 const moment = require("moment");
 
@@ -231,9 +232,21 @@ const updateSportsData = async (endPoint) => {
                     ${o.is_market_stop},
                     ${o.is_odds_stop},
                     ${o.odds_line ? `'${o.odds_line}'` : "NULL"},
-                    ${o.home_odds ?? "NULL"},
-                    ${o.draw_odds ?? "NULL"},
-                    ${o.away_odds ?? "NULL"},
+                    ${
+                      o.home_odds != null && o.home_odds !== ""
+                        ? o.home_odds
+                        : "NULL"
+                    },
+                    ${
+                      o.draw_odds != null && o.draw_odds !== ""
+                        ? o.draw_odds
+                        : "NULL"
+                    },
+                    ${
+                      o.away_odds != null && o.away_odds !== ""
+                        ? o.away_odds
+                        : "NULL"
+                    },
                     '${o.updated_at}'
                   )`
           )
@@ -353,90 +366,63 @@ exports.getSpecialData = async () => {
   }
 };
 
-exports.connectInplaySocket = async () => {
-  try {
-    const sportsArr = [
-      "soccer",
-      "baseball",
-      "icehockey",
-      "basketball",
-      "volleyball",
-    ];
+const connectInplaySocketWithRedis = async (sports) => {
+  await axios
+    .get(
+      `https://v6_i.api-77.com/getkey/${sports}?token=${process.env.SPORTS_TOKEN}`
+    )
+    .then((res) => {
+      const key = res.data.result.key;
+      const socket = new WebSocket(
+        `wss://v6_i.api-77.com/ws/${sports}?key=${key}`
+      );
 
-    for await (const sports of sportsArr) {
-      await axios
-        .get(
-          `https://v6_i.api-77.com/getkey/${sports}?token=${process.env.SPORTS_TOKEN}`
-        )
-        .then((res) => {
-          const key = res.data.result.key;
-          const socket = new WebSocket(
-            `wss://v6_i.api-77.com/ws/${sports}?key=${key}`
-          );
+      socket.on("open", () => {
+        console.log(`실시간 ${sports} 웹소켓 연결됨`);
+      });
 
-          socket.on("open", () => {
-            console.log(`실시간 ${sports} 웹소켓 연결됨`);
+      socket.on("message", (data) => {
+        const str = data.toString("utf8");
+        const jsonData = JSON.parse(str);
+        const matchId = jsonData.g;
+
+        const createTeamData = () => {
+          redisClient.set(`team:${matchId}`, JSON.stringify(jsonData.tm), {
+            EX: 60 * 60 * 24 * 3,
           });
+        };
 
-          socket.on("message", (data) => {
-            const str = data.toString("utf8");
-            const jsonData = JSON.parse(str);
-            const matchId = jsonData.g;
+        const createScoreData = () => {
+          redisClient.set(`score:${matchId}`, JSON.stringify(jsonData.ss), {
+            EX: 60 * 60 * 24 * 3,
+          });
+        };
 
-            // 팀정보
-            if (jsonData.tp === 12) {
-              SportsMatches.update(
-                {
-                  inplay_team_info: JSON.stringify(jsonData.tm),
-                },
-                {
-                  where: {
-                    match_id: matchId,
-                  },
-                }
-              ).then(() => {
-                console.log(`${matchId} 실시간 팀 정보 업데이트 완료`);
-              });
-            }
+        const createOddsData = () => {
+          const useInplayMarket = [
+            10501, 10506, 10511, 14501, 14502, 14504, 15501, 15503, 15504,
+            16501, 16502, 16503, 18501, 18502, 18503,
+          ];
 
-            // 스코어
-            if (jsonData.tp === 13) {
-              SportsMatches.update(
-                {
-                  inplay_score_info: JSON.stringify(jsonData.ss),
-                },
-                {
-                  where: {
-                    match_id: matchId,
-                  },
-                }
-              ).then(() => {
-                console.log(`${matchId} 실시간 스코어 정보 업데이트 완료`);
-              });
-            }
+          for (const market of jsonData.od) {
+            if (!market.l) continue;
 
-            // 배당
-            if (jsonData.tp === 14 && jsonData.od) {
-              const useInplayMarket = [
-                10501, 10506, 10511, 14501, 14502, 14504, 15501, 15503, 15504,
-                16501, 16502, 16503, 18501, 18502, 18503,
-              ];
-              const createOddsData = [];
+            if (!useInplayMarket.includes(market.m)) continue;
 
-              for (const market of jsonData.od) {
-                if (!market.l) continue;
+            for (const odds of market.l) {
+              const oddsKey = `${matchId}_${market.m}${
+                odds.n ? `_${odds.n}` : ""
+              }`;
 
-                if (!useInplayMarket.includes(market.m)) continue;
+              const isUnder = odds.o[0].n === "Under";
+              const isThreeWay = odds.o.length === 3;
 
-                for (const odds of market.l) {
-                  const oddsKey = `${matchId}_${market.m}${
-                    odds.n ? `_${odds.n}` : ""
-                  }`;
-
-                  const isUnder = odds.o[0].n === "Under";
-                  const isThreeWay = odds.o.length === 3;
-
-                  createOddsData.push({
+              redisClient
+                .multi()
+                .hSet(
+                  `odds:${matchId}`,
+                  oddsKey,
+                  JSON.stringify({
                     odds_key: oddsKey,
                     match_id: matchId,
                     market_id: market.m,
@@ -458,90 +444,79 @@ exports.connectInplaySocket = async () => {
                       : isThreeWay
                       ? odds.o[2].s
                       : odds.o[1].s,
-                  });
-                }
-              }
-
-              if (createOddsData.length > 0) {
-                const oddsValues = createOddsData
-                  .map(
-                    (o) => `(
-                            '${o.odds_key}',
-                            ${o.match_id},
-                            ${o.market_id},
-                            ${o.is_market_stop},
-                            ${o.is_odds_stop},
-                            ${o.odds_line ? `'${o.odds_line}'` : "NULL"},
-                            ${o.home_odds ?? "NULL"},
-                            ${o.draw_odds ?? "NULL"},
-                            ${o.away_odds ?? "NULL"},
-                            '${o.updated_at}',
-                            ${o.is_home_stop},
-                            ${o.is_draw_stop},
-                            ${o.is_away_stop}
-                          )`
-                  )
-                  .join(",\n");
-
-                const createOddsQuery = `
-                        MERGE INTO sports_odds AS target
-                        USING (VALUES 
-                        ${oddsValues}
-                        ) AS source (
-                        odds_key, match_id, market_id, is_market_stop, is_odds_stop,
-                        odds_line, home_odds, draw_odds, away_odds, updated_at, is_home_stop, is_draw_stop, is_away_stop
-                        )
-                        ON target.odds_key = source.odds_key
-                        WHEN MATCHED AND target.is_auto = 1 THEN
-                        UPDATE SET 
-                            match_id = source.match_id,
-                            market_id = source.market_id,
-                            is_market_stop = source.is_market_stop,
-                            is_odds_stop = source.is_odds_stop,
-                            odds_line = source.odds_line,
-                            home_odds = source.home_odds,
-                            draw_odds = source.draw_odds,
-                            away_odds = source.away_odds,
-                            updated_at = source.updated_at,
-                            is_home_stop = source.is_home_stop,
-                            is_draw_stop = source.is_draw_stop,
-                            is_away_stop = source.is_away_stop
-                        WHEN NOT MATCHED THEN
-                        INSERT (
-                            odds_key, match_id, market_id, is_market_stop, is_odds_stop,
-                            odds_line, home_odds, draw_odds, away_odds, updated_at, is_home_stop, is_draw_stop, is_away_stop
-                        )
-                        VALUES (
-                            source.odds_key, source.match_id, source.market_id,
-                            source.is_market_stop, source.is_odds_stop,
-                            source.odds_line, source.home_odds,
-                            source.draw_odds, source.away_odds, source.updated_at, source.is_home_stop, source.is_draw_stop, source.is_away_stop
-                        );
-                        `;
-
-                db.sequelize.query(createOddsQuery).then(() => {
-                  console.log(`${jsonData.g} 실시간 배당 업데이트 완료`);
-                });
-              }
+                  })
+                )
+                .expire(`odds:${matchId}`, 60 * 60 * 24 * 3) // 3일
+                .exec();
             }
+          }
+        };
 
-            // 경기상태
-            if (jsonData.tp === 15) {
-              SportsMatches.update(
-                {
-                  inplay_status_info: JSON.stringify(jsonData.st),
-                },
-                {
-                  where: {
-                    match_id: matchId,
-                  },
-                }
-              ).then(() => {
-                console.log(`${matchId} 실시간 경기상태 정보 업데이트 완료`);
-              });
-            }
+        const createStatusData = () => {
+          redisClient.set(`status:${matchId}`, JSON.stringify(jsonData.st), {
+            EX: 60 * 60 * 24 * 3,
           });
-        });
+        };
+
+        // 전체정보
+        if (jsonData.tp === 11) {
+          createTeamData();
+          createScoreData();
+          createStatusData();
+          if (jsonData.od) {
+            createOddsData();
+          }
+        }
+
+        // 팀정보
+        if (jsonData.tp === 12) {
+          createTeamData();
+        }
+
+        // 스코어
+        if (jsonData.tp === 13) {
+          createScoreData();
+        }
+
+        // 배당
+        if (jsonData.tp === 14 && jsonData.od) {
+          createOddsData();
+        }
+
+        // 경기상태
+        if (jsonData.tp === 15) {
+          createStatusData();
+        }
+      });
+
+      const statusInterval = setInterval(() => {
+        console.log(`${sports} 소켓 연결: ${socket.readyState}`);
+      }, 3000);
+
+      socket.on("close", () => {
+        // 재연결
+        clearInterval(statusInterval);
+        connectInplaySocketWithRedis(sports);
+      });
+
+      socket.on("error", (error) => {
+        console.error("에러 발생:", error);
+      });
+    });
+};
+
+exports.getInplayData = async () => {
+  try {
+    const sportsArr = [
+      "soccer",
+      "baseball",
+      "icehockey",
+      "basketball",
+      "volleyball",
+    ];
+
+    for (const sports of sportsArr) {
+      connectInplaySocketWithRedis(sports);
     }
   } catch (err) {
     console.log("실시간 데이터 업데이트 실패");
