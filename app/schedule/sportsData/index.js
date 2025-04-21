@@ -414,6 +414,8 @@ const connectInplaySocketWithRedis = async (sports) => {
         const jsonData = JSON.parse(str);
         const matchId = jsonData.g;
 
+        if (!matchId) return;
+
         const createTeamData = () => {
           redisClient.set(`team:${matchId}`, JSON.stringify(jsonData.tm), {
             EX: 60 * 60 * 24 * 3,
