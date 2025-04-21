@@ -1,9 +1,13 @@
-const jwt = require("jsonwebtoken");
 const db = require("../models");
-const User = db.user;
+const Op = db.Sequelize.Op;
+const User = db.up_users;
+
+const moment = require("moment");
 
 userVerifyToken = async (req, res, next) => {
-  const token = req.headers["access-token"];
+  const token = req.headers.authorization
+    ? req.headers.authorization.split(" ")[1]
+    : null;
 
   if (!token) {
     return res.status(401).send({
@@ -11,33 +15,37 @@ userVerifyToken = async (req, res, next) => {
     });
   }
 
-  jwt.verify(token, process.env.JWT_SECRET, async (err, decoded) => {
-    if (err) {
-      return res.status(401).send({
-        message: "토큰이 만료되었습니다",
-      });
-    }
-
+  try {
     const findUser = await User.findOne({
       where: {
-        id: decoded.id,
+        token,
+        token_expired: {
+          [Op.gt]: moment().format("YYYY-MM-DD HH:mm:ss"),
+        },
+        role_name: {
+          [Op.notIn]: ["admin", "agent"],
+        },
       },
     });
 
     if (!findUser) {
       return res.status(401).send({
-        message: "잘못된 요청입니다",
+        message: "Token Is Not Valid",
       });
     }
 
-    req.user_id = decoded.id;
-
     next();
-  });
+  } catch (err) {
+    return res.status(500).send({
+      message: "Server Error",
+    });
+  }
 };
 
 adminVerifyToken = async (req, res, next) => {
-  const token = req.headers["access-token"];
+  const token = req.headers.authorization
+    ? req.headers.authorization.split(" ")[1]
+    : null;
 
   if (!token) {
     return res.status(401).send({
@@ -45,17 +53,29 @@ adminVerifyToken = async (req, res, next) => {
     });
   }
 
-  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
-    if (err) {
+  try {
+    const findUser = await User.findOne({
+      where: {
+        token,
+        token_expired: {
+          [Op.gt]: moment().format("YYYY-MM-DD HH:mm:ss"),
+        },
+        role_name: ["admin", "agent"],
+      },
+    });
+
+    if (!findUser) {
       return res.status(401).send({
-        message: "토큰이 만료되었습니다",
+        message: "Token Is Not Valid",
       });
     }
 
-    req.user_id = decoded.user_id;
-
     next();
-  });
+  } catch (err) {
+    return res.status(500).send({
+      message: "Server Error",
+    });
+  }
 };
 
 const authJwt = {
