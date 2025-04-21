@@ -170,13 +170,41 @@ exports.getSportsListForUser = async (req, res) => {
         );
       });
 
-      // soccer + 경기중은 아예 제외
+      // soccer, esports + 경기중은 아예 제외
       findSportsMatches = findSportsMatches.filter(
-        (x) => x.sports_name !== "soccer" || x.status_kr !== "경기중"
+        (x) =>
+          (x.sports_name !== "soccer" && x.sports_name !== "esports") ||
+          x.status_kr !== "경기중"
       );
     }
 
-    return res.status(200).send(findSportsMatches);
+    const sportsNames = [
+      "soccer",
+      "americanfootball",
+      "boxingufc",
+      "tennis",
+      "baseball",
+      "icehockey",
+      "basketball",
+      "handball",
+      "volleyball",
+      "tabletennis",
+      "esports",
+    ];
+
+    const sportsCount = sportsNames.reduce((acc, name) => {
+      acc[name] = findSportsMatches.filter(
+        (x) =>
+          x.sports_name === name &&
+          (x.getDataValue("sports_odds") || []).length > 0
+      ).length;
+      return acc;
+    }, {});
+
+    return res.status(200).send({
+      list: findSportsMatches,
+      count: sportsCount,
+    });
   } catch (err) {
     console.log(err);
     return res.status(500).send({

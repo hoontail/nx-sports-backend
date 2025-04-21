@@ -497,8 +497,8 @@ const connectInplaySocketWithRedis = async (sports) => {
       });
 
       const statusInterval = setInterval(() => {
-        console.log(`${sports} 소켓 연결: ${socket.readyState}`);
-      }, 3000);
+        console.log(`${sports} 소켓 연결 상태: ${socket.readyState}`);
+      }, 5000);
 
       socket.on("close", () => {
         // 재연결
@@ -509,6 +509,11 @@ const connectInplaySocketWithRedis = async (sports) => {
       socket.on("error", (error) => {
         console.error("에러 발생:", error);
       });
+
+      // 5분 뒤 재연결
+      setTimeout(() => {
+        socket.close();
+      }, 5 * 60 * 1000);
     });
 };
 

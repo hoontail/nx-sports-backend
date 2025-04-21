@@ -7,7 +7,7 @@ const cors = require("cors");
 require("dotenv").config();
 const userRoutes = require("./app/routes/user");
 const adminRoutes = require("./app/routes/admin");
-const sportsSchedule = require("./app/schedule/sports");
+const sportsDataSchedule = require("./app/schedule/sportsData");
 
 const app = express();
 const server = http.createServer(app);
@@ -30,11 +30,11 @@ db.sequelize.sync();
 app.use("/v1", userRoutes);
 app.use("/a1", adminRoutes);
 
-// if (process.env.INSTANCE_ID == 0) {
-sportsSchedule.getPrematchData(true);
-sportsSchedule.getSpecialData();
-sportsSchedule.getInplayData();
-// }
+if (process.env.INSTANCE_ID == 0) {
+  sportsDataSchedule.getPrematchData(true);
+  sportsDataSchedule.getSpecialData();
+  sportsDataSchedule.getInplayData();
+}
 
 const PORT = process.env.PORT || 10010;
 
