@@ -428,11 +428,12 @@ const connectInplaySocketWithRedis = async (sports) => {
           });
         };
 
-        const createOddsData = () => {
+        const createOddsData = async () => {
           const useInplayMarket = [
             10501, 10506, 10511, 14501, 14502, 14504, 15501, 15503, 15504,
             16501, 16502, 16503, 18501, 18502, 18503,
           ];
+          const deleteSameLineOdds = [];
 
           for (const market of jsonData.od) {
             if (!market.l) continue;
@@ -458,6 +459,7 @@ const connectInplaySocketWithRedis = async (sports) => {
                     market_id: market.m,
                     is_market_stop: market.s,
                     is_odds_stop: odds.s,
+                    is_delete: 0,
                     odds_line: odds.n,
                     home_odds: isUnder ? odds.o[1].v : odds.o[0].v,
                     draw_odds: isThreeWay ? odds.o[1].v : null,
@@ -478,6 +480,40 @@ const connectInplaySocketWithRedis = async (sports) => {
                 )
                 .expire(`odds:${matchId}`, 60 * 60 * 24 * 3) // 3일
                 .exec();
+
+              // 기준점이 있을 때 기존 기준점 배당 삭제
+              if (odds.n) {
+                deleteSameLineOdds.push({
+                  match_id: matchId,
+                  market_id: market.m,
+                  odds_line: odds.n,
+                });
+              }
+            }
+          }
+
+          if (deleteSameLineOdds.length > 0) {
+            for await (const x of deleteSameLineOdds) {
+              const allOdds = await redisClient.hGetAll(`odds:${x.match_id}`);
+
+              const multi = redisClient.multi();
+
+              Object.entries(allOdds).forEach(([key, val]) => {
+                try {
+                  const parsed = JSON.parse(val);
+                  const isSameMarket = parsed.market_id === x.market_id;
+                  const isDifferentLine = parsed.odds_line !== x.odds_line;
+
+                  if (isSameMarket && isDifferentLine) {
+                    parsed.is_delete = 1;
+                    parsed.updated_at = moment().format("YYYY-MM-DD HH:mm:ss");
+
+                    multi.hSet(x.match_id, key, JSON.stringify(parsed));
+                  }
+                } catch (e) {
+                  console.warn(`Parsing failed for key: ${key}`);
+                }
+              });
             }
           }
         };
