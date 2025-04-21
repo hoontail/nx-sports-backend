@@ -1,6 +1,7 @@
 const axios = require("axios");
 const db = require("../../models");
 const Op = db.Sequelize.Op;
+const SportsMatches = db.sports_matches;
 const SportsOdds = db.sports_odds;
 
 const redisClient = require("../../helpers/redisClient");
@@ -483,6 +484,34 @@ const connectInplaySocketWithRedis = async (sports) => {
           redisClient.set(`status:${matchId}`, JSON.stringify(jsonData.st), {
             EX: 60 * 60 * 24 * 3,
           });
+
+          // 정지
+          if (jsonData.st.sd === 1) {
+            SportsMatches.update(
+              {
+                is_inplay_stop: 1,
+              },
+              {
+                where: {
+                  match_id: matchId,
+                },
+              }
+            );
+          }
+
+          // 삭제
+          if (jsonData.st.rm === 1) {
+            SportsMatches.update(
+              {
+                is_inplay_delete: 1,
+              },
+              {
+                where: {
+                  match_id: matchId,
+                },
+              }
+            );
+          }
         };
 
         // 전체정보

@@ -14,10 +14,6 @@ exports.getSportsListForUser = async (req, res) => {
   };
   let marketCondition = {};
 
-  if (sports && sports !== "") {
-    condition.sports_name = sports;
-  }
-
   if (
     gameType === "cross" ||
     gameType === "winlose" ||
@@ -171,7 +167,7 @@ exports.getSportsListForUser = async (req, res) => {
         );
       });
 
-      // soccer, esports + 경기중은 아예 제외
+      // soccer, esports + 경기중은 제외
       findSportsMatches = findSportsMatches.filter(
         (x) =>
           (x.sports_name !== "soccer" && x.sports_name !== "esports") ||
@@ -193,6 +189,7 @@ exports.getSportsListForUser = async (req, res) => {
       "esports",
     ];
 
+    // 종목별 경기수
     const sportsCount = sportsNames.reduce((acc, name) => {
       acc[name] = findSportsMatches.filter(
         (x) =>
@@ -201,6 +198,13 @@ exports.getSportsListForUser = async (req, res) => {
       ).length;
       return acc;
     }, {});
+
+    // 종목 필터
+    if (sports && sports !== "") {
+      findSportsMatches = findSportsMatches.filter(
+        (x) => x.sports_name === sports
+      );
+    }
 
     return res.status(200).send({
       list: findSportsMatches,
