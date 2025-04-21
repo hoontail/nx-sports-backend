@@ -1,5 +1,7 @@
 const axios = require("axios");
 const db = require("../../models");
+const Op = db.Sequelize.Op;
+const SportsOdds = db.sports_odds;
 
 const redisClient = require("../../helpers/redisClient");
 const WebSocket = require("ws");
@@ -58,6 +60,7 @@ const updateSportsData = async (endPoint) => {
   await axiosInstance.get(endPoint).then(async (res) => {
     const createMatchData = [];
     const createOddsData = [];
+    const deleteSameLineOdds = [];
     if (res.data.success === 1) {
       for (const match of res.data.result.list) {
         createMatchData.push({
@@ -85,7 +88,7 @@ const updateSportsData = async (endPoint) => {
           country_image: match.cc_image,
           start_datetime: match.time,
           score: JSON.stringify(match.score),
-          updated_at: moment(match.updated_at).format("YYYY-MM-DD HH:mm:ss"),
+          updated_at: moment().format("YYYY-MM-DD HH:mm:ss"),
         });
 
         for (const market of match.market) {
@@ -113,10 +116,16 @@ const updateSportsData = async (endPoint) => {
                 : isThreeWay
                 ? odds.odds[2].value
                 : odds.odds[1].value,
-              updated_at: moment(market.updated_at).format(
-                "YYYY-MM-DD HH:mm:ss"
-              ),
+              updated_at: moment().format("YYYY-MM-DD HH:mm:ss"),
             });
+
+            if (odds.name) {
+              deleteSameLineOdds.push({
+                match_id: match.id,
+                market_id: market.market_id,
+                odds_line: odds.name,
+              });
+            }
           }
         }
       }
@@ -286,6 +295,26 @@ const updateSportsData = async (endPoint) => {
         await db.sequelize.query(createOddsQuery);
       }
 
+      // 기준점 바뀐 경우 기존 기준점 삭제
+      if (deleteSameLineOdds.length > 0) {
+        for await (const odds of deleteSameLineOdds) {
+          await SportsOdds.update(
+            {
+              is_odds_stop: 1,
+            },
+            {
+              where: {
+                match_id: odds.match_id,
+                market_id: odds.market_id,
+                odds_line: {
+                  [Op.ne]: odds.odds_line,
+                },
+              },
+            }
+          );
+        }
+      }
+
       // 다음 페이지
       if (res.data.result.pagination) {
         const pagination = res.data.result.pagination;
@@ -434,7 +463,7 @@ const connectInplaySocketWithRedis = async (sports) => {
                       : isThreeWay
                       ? odds.o[2].v
                       : odds.o[1].v,
-                    updated_at: moment(market.ut).format("YYYY-MM-DD HH:mm:ss"),
+                    updated_at: moment().format("YYYY-MM-DD HH:mm:ss"),
                     is_home_stop: isUnder ? odds.o[1].s : odds.o[0].s,
                     is_draw_stop: isThreeWay ? odds.o[1].s : 0,
                     is_away_stop: isUnder
