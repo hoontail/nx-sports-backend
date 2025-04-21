@@ -300,7 +300,7 @@ const updateSportsData = async (endPoint) => {
         for await (const odds of deleteSameLineOdds) {
           await SportsOdds.update(
             {
-              is_odds_stop: 1,
+              is_delete: 1,
             },
             {
               where: {

@@ -69,6 +69,7 @@ exports.getSportsListForUser = async (req, res) => {
         where: {
           is_market_stop: 0,
           is_odds_stop: 0,
+          is_delete: 0,
         },
       },
       attributes: [
