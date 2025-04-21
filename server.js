@@ -5,6 +5,7 @@ const device = require("express-device");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 require("dotenv").config();
+const schedule = require("node-schedule");
 const userRoutes = require("./app/routes/user");
 const adminRoutes = require("./app/routes/admin");
 const sportsDataSchedule = require("./app/schedule/sportsData");
@@ -34,6 +35,12 @@ if (process.env.INSTANCE_ID == 0) {
   sportsDataSchedule.getPrematchData(true);
   sportsDataSchedule.getSpecialData();
   sportsDataSchedule.getInplayData();
+}
+
+if (process.env.INSTANCE_ID == 1) {
+  schedule.scheduleJob({ hour: 00, minute: 00 }, function () {
+    sportsDataSchedule.deleteOldSportsOdds();
+  });
 }
 
 const PORT = process.env.PORT || 10010;

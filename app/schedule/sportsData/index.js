@@ -594,3 +594,21 @@ exports.getInplayData = async () => {
     console.log("실시간 데이터 업데이트 실패");
   }
 };
+
+exports.deleteOldSportsOdds = async () => {
+  try {
+    console.log("스포츠 배당 데이터 정리 시작");
+
+    await SportsOdds.destroy({
+      where: {
+        updated_at: {
+          [Op.lt]: moment().subtract(1, "week").format("YYYY-MM-DD HH:mm:ss"),
+        },
+      },
+    });
+
+    console.log("스포츠 배당 데이터 정리 완료");
+  } catch (err) {
+    console.log("스포츠 배당 데이터 정리 실패");
+  }
+};
