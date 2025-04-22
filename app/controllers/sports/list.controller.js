@@ -184,8 +184,7 @@ exports.getSportsListForUser = async (req, res) => {
             }
           }
 
-          const getUnablePeriods = unablePeriodMap[sports_name];
-          const unablePeriods = getUnablePeriods ? getUnablePeriods(match) : [];
+          const unablePeriods = unablePeriodMap[sports_name];
 
           match.setDataValue(
             "sports_odds",

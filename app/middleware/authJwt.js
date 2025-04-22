@@ -34,6 +34,8 @@ userVerifyToken = async (req, res, next) => {
       });
     }
 
+    req.user_id = findUser.id;
+    req.username = findUser.username;
     next();
   } catch (err) {
     return res.status(500).send({

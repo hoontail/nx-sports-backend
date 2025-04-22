@@ -64,12 +64,10 @@ module.exports = function (sequelize, DataTypes) {
       sports_single_rolling_percentage: {
         type: DataTypes.DECIMAL(5, 3),
         allowNull: true,
-        defaultValue: 0,
       },
       sports_multi_rolling_percentage: {
         type: DataTypes.DECIMAL(5, 3),
         allowNull: true,
-        defaultValue: 0,
       },
     },
     {
