@@ -397,7 +397,7 @@ exports.getSpecialData = async () => {
 const connectInplaySocketWithRedis = async (sports) => {
   await axios
     .get(
-      `${process.env.SPORTS_SOCKET_URL}/getkey/${sports}?token=${process.env.SPORTS_TOKEN}`
+      `${process.env.SPORTS_INPLAY_URL}/getkey/${sports}?token=${process.env.SPORTS_TOKEN}`
     )
     .then((res) => {
       const key = res.data.result.key;
