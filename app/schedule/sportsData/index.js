@@ -397,12 +397,12 @@ exports.getSpecialData = async () => {
 const connectInplaySocketWithRedis = async (sports) => {
   await axios
     .get(
-      `https://v6_i.api-77.com/getkey/${sports}?token=${process.env.SPORTS_TOKEN}`
+      `${process.env.SPORTS_URL}/getkey/${sports}?token=${process.env.SPORTS_TOKEN}`
     )
     .then((res) => {
       const key = res.data.result.key;
       const socket = new WebSocket(
-        `wss://v6_i.api-77.com/ws/${sports}?key=${key}`
+        `${process.env.SPORTS_SOCKET_URL}/ws/${sports}?key=${key}`
       );
 
       socket.on("open", () => {
