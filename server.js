@@ -9,6 +9,7 @@ const schedule = require("node-schedule");
 const userRoutes = require("./app/routes/user");
 const adminRoutes = require("./app/routes/admin");
 const sportsDataSchedule = require("./app/schedule/sportsData");
+const sportsResultSchedule = require("./app/schedule/sportsResult");
 
 const app = express();
 const server = http.createServer(app);
@@ -35,6 +36,10 @@ if (process.env.INSTANCE_ID == 0) {
   sportsDataSchedule.getPrematchData(true);
   sportsDataSchedule.getSpecialData();
   sportsDataSchedule.getInplayData();
+
+  schedule.scheduleJob("00 * * * * *", function () {
+    sportsResultSchedule.sportsResultProcess();
+  });
 }
 
 if (process.env.INSTANCE_ID == 1) {

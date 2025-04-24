@@ -61,4 +61,19 @@ db.sports_odds.hasOne(db.sports_market, {
   sourceKey: "market_id",
 });
 
+db.up_users.hasMany(db.sports_bet_history, {
+  foreignKey: "username",
+  sourceKey: "username",
+});
+
+db.sports_bet_history.belongsTo(db.up_users, {
+  foreignKey: "username",
+  targetKey: "username",
+});
+
+db.sports_bet_detail.hasOne(db.sports_market, {
+  foreignKey: "market_id",
+  sourceKey: "market_id",
+});
+
 module.exports = db;
