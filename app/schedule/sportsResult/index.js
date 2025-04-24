@@ -56,12 +56,6 @@ exports.sportsResultProcess = async () => {
       },
     });
 
-    console.log(
-      findFinishedMatches.length,
-      findSpecialMatches.length,
-      findCanceledMatches.length
-    );
-
     await Promise.all(
       findFinishedMatches.map(async (match) => {
         switch (match.sports_name) {
