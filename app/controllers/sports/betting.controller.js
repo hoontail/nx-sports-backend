@@ -300,6 +300,28 @@ exports.bettingSports = async (req, res) => {
       });
     }
 
+    totalOdds = totalOdds.toFixed(2);
+
+    if (
+      createBetDetailData.length === 1 &&
+      findSportsConfig.single_minus_odds > 0
+    ) {
+      totalOdds = totalOdds - findSportsConfig.single_minus_odds;
+
+      if (totalOdds < 1) {
+        totalOdds = 1;
+      }
+    } else if (
+      createBetDetailData.length === 2 &&
+      findSportsConfig.two_minus_odds > 0
+    ) {
+      totalOdds = totalOdds - findSportsConfig.two_minus_odds;
+
+      if (totalOdds < 1) {
+        totalOdds = 1;
+      }
+    }
+
     // 조합 체크
     if (createBetDetailData.length > 1) {
       const isCombineValid = await checkCombine(gameType, createBetDetailData);

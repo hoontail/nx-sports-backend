@@ -8,7 +8,6 @@ const SportsOdds = db.sports_odds;
 const redisClient = require("../../helpers/redisClient");
 const WebSocket = require("ws");
 const moment = require("moment");
-const debounce = require("lodash/debounce");
 const socketIO = require("socket.io-client");
 const socket = socketIO("http://localhost:3001");
 
@@ -487,6 +486,13 @@ const connectInplaySocketWithRedis = async (sports) => {
             }
           }
 
+          // 소켓 전달
+          socket.emit("sportsInplayData", {
+            type: "odds",
+            match_id: matchId,
+            sports_odds: createOddsData,
+          });
+
           if (createOddsData.length > 0) {
             const oddsValues = createOddsData
               .map(
@@ -529,7 +535,7 @@ const connectInplaySocketWithRedis = async (sports) => {
               odds_line, home_odds, draw_odds, away_odds, updated_at, is_home_stop, is_draw_stop, is_away_stop
               )
               ON target.odds_key = source.odds_key
-              WHEN MATCHED AND target.is_auto = 1 THEN
+              WHEN MATCHED THEN
               UPDATE SET 
                   match_id = source.match_id,
                   market_id = source.market_id,
@@ -608,6 +614,14 @@ const connectInplaySocketWithRedis = async (sports) => {
               }
             );
           }
+
+          // 소켓 전달
+          socket.emit("sportsInplayData", {
+            type: "status",
+            match_id: matchId,
+            is_inplay_stop: jsonData.st.sd,
+            is_inplay_delete: jsonData.st.rm,
+          });
         };
 
         // 전체정보
