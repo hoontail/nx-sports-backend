@@ -1,6 +1,6 @@
 const db = require("../../models");
 const Op = db.Sequelize.Op;
-const User = db.up_users;
+const Users = db.up_users;
 const LevelConfigs = db.level_configs;
 const SportsConfigs = db.sports_configs;
 const SportsBonusOdds = db.sports_bonus_odds;
@@ -57,7 +57,7 @@ exports.bettingSports = async (req, res) => {
       });
     }
 
-    const findUser = await User.findOne({
+    const findUser = await Users.findOne({
       where: {
         username,
       },
@@ -314,7 +314,7 @@ exports.bettingSports = async (req, res) => {
     await db.sequelize.transaction(async (t) => {
       try {
         // -보유머니 + 총배팅
-        await User.decrement(
+        await Users.decrement(
           {
             balance: amount,
             bet_total: -amount,
@@ -378,7 +378,7 @@ exports.bettingSports = async (req, res) => {
           const rollingAmount = (amount * rollingPercentage) / 100;
 
           if (rollingAmount > 0) {
-            await User.increment(
+            await Users.increment(
               {
                 rolling_point: rollingAmount,
               },

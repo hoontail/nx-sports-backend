@@ -1,12 +1,16 @@
 const axios = require("axios");
 const db = require("../../models");
 const Op = db.Sequelize.Op;
+const literal = db.Sequelize.literal;
 const SportsMatches = db.sports_matches;
 const SportsOdds = db.sports_odds;
 
 const redisClient = require("../../helpers/redisClient");
 const WebSocket = require("ws");
 const moment = require("moment");
+const debounce = require("lodash/debounce");
+const socketIO = require("socket.io-client");
+const socket = socketIO("http://localhost:3001");
 
 const translateSportsName = (name) => {
   let nameKr = "";
@@ -228,6 +232,7 @@ const updateSportsData = async (endPoint) => {
             `;
 
         await db.sequelize.query(createMatchQuery);
+        socket.emit("sportsMatchesData");
       }
 
       if (createOddsData.length > 0) {
@@ -294,26 +299,22 @@ const updateSportsData = async (endPoint) => {
                 `;
 
         await db.sequelize.query(createOddsQuery);
+        socket.emit("sportsOddsData");
       }
 
       // 기준점 바뀐 경우 기존 기준점 삭제
       if (deleteSameLineOdds.length > 0) {
-        for await (const odds of deleteSameLineOdds) {
-          await SportsOdds.update(
-            {
-              is_delete: 1,
-            },
-            {
-              where: {
-                match_id: odds.match_id,
-                market_id: odds.market_id,
-                odds_line: {
-                  [Op.ne]: odds.odds_line,
-                },
-              },
-            }
-          );
-        }
+        const whereConditions = deleteSameLineOdds.map(
+          (o) =>
+            `(match_id = ${o.match_id} AND market_id = ${o.market_id} AND odds_line != '${o.odds_line}')`
+        );
+
+        await SportsOdds.update(
+          { is_delete: 1 },
+          {
+            where: literal(whereConditions.join(" OR ")),
+          }
+        );
       }
 
       // 다음 페이지
@@ -409,119 +410,66 @@ const connectInplaySocketWithRedis = async (sports) => {
         console.log(`실시간 ${sports} 웹소켓 연결됨`);
       });
 
-      socket.on("message", (data) => {
-        const str = data.toString("utf8");
-        const jsonData = JSON.parse(str);
-        const matchId = jsonData.g;
+      const debouncedCreateOdds = debounce(async (jsonData, matchId) => {
+        const useInplayMarket = [
+          10501, 10506, 10511, 14501, 14502, 14504, 15501, 15503, 15504, 16501,
+          16502, 16503, 18501, 18502, 18503,
+        ];
+        const createOddsData = [];
+        const deleteSameLineOdds = [];
 
-        if (!matchId) return;
+        for (const market of jsonData.od) {
+          if (!market.l) continue;
 
-        const createTeamData = () => {
-          redisClient.set(`team:${matchId}`, JSON.stringify(jsonData.tm), {
-            EX: 60 * 60 * 24 * 3,
-          });
-        };
+          if (!useInplayMarket.includes(market.m)) continue;
 
-        const createScoreData = () => {
-          redisClient.set(`score:${matchId}`, JSON.stringify(jsonData.ss), {
-            EX: 60 * 60 * 24 * 3,
-          });
-        };
+          for (const odds of market.l) {
+            const oddsKey = `${matchId}_${market.m}${
+              odds.n ? `_${odds.n}` : ""
+            }`;
 
-        const createOddsData = async () => {
-          const useInplayMarket = [
-            10501, 10506, 10511, 14501, 14502, 14504, 15501, 15503, 15504,
-            16501, 16502, 16503, 18501, 18502, 18503,
-          ];
-          const createOddsData = [];
-          const deleteSameLineOdds = [];
+            const isUnder = odds.o[0].n === "Under";
+            const isThreeWay = odds.o.length === 3;
 
-          for (const market of jsonData.od) {
-            if (!market.l) continue;
+            createOddsData.push({
+              odds_key: oddsKey,
+              match_id: matchId,
+              market_id: market.m,
+              is_market_stop: market.s,
+              is_odds_stop: odds.s,
+              is_delete: 0,
+              odds_line: odds.n,
+              home_odds: isUnder ? odds.o[1].v : odds.o[0].v,
+              draw_odds: isThreeWay ? odds.o[1].v : null,
+              away_odds: isUnder
+                ? odds.o[0].v
+                : isThreeWay
+                ? odds.o[2].v
+                : odds.o[1].v,
+              updated_at: moment().format("YYYY-MM-DD HH:mm:ss"),
+              is_home_stop: isUnder ? odds.o[1].s : odds.o[0].s,
+              is_draw_stop: isThreeWay ? odds.o[1].s : 0,
+              is_away_stop: isUnder
+                ? odds.o[0].s
+                : isThreeWay
+                ? odds.o[2].s
+                : odds.o[1].s,
+            });
 
-            if (!useInplayMarket.includes(market.m)) continue;
-
-            for (const odds of market.l) {
-              const oddsKey = `${matchId}_${market.m}${
-                odds.n ? `_${odds.n}` : ""
-              }`;
-
-              const isUnder = odds.o[0].n === "Under";
-              const isThreeWay = odds.o.length === 3;
-
-              createOddsData.push({
-                odds_key: oddsKey,
+            if (odds.n) {
+              deleteSameLineOdds.push({
                 match_id: matchId,
                 market_id: market.m,
-                is_market_stop: market.s,
-                is_odds_stop: odds.s,
-                is_delete: 0,
                 odds_line: odds.n,
-                home_odds: isUnder ? odds.o[1].v : odds.o[0].v,
-                draw_odds: isThreeWay ? odds.o[1].v : null,
-                away_odds: isUnder
-                  ? odds.o[0].v
-                  : isThreeWay
-                  ? odds.o[2].v
-                  : odds.o[1].v,
-                updated_at: moment().format("YYYY-MM-DD HH:mm:ss"),
-                is_home_stop: isUnder ? odds.o[1].s : odds.o[0].s,
-                is_draw_stop: isThreeWay ? odds.o[1].s : 0,
-                is_away_stop: isUnder
-                  ? odds.o[0].s
-                  : isThreeWay
-                  ? odds.o[2].s
-                  : odds.o[1].s,
               });
-
-              // redisClient
-              //   .multi()
-              //   .hSet(
-              //     `odds:${matchId}`,
-              //     oddsKey,
-              //     JSON.stringify({
-              //       odds_key: oddsKey,
-              //       match_id: matchId,
-              //       market_id: market.m,
-              //       is_market_stop: market.s,
-              //       is_odds_stop: odds.s,
-              //       is_delete: 0,
-              //       odds_line: odds.n,
-              //       home_odds: isUnder ? odds.o[1].v : odds.o[0].v,
-              //       draw_odds: isThreeWay ? odds.o[1].v : null,
-              //       away_odds: isUnder
-              //         ? odds.o[0].v
-              //         : isThreeWay
-              //         ? odds.o[2].v
-              //         : odds.o[1].v,
-              //       updated_at: moment().format("YYYY-MM-DD HH:mm:ss"),
-              //       is_home_stop: isUnder ? odds.o[1].s : odds.o[0].s,
-              //       is_draw_stop: isThreeWay ? odds.o[1].s : 0,
-              //       is_away_stop: isUnder
-              //         ? odds.o[0].s
-              //         : isThreeWay
-              //         ? odds.o[2].s
-              //         : odds.o[1].s,
-              //     })
-              //   )
-              //   .expire(`odds:${matchId}`, 60 * 60 * 24 * 3) // 3일
-              //   .exec();
-
-              // 기준점이 있을 때 기존 기준점 배당 삭제
-              if (odds.n) {
-                deleteSameLineOdds.push({
-                  match_id: matchId,
-                  market_id: market.m,
-                  odds_line: odds.n,
-                });
-              }
             }
           }
+        }
 
-          if (createOddsData.length > 0) {
-            const oddsValues = createOddsData
-              .map(
-                (o) => `(
+        if (createOddsData.length > 0) {
+          const oddsValues = createOddsData
+            .map(
+              (o) => `(
                     '${o.odds_key}',
                     ${o.match_id},
                     ${o.market_id},
@@ -548,94 +496,85 @@ const connectInplaySocketWithRedis = async (sports) => {
                     ${o.is_draw_stop},
                     ${o.is_away_stop}
                   )`
-              )
-              .join(",\n");
+            )
+            .join(",\n");
 
-            const createOddsQuery = `
-                MERGE INTO sports_odds AS target
-                USING (VALUES 
-                ${oddsValues}
-                ) AS source (
+          const createOddsQuery = `
+            MERGE INTO sports_odds AS target
+            USING (VALUES 
+            ${oddsValues}
+            ) AS source (
+            odds_key, match_id, market_id, is_market_stop, is_odds_stop,
+            odds_line, home_odds, draw_odds, away_odds, updated_at, is_home_stop, is_draw_stop, is_away_stop
+            )
+            ON target.odds_key = source.odds_key
+            WHEN MATCHED AND target.is_auto = 1 THEN
+            UPDATE SET 
+                match_id = source.match_id,
+                market_id = source.market_id,
+                is_market_stop = source.is_market_stop,
+                is_odds_stop = source.is_odds_stop,
+                odds_line = source.odds_line,
+                home_odds = source.home_odds,
+                draw_odds = source.draw_odds,
+                away_odds = source.away_odds,
+                updated_at = source.updated_at,
+                is_home_stop = source.is_home_stop,
+                is_draw_stop = source.is_draw_stop,
+                is_away_stop = source.is_away_stop
+            WHEN NOT MATCHED THEN
+            INSERT (
                 odds_key, match_id, market_id, is_market_stop, is_odds_stop,
                 odds_line, home_odds, draw_odds, away_odds, updated_at, is_home_stop, is_draw_stop, is_away_stop
-                )
-                ON target.odds_key = source.odds_key
-                WHEN MATCHED AND target.is_auto = 1 THEN
-                UPDATE SET 
-                    match_id = source.match_id,
-                    market_id = source.market_id,
-                    is_market_stop = source.is_market_stop,
-                    is_odds_stop = source.is_odds_stop,
-                    odds_line = source.odds_line,
-                    home_odds = source.home_odds,
-                    draw_odds = source.draw_odds,
-                    away_odds = source.away_odds,
-                    updated_at = source.updated_at,
-                    is_home_stop = source.is_home_stop,
-                    is_draw_stop = source.is_draw_stop,
-                    is_away_stop = source.is_away_stop
-                WHEN NOT MATCHED THEN
-                INSERT (
-                    odds_key, match_id, market_id, is_market_stop, is_odds_stop,
-                    odds_line, home_odds, draw_odds, away_odds, updated_at, is_home_stop, is_draw_stop, is_away_stop
-                )
-                VALUES (
-                    source.odds_key, source.match_id, source.market_id,
-                    source.is_market_stop, source.is_odds_stop,
-                    source.odds_line, source.home_odds,
-                    source.draw_odds, source.away_odds, source.updated_at, source.is_home_stop, source.is_draw_stop, source.is_away_stop
-                );
-                `;
+            )
+            VALUES (
+                source.odds_key, source.match_id, source.market_id,
+                source.is_market_stop, source.is_odds_stop,
+                source.odds_line, source.home_odds,
+                source.draw_odds, source.away_odds, source.updated_at, source.is_home_stop, source.is_draw_stop, source.is_away_stop
+            );
+          `;
 
-            await db.sequelize.query(createOddsQuery);
-          }
-          // 기준점 바뀐 경우 기존 기준점 삭제
-          if (deleteSameLineOdds.length > 0) {
-            for await (const odds of deleteSameLineOdds) {
-              await SportsOdds.update(
-                {
-                  is_delete: 1,
-                },
-                {
-                  where: {
-                    match_id: odds.match_id,
-                    market_id: odds.market_id,
-                    odds_line: {
-                      [Op.ne]: odds.odds_line,
-                    },
-                  },
-                }
-              );
+          await db.sequelize.query(createOddsQuery);
+        }
+
+        if (deleteSameLineOdds.length > 0) {
+          const whereConditions = deleteSameLineOdds.map(
+            (o) =>
+              `(match_id = ${o.match_id} AND market_id = ${o.market_id} AND odds_line != '${o.odds_line}')`
+          );
+
+          await SportsOdds.update(
+            {
+              is_delete: 1,
+            },
+            {
+              where: literal(whereConditions.join(" OR ")),
             }
-          }
+          );
+        }
+      }, 300);
 
-          // if (deleteSameLineOdds.length > 0) {
-          //   for await (const x of deleteSameLineOdds) {
-          //     const allOdds = await redisClient.hGetAll(`odds:${x.match_id}`);
+      socket.on("message", (data) => {
+        const str = data.toString("utf8");
+        const jsonData = JSON.parse(str);
+        const matchId = jsonData.g;
 
-          //     const multi = redisClient.multi();
+        if (!matchId) return;
 
-          //     Object.entries(allOdds).forEach(([key, val]) => {
-          //       try {
-          //         const parsed = JSON.parse(val);
-          //         const isSameMarket = parsed.market_id === x.market_id;
-          //         const isDifferentLine = parsed.odds_line !== x.odds_line;
-
-          //         if (isSameMarket && isDifferentLine) {
-          //           parsed.is_delete = 1;
-          //           parsed.updated_at = moment().format("YYYY-MM-DD HH:mm:ss");
-
-          //           multi.hSet(x.match_id, key, JSON.stringify(parsed));
-          //         }
-          //       } catch (e) {
-          //         console.warn(`Parsing failed for key: ${key}`);
-          //       }
-          //     });
-          //   }
-          // }
+        const createTeam = () => {
+          redisClient.set(`team:${matchId}`, JSON.stringify(jsonData.tm), {
+            EX: 60 * 60 * 24 * 3,
+          });
         };
 
-        const createStatusData = () => {
+        const createScore = () => {
+          redisClient.set(`score:${matchId}`, JSON.stringify(jsonData.ss), {
+            EX: 60 * 60 * 24 * 3,
+          });
+        };
+
+        const createStatus = () => {
           redisClient.set(`status:${matchId}`, JSON.stringify(jsonData.st), {
             EX: 60 * 60 * 24 * 3,
           });
@@ -672,40 +611,40 @@ const connectInplaySocketWithRedis = async (sports) => {
         // 전체정보
         if (jsonData.tp === 11) {
           if (jsonData.tm) {
-            createTeamData();
+            createTeam();
           }
 
           if (jsonData.ss) {
-            createScoreData();
+            createScore();
           }
 
           if (jsonData.st) {
-            createStatusData();
+            createStatus();
           }
 
           if (jsonData.od) {
-            createOddsData();
+            debouncedCreateOdds(jsonData, matchId);
           }
         }
 
         // 팀정보
         if (jsonData.tp === 12 && jsonData.tm) {
-          createTeamData();
+          createTeam();
         }
 
         // 스코어
         if (jsonData.tp === 13 && jsonData.ss) {
-          createScoreData();
+          createScore();
         }
 
         // 배당
         if (jsonData.tp === 14 && jsonData.od) {
-          createOddsData();
+          debouncedCreateOdds(jsonData, matchId);
         }
 
         // 경기상태
         if (jsonData.tp === 15 && jsonData.st) {
-          createStatusData();
+          createStatus();
         }
       });
 

@@ -1,7 +1,7 @@
 const axios = require("axios");
 const db = require("../../models");
 const Op = db.Sequelize.Op;
-const User = db.up_users;
+const Users = db.up_users;
 const SportsMatches = db.sports_matches;
 const SportsOdds = db.sports_odds;
 const SportsMarket = db.sports_market;
@@ -1156,7 +1156,7 @@ exports.betHistoryResultProcess = async (historyId) => {
         100;
 
       if (losingPoint > 0) {
-        await User.increment(
+        await Users.increment(
           {
             rolling_point: losingPoint,
           },
@@ -1242,7 +1242,7 @@ exports.betHistoryResultProcess = async (historyId) => {
       }
     );
 
-    await User.increment(
+    await Users.increment(
       {
         balance: winAmount,
       },

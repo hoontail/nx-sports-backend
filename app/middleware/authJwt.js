@@ -1,6 +1,6 @@
 const db = require("../models");
 const Op = db.Sequelize.Op;
-const User = db.up_users;
+const Users = db.up_users;
 
 const moment = require("moment");
 
@@ -16,7 +16,7 @@ userVerifyToken = async (req, res, next) => {
   }
 
   try {
-    const findUser = await User.findOne({
+    const findUser = await Users.findOne({
       where: {
         token,
         token_expired: {
@@ -56,7 +56,7 @@ adminVerifyToken = async (req, res, next) => {
   }
 
   try {
-    const findUser = await User.findOne({
+    const findUser = await Users.findOne({
       where: {
         token,
         token_expired: {
