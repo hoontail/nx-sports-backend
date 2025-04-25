@@ -9,7 +9,7 @@ const redisClient = require("../../helpers/redisClient");
 const WebSocket = require("ws");
 const moment = require("moment");
 const socketIO = require("socket.io-client");
-const socket = socketIO("http://localhost:3001");
+const ioSocket = socketIO("http://localhost:3001");
 
 const translateSportsName = (name) => {
   let nameKr = "";
@@ -231,7 +231,7 @@ const updateSportsData = async (endPoint) => {
             `;
 
         await db.sequelize.query(createMatchQuery);
-        socket.emit("sportsMatchesData");
+        ioSocket.emit("sportsMatchesData");
       }
 
       if (createOddsData.length > 0) {
@@ -298,7 +298,7 @@ const updateSportsData = async (endPoint) => {
                 `;
 
         await db.sequelize.query(createOddsQuery);
-        socket.emit("sportsOddsData");
+        ioSocket.emit("sportsOddsData");
       }
 
       // 기준점 바뀐 경우 기존 기준점 삭제
@@ -401,17 +401,17 @@ const connectInplaySocketWithRedis = async (sports) => {
     )
     .then((res) => {
       const key = res.data.result.key;
-      const socket = new WebSocket(
+      const webSocket = new WebSocket(
         `${process.env.SPORTS_SOCKET_URL}/ws/${sports}?key=${key}`
       );
 
-      socket.on("open", () => {
+      webSocket.on("open", () => {
         console.log(`실시간 ${sports} 웹소켓 연결됨`);
       });
 
       const oddsTimer = {};
 
-      socket.on("message", (data) => {
+      webSocket.on("message", (data) => {
         const str = data.toString("utf8");
         const jsonData = JSON.parse(str);
         const matchId = jsonData.g;
@@ -487,7 +487,7 @@ const connectInplaySocketWithRedis = async (sports) => {
           }
 
           // 소켓 전달
-          socket.emit("sportsInplayData", {
+          ioSocket.emit("sportsInplayData", {
             type: "odds",
             match_id: matchId,
             sports_odds: createOddsData,
@@ -616,7 +616,7 @@ const connectInplaySocketWithRedis = async (sports) => {
           }
 
           // 소켓 전달
-          socket.emit("sportsInplayData", {
+          ioSocket.emit("sportsInplayData", {
             type: "status",
             match_id: matchId,
             is_inplay_stop: jsonData.st.sd,
@@ -671,22 +671,22 @@ const connectInplaySocketWithRedis = async (sports) => {
       });
 
       const statusInterval = setInterval(() => {
-        console.log(`${sports} 소켓 연결 상태: ${socket.readyState}`);
+        console.log(`${sports} 소켓 연결 상태: ${webSocket.readyState}`);
       }, 5000);
 
-      socket.on("close", () => {
+      webSocket.on("close", () => {
         // 재연결
         clearInterval(statusInterval);
         connectInplaySocketWithRedis(sports);
       });
 
-      socket.on("error", (error) => {
+      webSocket.on("error", (error) => {
         console.error("에러 발생:", error);
       });
 
       // 5분 뒤 재연결
       setTimeout(() => {
-        socket.close();
+        webSocket.close();
       }, 5 * 60 * 1000);
     });
 };
