@@ -25,4 +25,19 @@ router.post(
   [rateLimit.apiLimiter],
   sportsBettingController.bettingSportsTest
 );
+
+// 보너스 목록
+router.get(
+  "/bonus",
+  [rateLimit.apiLimiter],
+  sportsListController.getBonusListForUser
+);
+
+// 조합 목록
+router.get(
+  "/combine",
+  [rateLimit.apiLimiter],
+  sportsListController.getCombineListForUser
+);
+
 module.exports = router;

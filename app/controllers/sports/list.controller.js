@@ -3,6 +3,8 @@ const Op = db.Sequelize.Op;
 const SportsMatches = db.sports_matches;
 const SportsOdds = db.sports_odds;
 const SportsMarket = db.sports_market;
+const SportsBonusOdds = db.sports_bonus_odds;
+const SportsCombine = db.sports_combine;
 
 const moment = require("moment");
 const redisClient = require("../../helpers/redisClient");
@@ -217,6 +219,7 @@ exports.getSportsListForUser = async (req, res) => {
         count: sportsCount,
       });
     } catch (err) {
+      console.log(err);
       return res.status(500).send({
         message: "Server Error",
       });
@@ -318,5 +321,53 @@ exports.getSportsListForUser = async (req, res) => {
         message: "Server Error",
       });
     }
+  }
+};
+
+exports.getBonusListForUser = async (req, res) => {
+  try {
+    const findList = await SportsBonusOdds.findAll({
+      attributes: ["folder_count", "odds", "min_odds", "error_message"],
+      where: {
+        status: 1,
+      },
+      order: [["folder_count", "asc"]],
+    });
+
+    return res.status(200).send(findList);
+  } catch {
+    return res.status(500).send({
+      message: "Server Error",
+    });
+  }
+};
+
+exports.getCombineListForUser = async (req, res) => {
+  try {
+    const findList = await SportsCombine.findAll({
+      attributes: [
+        "game_type",
+        "sports_name",
+        "sports_name_kr",
+        "league_type",
+        "match_type",
+        "market_type_1",
+        "bet_type_1",
+        "period_type_1",
+        "market_type_2",
+        "bet_type_2",
+        "period_type_2",
+        "error_message",
+      ],
+      where: {
+        status: 1,
+      },
+    });
+
+    return res.status(200).send(findList);
+  } catch {
+    return res.status(500).send({
+      message: "Server Error",
+    });
   }
 };
