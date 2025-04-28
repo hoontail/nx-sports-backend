@@ -5,6 +5,8 @@ const SportsOdds = db.sports_odds;
 const SportsMarket = db.sports_market;
 const SportsBonusOdds = db.sports_bonus_odds;
 const SportsCombine = db.sports_combine;
+const SportsConfigs = db.sports_configs;
+const Users = db.up_users;
 
 const moment = require("moment");
 const redisClient = require("../../helpers/redisClient");
@@ -373,6 +375,62 @@ exports.getCombineListForUser = async (req, res) => {
     });
 
     return res.status(200).send(findList);
+  } catch {
+    return res.status(500).send({
+      message: "Server Error",
+    });
+  }
+};
+
+exports.getMySportsConfigForUser = async (req, res) => {
+  try {
+    const config = {
+      single_min_bet_amount: 0,
+      single_max_bet_amount: 0,
+      single_max_win_amount: 0,
+      multi_min_bet_amount: 0,
+      multi_max_bet_amount: 0,
+      multi_max_win_amount: 0,
+      single_minus_odds: 0,
+      two_minus_odds: 0,
+    };
+
+    const findUser = await Users.findOne({
+      where: {
+        username: req.username,
+      },
+    });
+
+    const findSportsConfig = await SportsConfigs.findOne();
+
+    config.single_min_bet_amount =
+      findUser["sports_single_min_bet_amount"] ??
+      findSportsConfig["single_min_bet_amount"];
+
+    config.single_max_bet_amount =
+      findUser["sports_single_max_bet_amount"] ??
+      findSportsConfig["single_max_bet_amount"];
+
+    config.single_max_win_amount =
+      findUser["sports_single_max_win_amount"] ??
+      findSportsConfig["single_max_win_amount"];
+
+    config.multi_min_bet_amount =
+      findUser["sports_multi_min_bet_amount"] ??
+      findSportsConfig["multi_min_bet_amount"];
+
+    config.multi_max_bet_amount =
+      findUser["sports_multi_max_bet_amount"] ??
+      findSportsConfig["multi_max_bet_amount"];
+
+    config.multi_max_win_amount =
+      findUser["sports_multi_max_win_amount"] ??
+      findSportsConfig["multi_max_win_amount"];
+
+    config.single_minus_odds = findSportsConfig.single_minus_odds;
+    config.two_minus_odds = findSportsConfig.two_minus_odds;
+
+    return res.status(200).send(config);
   } catch {
     return res.status(500).send({
       message: "Server Error",

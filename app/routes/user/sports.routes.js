@@ -40,4 +40,11 @@ router.get(
   sportsListController.getCombineListForUser
 );
 
+// 설정
+router.get(
+  "/config",
+  [rateLimit.apiLimiter, authJwt.userVerifyToken],
+  sportsListController.getMySportsConfigForUser
+);
+
 module.exports = router;
