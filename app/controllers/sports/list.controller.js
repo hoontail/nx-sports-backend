@@ -209,9 +209,17 @@ exports.getSportsListForUser = async (req, res) => {
 
       // 종목 필터
       if (sports && sports !== "") {
-        findSportsMatches = findSportsMatches.filter(
-          (x) => x.sports_name === sports
-        );
+        if (sports === "etc") {
+          findSportsMatches = findSportsMatches.filter((x) =>
+            ["americanfootball", "boxingufc", "tennis", "tabletennis"].includes(
+              x.sports_name
+            )
+          );
+        } else {
+          findSportsMatches = findSportsMatches.filter(
+            (x) => x.sports_name === sports
+          );
+        }
       }
 
       return res.status(200).send({
