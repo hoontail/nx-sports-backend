@@ -47,9 +47,9 @@ exports.getSportsListForUser = async (req, res) => {
     let marketCondition = {};
 
     if (
-      gameType === "cross" ||
-      gameType === "winlose" ||
-      gameType === "handicap"
+      gameType === "크로스" ||
+      gameType === "승무패" ||
+      gameType === "핸디캡"
     ) {
       condition.status_kr = "경기전";
       condition.start_datetime = {
@@ -59,10 +59,10 @@ exports.getSportsListForUser = async (req, res) => {
         ],
       };
 
-      if (gameType === "cross") marketCondition.is_cross = 1;
-      if (gameType === "winlose") marketCondition.is_winlose = 1;
-      if (gameType === "handicap") marketCondition.is_handicap = 1;
-    } else if (gameType === "special") {
+      if (gameType === "크로스") marketCondition.is_cross = 1;
+      if (gameType === "승무패") marketCondition.is_winlose = 1;
+      if (gameType === "핸디캡") marketCondition.is_handicap = 1;
+    } else if (gameType === "스페셜") {
       condition.status_kr = ["경기전", "경기중"];
       condition.start_datetime = {
         [Op.between]: [
@@ -173,7 +173,7 @@ exports.getSportsListForUser = async (req, res) => {
         },
       };
 
-      if (gameType === "special") {
+      if (gameType === "스페셜") {
         findSportsMatches.forEach((match) => {
           const { sports_name } = match;
 
