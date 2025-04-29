@@ -124,12 +124,9 @@ const soccerResultProcess = async (match) => {
     const marketPeriod = odds.sports_market.period;
     const oddsLine = parseFloat(odds.odds_line);
 
-    if (
-      (match.status_kr === "" || match.status_kr === "전반전") &&
-      marketPeriod === "전반전"
-    ) {
-      continue;
-    }
+    if (match.period_id < 102 && marketPeriod === "전반전") continue;
+
+    if (match.status_kr !== "경기종료" && marketPeriod === "후반전") continue;
 
     if (marketPeriod === "연장포함") {
       homeScore = parseInt(resultJson.home.score);
@@ -139,6 +136,11 @@ const soccerResultProcess = async (match) => {
     if (marketPeriod === "전반전") {
       homeScore = parseInt(resultJson.home["1"]);
       awayScore = parseInt(resultJson.away["1"]);
+    }
+
+    if (marketPeriod === "후반전") {
+      homeScore = parseInt(resultJson.home["2"]);
+      awayScore = parseInt(resultJson.away["2"]);
     }
 
     if (marketType === "승무패" || marketType === "더블찬스") {
@@ -205,7 +207,7 @@ const baseballResultProcess = async (match) => {
         endMarketArr.push("2이닝");
       }
       if (match.period_id > 203) {
-        endMarketArr.push("3이닝");
+        endMarketArr.push("3이닝", "3이닝합계");
       }
       if (match.period_id > 204) {
         endMarketArr.push("4이닝");
@@ -217,7 +219,7 @@ const baseballResultProcess = async (match) => {
         endMarketArr.push("6이닝");
       }
       if (match.period_id > 207) {
-        endMarketArr.push("7이닝");
+        endMarketArr.push("7이닝", "7이닝합계");
       }
       if (match.period_id > 208) {
         endMarketArr.push("8이닝");
@@ -258,6 +260,15 @@ const baseballResultProcess = async (match) => {
     } else if (marketPeriod === "9이닝") {
       homeScore = parseInt(resultJson.home["9"]);
       awayScore = parseInt(resultJson.away["9"]);
+    } else if (marketPeriod === "3이닝합계") {
+      homeScore =
+        parseInt(resultJson.home["1"]) +
+        parseInt(resultJson.home["2"]) +
+        parseInt(resultJson.home["3"]);
+      awayScore =
+        parseInt(resultJson.away["1"]) +
+        parseInt(resultJson.away["2"]) +
+        parseInt(resultJson.away["3"]);
     } else if (marketPeriod === "5이닝합계") {
       homeScore =
         parseInt(resultJson.home["1"]) +
@@ -271,6 +282,23 @@ const baseballResultProcess = async (match) => {
         parseInt(resultJson.away["3"]) +
         parseInt(resultJson.away["4"]) +
         parseInt(resultJson.away["5"]);
+    } else if (marketPeriod === "7이닝합계") {
+      homeScore =
+        parseInt(resultJson.home["1"]) +
+        parseInt(resultJson.home["2"]) +
+        parseInt(resultJson.home["3"]) +
+        parseInt(resultJson.home["4"]) +
+        parseInt(resultJson.home["5"]) +
+        parseInt(resultJson.home["6"]) +
+        parseInt(resultJson.home["7"]);
+      awayScore =
+        parseInt(resultJson.away["1"]) +
+        parseInt(resultJson.away["2"]) +
+        parseInt(resultJson.away["3"]) +
+        parseInt(resultJson.away["4"]) +
+        parseInt(resultJson.away["5"]) +
+        parseInt(resultJson.away["6"]) +
+        parseInt(resultJson.away["7"]);
     }
 
     if (marketType === "승패" || marketType === "승무패") {
@@ -418,7 +446,7 @@ const basketballResultProcess = async (match) => {
         endMarketArr.push("1쿼터");
       }
       if (match.period_id > 302) {
-        endMarketArr.push("2쿼터");
+        endMarketArr.push("2쿼터", "전반전");
       }
       if (match.period_id > 303 && match.period_id !== 305) {
         endMarketArr.push("3쿼터");
@@ -435,6 +463,11 @@ const basketballResultProcess = async (match) => {
     if (marketPeriod === "연장포함") {
       homeScore = parseInt(resultJson.home.score);
       awayScore = parseInt(resultJson.away.score);
+    } else if (marketType === "전반전") {
+      homeScore =
+        parseInt(resultJson.home["1"]) + parseInt(resultJson.home["2"]);
+      awayScore =
+        parseInt(resultJson.away["1"]) + parseInt(resultJson.away["2"]);
     } else if (marketType === "1쿼터") {
       homeScore = parseInt(resultJson.home["1"]);
       awayScore = parseInt(resultJson.away["1"]);

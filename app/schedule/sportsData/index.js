@@ -481,13 +481,13 @@ const connectInplaySocketWithRedis = async (sports, marketArr) => {
                   : odds.o[1].s,
               });
 
-              if (odds.n) {
-                deleteSameLineOdds.push({
-                  match_id: matchId,
-                  market_id: market.m,
-                  odds_line: odds.n,
-                });
-              }
+              // if (odds.n) {
+              //   deleteSameLineOdds.push({
+              //     match_id: matchId,
+              //     market_id: market.m,
+              //     odds_line: odds.n,
+              //   });
+              // }
             }
           }
 
@@ -570,21 +570,21 @@ const connectInplaySocketWithRedis = async (sports, marketArr) => {
             await db.sequelize.query(createOddsQuery);
           }
 
-          if (deleteSameLineOdds.length > 0) {
-            const whereConditions = deleteSameLineOdds.map(
-              (o) =>
-                `(match_id = ${o.match_id} AND market_id = ${o.market_id} AND odds_line != '${o.odds_line}')`
-            );
+          // if (deleteSameLineOdds.length > 0) {
+          //   const whereConditions = deleteSameLineOdds.map(
+          //     (o) =>
+          //       `(match_id = ${o.match_id} AND market_id = ${o.market_id} AND odds_line != '${o.odds_line}')`
+          //   );
 
-            await SportsOdds.update(
-              {
-                is_delete: 1,
-              },
-              {
-                where: literal(whereConditions.join(" OR ")),
-              }
-            );
-          }
+          //   await SportsOdds.update(
+          //     {
+          //       is_delete: 1,
+          //     },
+          //     {
+          //       where: literal(whereConditions.join(" OR ")),
+          //     }
+          //   );
+          // }
         };
 
         const createStatus = () => {
