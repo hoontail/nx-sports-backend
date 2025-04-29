@@ -682,7 +682,7 @@ const connectInplaySocketWithRedis = async (sports, marketArr) => {
       webSocket.on("close", () => {
         // 재연결
         clearInterval(statusInterval);
-        connectInplaySocketWithRedis(sports);
+        connectInplaySocketWithRedis(sports, marketArr);
       });
 
       webSocket.on("error", (error) => {
