@@ -128,6 +128,12 @@ const soccerResultProcess = async (match) => {
 
     if (match.status_kr !== "경기종료" && marketPeriod === "후반전") continue;
 
+    if (
+      match.status_kr !== "경기종료" &&
+      (marketPeriod === "연장포함" || marketPeriod === "연장제외")
+    )
+      continue;
+
     if (marketPeriod === "연장포함") {
       homeScore = parseInt(resultJson.home.score);
       awayScore = parseInt(resultJson.away.score);
