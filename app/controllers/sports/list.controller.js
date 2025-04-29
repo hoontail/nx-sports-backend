@@ -189,7 +189,8 @@ exports.getSportsListForUser = async (req, res) => {
         if (sports_name === "esports") {
           const isInvalid =
             match.status_kr !== "경기전" ||
-            match.start_datetime < moment().format("YYYY-MM-DD HH:mm:ss");
+            moment.utc(match.start_datetime).format("YYYY-MM-DD HH:mm:ss") <
+              moment().format("YYYY-MM-DD HH:mm:ss");
 
           if (isInvalid) {
             match.setDataValue("sports_odds", []);
@@ -197,14 +198,18 @@ exports.getSportsListForUser = async (req, res) => {
           }
         }
 
-        const unablePeriods = unablePeriodMap[sports_name](match);
+        const unablePeriodsFunc = unablePeriodMap[sports_name];
 
-        match.setDataValue(
-          "sports_odds",
-          match.sports_odds.filter(
-            (odds) => !unablePeriods.includes(odds.sports_market.period)
-          )
-        );
+        if (unablePeriodsFunc) {
+          const unablePeriods = unablePeriodsFunc(match);
+
+          match.setDataValue(
+            "sports_odds",
+            match.sports_odds.filter(
+              (odds) => !unablePeriods.includes(odds.sports_market.period)
+            )
+          );
+        }
       });
 
       // soccer, esports + 경기중은 제외

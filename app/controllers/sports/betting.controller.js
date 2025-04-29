@@ -180,7 +180,9 @@ exports.bettingSports = async (req, res) => {
 
       if (
         ["크로스", "승무패", "핸디캡"].includes(gameType) &&
-        (odds.sports_match.start_datetime <
+        (moment
+          .utc(odds.sports_match.start_datetime)
+          .format("YYYY-MM-DD HH:mm:ss") <
           moment().format("YYYY-MM-DD HH:mm:ss") ||
           odds.sports_match.status_kr !== "경기전")
       ) {

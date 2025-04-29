@@ -4,6 +4,7 @@ const Op = db.Sequelize.Op;
 const literal = db.Sequelize.literal;
 const SportsMatches = db.sports_matches;
 const SportsOdds = db.sports_odds;
+const SportsMarket = db.sports_market;
 
 const redisClient = require("../../helpers/redisClient");
 const WebSocket = require("ws");
@@ -395,7 +396,7 @@ exports.getSpecialData = async () => {
   }
 };
 
-const connectInplaySocketWithRedis = async (sports) => {
+const connectInplaySocketWithRedis = async (sports, marketArr) => {
   await axios
     .get(
       `${process.env.SPORTS_INPLAY_URL}/getkey/${sports}?token=${process.env.SPORTS_TOKEN}`
@@ -432,17 +433,13 @@ const connectInplaySocketWithRedis = async (sports) => {
         };
 
         const createOdds = async () => {
-          const useInplayMarket = [
-            10501, 10506, 10511, 14501, 14502, 14504, 15501, 15503, 15504,
-            16501, 16502, 16503, 18501, 18502, 18503,
-          ];
           const createOddsData = [];
           const deleteSameLineOdds = [];
 
           for (const market of jsonData.od) {
             if (!market.l) continue;
 
-            if (!useInplayMarket.includes(market.m)) continue;
+            if (!marketArr.includes(market.m)) continue;
 
             for (const odds of market.l) {
               const oddsKey = `${matchId}_${market.m}${
@@ -702,8 +699,11 @@ exports.getInplayData = async () => {
       "volleyball",
     ];
 
+    const findSportsMarket = await SportsMarket.findAll();
+    const marketArr = findSportsMarket.map((x) => x.id);
+
     for (const sports of sportsArr) {
-      connectInplaySocketWithRedis(sports);
+      connectInplaySocketWithRedis(sports, marketArr);
     }
   } catch (err) {
     console.log("실시간 데이터 업데이트 실패");
