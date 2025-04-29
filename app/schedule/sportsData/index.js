@@ -320,7 +320,7 @@ const updateSportsData = async (endPoint, marketArr) => {
       if (res.data.result.pagination) {
         const pagination = res.data.result.pagination;
         if (pagination.page < pagination.total_pages) {
-          await updateSportsData(pagination.next_link);
+          await updateSportsData(pagination.next_link, marketArr);
         }
       }
     } else {
