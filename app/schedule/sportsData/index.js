@@ -54,7 +54,7 @@ const translateSportsName = (name) => {
   return nameKr;
 };
 
-const updateSportsData = async (endPoint) => {
+const updateSportsData = async (endPoint, marketArr) => {
   const axiosInstance = axios.create({
     timeout: 10000,
     headers: {
@@ -98,6 +98,7 @@ const updateSportsData = async (endPoint) => {
 
         for (const market of match.market) {
           if (!market.list) continue;
+          if (!marketArr.includes(market.market_id)) continue;
 
           for (const odds of market.list) {
             const oddsKey = `${match.id}_${market.market_id}${
@@ -346,12 +347,15 @@ exports.getPrematchData = async (isInit) => {
       "esports",
     ];
 
+    const findSportsMarket = await SportsMarket.findAll();
+    const marketArr = findSportsMarket.map((x) => x.id);
+
     for await (const sports of sportsArr) {
       const endPoint = `${process.env.SPORTS_URL}/${sports}/single${
         !isInit ? "/latest" : ""
       }?token=${process.env.SPORTS_TOKEN}${!isInit ? "&ts=180" : ""}`;
 
-      await updateSportsData(endPoint);
+      await updateSportsData(endPoint, marketArr);
 
       console.log(`프리매치 ${sports} 업데이트 완료`);
     }
@@ -380,10 +384,13 @@ exports.getSpecialData = async () => {
       "esports",
     ];
 
+    const findSportsMarket = await SportsMarket.findAll();
+    const marketArr = findSportsMarket.map((x) => x.id);
+
     for await (const sports of sportsArr) {
       const endPoint = `${process.env.SPORTS_URL}/${sports}/special?token=${process.env.SPORTS_TOKEN}`;
 
-      await updateSportsData(endPoint);
+      await updateSportsData(endPoint, marketArr);
 
       console.log(`스페셜 ${sports} 업데이트 완료`);
     }
