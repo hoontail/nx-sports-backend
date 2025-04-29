@@ -231,7 +231,6 @@ const updateSportsData = async (endPoint) => {
             `;
 
         await db.sequelize.query(createMatchQuery);
-        ioSocket.emit("sportsMatchesData");
       }
 
       if (createOddsData.length > 0) {
@@ -298,7 +297,6 @@ const updateSportsData = async (endPoint) => {
                 `;
 
         await db.sequelize.query(createOddsQuery);
-        ioSocket.emit("sportsOddsData");
       }
 
       // 기준점 바뀐 경우 기존 기준점 삭제
@@ -356,6 +354,9 @@ exports.getPrematchData = async (isInit) => {
 
       console.log(`프리매치 ${sports} 업데이트 완료`);
     }
+
+    ioSocket.emit("sportsMatchesData");
+    ioSocket.emit("sportsOddsData");
   } catch (err) {
     // console.log(err);
     console.log("프리매치 데이터 업데이트 실패");

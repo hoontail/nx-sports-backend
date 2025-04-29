@@ -473,7 +473,7 @@ const checkCombine = async (gameType, oddsArr) => {
         (combine.market_type_1 === "전체" ||
           combine.market_type_1 === odds.market_type) &&
         (combine.bet_type_1 === "전체" ||
-          combine.bet_type_1 === odds.bet_type) &&
+          combine.bet_type_1 == odds.bet_type) &&
         (combine.period_type_1 === "전체" ||
           combine.period_type_1 === odds.period);
       if (!pass1) continue;
@@ -489,8 +489,7 @@ const checkCombine = async (gameType, oddsArr) => {
         (o) =>
           (combine.market_type_2 === "전체" ||
             combine.market_type_2 === o.market_type) &&
-          (combine.bet_type_2 === "전체" ||
-            combine.bet_type_2 === o.bet_type) &&
+          (combine.bet_type_2 === "전체" || combine.bet_type_2 == o.bet_type) &&
           (combine.period_type_2 === "전체" ||
             combine.period_type_2 === o.period)
       );
