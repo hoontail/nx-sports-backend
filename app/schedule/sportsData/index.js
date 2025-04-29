@@ -347,8 +347,8 @@ exports.getPrematchData = async (isInit) => {
 
     for await (const sports of sportsArr) {
       const endPoint = `${process.env.SPORTS_URL}/${sports}/single${
-        isInit ? "" : "/latest"
-      }?token=${process.env.SPORTS_TOKEN}`;
+        !isInit ? "/latest" : ""
+      }?token=${process.env.SPORTS_TOKEN}${!isInit ? "&ts=180" : ""}`;
 
       await updateSportsData(endPoint);
 
