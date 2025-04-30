@@ -89,34 +89,38 @@ exports.getSportsListForUser = async (req, res) => {
     condition.is_inplay_delete = 0;
     marketCondition.is_inplay = 1;
   }
-
   try {
     let findSportsMatches = await SportsMatches.findAll({
-      include: {
-        include: {
-          attributes: ["type", "period", "name"],
-          model: SportsMarket,
-          where: marketCondition,
+      include: [
+        {
+          include: [
+            {
+              attributes: ["type", "period", "name"],
+              model: SportsMarket,
+              where: marketCondition,
+            },
+          ],
+          attributes: [
+            "is_market_stop",
+            "is_odds_stop",
+            "odds_line",
+            "home_odds",
+            "draw_odds",
+            "away_odds",
+            "odds_key",
+            "is_home_stop",
+            "is_draw_stop",
+            "is_away_stop",
+          ],
+          model: SportsOdds,
+          where: {
+            is_market_stop: 0,
+            is_odds_stop: 0,
+            is_delete: 0,
+          },
+          required: false,
         },
-        attributes: [
-          "is_market_stop",
-          "is_odds_stop",
-          "odds_line",
-          "home_odds",
-          "draw_odds",
-          "away_odds",
-          "odds_key",
-          "is_home_stop",
-          "is_draw_stop",
-          "is_away_stop",
-        ],
-        model: SportsOdds,
-        where: {
-          is_market_stop: 0,
-          is_odds_stop: 0,
-          is_delete: 0,
-        },
-      },
+      ],
       attributes: [
         "match_id",
         "sports_name",

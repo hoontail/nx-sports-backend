@@ -350,15 +350,17 @@ exports.getPrematchData = async (isInit) => {
     const findSportsMarket = await SportsMarket.findAll();
     const marketArr = findSportsMarket.map((x) => x.market_id);
 
-    for await (const sports of sportsArr) {
+    const updatePromises = sportsArr.map((sports) => {
       const endPoint = `${process.env.SPORTS_URL}/${sports}/single${
         !isInit ? "/latest" : ""
       }?token=${process.env.SPORTS_TOKEN}${!isInit ? "&ts=180" : ""}`;
 
-      await updateSportsData(endPoint, marketArr);
+      return updateSportsData(endPoint, marketArr).then(() => {
+        console.log(`프리매치 ${sports} 업데이트 완료`);
+      });
+    });
 
-      console.log(`프리매치 ${sports} 업데이트 완료`);
-    }
+    await Promise.all(updatePromises);
 
     ioSocket.emit("sportsMatchesData");
     ioSocket.emit("sportsOddsData");
@@ -368,7 +370,7 @@ exports.getPrematchData = async (isInit) => {
   } finally {
     setTimeout(() => {
       this.getPrematchData(false);
-    }, 6 * 10000);
+    }, 30 * 1000);
   }
 };
 
