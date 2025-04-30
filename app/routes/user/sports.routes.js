@@ -22,8 +22,8 @@ router.get(
 // 스포츠 배팅
 router.post(
   "/betting",
-  [rateLimit.apiLimiter],
-  sportsBettingController.bettingSportsTest
+  [rateLimit.apiLimiter, authJwt.userVerifyToken],
+  sportsBettingController.bettingSports
 );
 
 // 보너스 목록

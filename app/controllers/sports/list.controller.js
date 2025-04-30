@@ -1,5 +1,6 @@
 const db = require("../../models");
 const Op = db.Sequelize.Op;
+const literal = db.Sequelize.literal;
 const SportsMatches = db.sports_matches;
 const SportsOdds = db.sports_odds;
 const SportsMarket = db.sports_market;
@@ -145,7 +146,7 @@ exports.getSportsListForUser = async (req, res) => {
         ["start_datetime", "asc"],
         ["league_id", "ASC"],
         [SportsOdds, SportsMarket, "order", "ASC"],
-        [SportsOdds, "odds_line", "asc"],
+        [literal("CAST([sports_odds].[odds_line] AS FLOAT)"), "ASC"],
       ],
     });
 

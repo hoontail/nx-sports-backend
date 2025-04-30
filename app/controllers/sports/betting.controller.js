@@ -17,18 +17,11 @@ const utils = require("../../utils");
 const moment = require("moment");
 const commaNumber = require("comma-number");
 
-const dd = [
-  {
-    matchId: "123",
-    oddsKey: "1234124",
-    betType: 1,
-  },
-];
 exports.bettingSports = async (req, res) => {
   try {
-    const { gameType, amount, oddsArr } = req.body;
+    const { gameType, amount, bettingArr } = req.body;
     const { username } = req;
-    const oddsArrParse = JSON.parse(oddsArr);
+    const bettingArrParse = JSON.parse(bettingArr);
     const key = utils.getUuidKey();
     const ip = utils.getIp(req);
     let minBetAmount;
@@ -38,14 +31,14 @@ exports.bettingSports = async (req, res) => {
     let totalOdds = 1;
 
     if (
-      !["크로스", "승무패", "핸디캡", "스페셜", "인플레이"].includes(gameType)
+      !["크로스", "승무패", "핸디캡", "스페셜", "라이브"].includes(gameType)
     ) {
       return res.status(400).send({
         message: "잘못된 요청입니다",
       });
     }
 
-    if (!oddsArr || oddsArrParse.length === 0) {
+    if (!bettingArr || bettingArrParse.length === 0) {
       return res.status(400).send({
         message: "배팅경기를 선택해주세요",
       });
@@ -71,7 +64,7 @@ exports.bettingSports = async (req, res) => {
 
     const findSportsConfig = await SportsConfigs.findOne();
 
-    const isSingle = oddsArrParse.length === 1;
+    const isSingle = bettingArrParse.length === 1;
     const betType = isSingle ? "single" : "multi";
 
     minBetAmount =
@@ -107,8 +100,8 @@ exports.bettingSports = async (req, res) => {
     }
 
     // 보너스 배당 체크
-    const bonusOddsCount = oddsArrParse.filter(
-      (x) => x.matchKey === "보너스"
+    const bonusOddsCount = bettingArrParse.filter(
+      (x) => x.match.match_id === "보너스"
     ).length;
 
     if (bonusOddsCount > 1) {
@@ -117,12 +110,14 @@ exports.bettingSports = async (req, res) => {
       });
     }
 
-    const bonusOdds = oddsArrParse.find((x) => x.matchKey === "보너스");
+    const bonusOdds = bettingArrParse.find(
+      (x) => x.match.match_id === "보너스"
+    );
     let findSportsBonusOdds;
     if (bonusOdds) {
       findSportsBonusOdds = await SportsBonusOdds.findOne({
         where: {
-          id: bonusOdds.oddsKey,
+          folder_count: bonusOdds.odds.odds_key,
         },
       });
 
@@ -133,7 +128,7 @@ exports.bettingSports = async (req, res) => {
       }
 
       if (
-        oddsArrParse.length - bonusOddsCount <
+        bettingArrParse.length - bonusOddsCount <
         findSportsBonusOdds.folder_count
       ) {
         return res.status(400).send({
@@ -145,8 +140,8 @@ exports.bettingSports = async (req, res) => {
     }
 
     const oddsKeyArr = [];
-    oddsArrParse.forEach((x) => {
-      if (x.matchId !== "보너스") oddsKeyArr.push(x.oddsKey);
+    bettingArrParse.forEach((x) => {
+      if (x.match.match_id !== "보너스") oddsKeyArr.push(x.odds.odds_key);
     });
 
     const findSportsOdds = await SportsOdds.findAll({
@@ -165,7 +160,17 @@ exports.bettingSports = async (req, res) => {
 
     const createBetDetailData = [];
 
+    if (findSportsOdds.length !== bettingArrParse.length) {
+      return res.status(400).send({
+        message: "삭제된 배당은 배팅이 불가합니다",
+      });
+    }
+
     for (const odds of findSportsOdds) {
+      const betType = bettingArrParse.find(
+        (x) => x.odds.odds_key === odds.odds_key
+      ).betType;
+
       if (odds.sports_match.is_delete) {
         return res.status(400).send({
           message: "삭제된 경기가 포함되어 있습니다",
@@ -237,20 +242,40 @@ exports.bettingSports = async (req, res) => {
             if (p >= 505) arr.push("5세트");
             return arr;
           },
+          esports: (x) => {
+            const arr = [];
+            if (
+              x.status_kr !== "경기전" ||
+              moment.utc(match.start_datetime).format("YYYY-MM-DD HH:mm:ss") <
+                moment().format("YYYY-MM-DD HH:mm:ss")
+            ) {
+              arr.push(
+                "1세트",
+                "2세트",
+                "3세트",
+                "4세트",
+                "5세트",
+                "연장제외",
+                "연장포함"
+              );
+            }
+          },
         };
 
-        const unablePeriods = unablePeriodMap[odds.sports_match.sports_name];
+        const unablePeriodsFunc =
+          unablePeriodMap[odds.sports_match.sports_name];
 
-        if (unablePeriods.includes(odds.sports_market.period)) {
-          return res.status(400).send({
-            message: "정지된 배당입니다",
-          });
+        if (unablePeriodsFunc) {
+          const unablePeriods = unablePeriodsFunc(match);
+
+          if (unablePeriods.includes(odds.sports_market.period)) {
+            return res.status(400).send({
+              message: "정지된 배당입니다",
+            });
+          }
         }
       }
 
-      const betType = oddsArrParse.find(
-        (x) => x.oddsKey === odds.odds_key
-      ).betType;
       let selectedOdds;
       if (betType === 0) {
         selectedOdds = odds.away_odds;
@@ -272,7 +297,7 @@ exports.bettingSports = async (req, res) => {
 
       totalOdds = totalOdds * selectedOdds;
 
-      const match = odds.sportsMatch;
+      const match = odds.sports_match;
       createBetDetailData.push({
         sports_bet_history_id: null,
         match_id: match.match_id,
@@ -452,7 +477,7 @@ exports.bettingSports = async (req, res) => {
   }
 };
 
-const checkCombine = async (gameType, oddsArr) => {
+const checkCombine = async (gameType, bettingArr) => {
   const findSportsCombine = await SportsCombine.findAll({
     where: { status: 1 },
   });
@@ -461,8 +486,8 @@ const checkCombine = async (gameType, oddsArr) => {
   outer: for (const combine of findSportsCombine) {
     if (combine.game_type !== gameType) continue;
 
-    for (const odds of oddsArr) {
-      let othersBase = oddsArr.filter((x) => x.odds_key !== odds.odds_key);
+    for (const odds of bettingArr) {
+      let othersBase = bettingArr.filter((x) => x.odds_key !== odds.odds_key);
 
       if (
         combine.sports_name !== "전체" &&
