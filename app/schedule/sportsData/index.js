@@ -440,6 +440,7 @@ const connectInplaySocketWithRedis = async (sports, marketArr) => {
             EX: 60 * 60 * 24 * 3,
           });
         };
+
         const createOdds = async () => {
           const createOddsData = [];
           const socketOddsData = [];
@@ -499,6 +500,21 @@ const connectInplaySocketWithRedis = async (sports, marketArr) => {
               });
             }
           }
+
+          socketOddsData.sort((a, b) => {
+            // 1차: sports_market.order 기준 오름차순
+            const orderA = a.sports_market?.order ?? Number.MAX_SAFE_INTEGER;
+            const orderB = b.sports_market?.order ?? Number.MAX_SAFE_INTEGER;
+
+            if (orderA !== orderB) {
+              return orderA - orderB;
+            }
+
+            // 2차: odds_line 기준 오름차순 (null은 마지막)
+            if (a.odds_line == null) return 1;
+            if (b.odds_line == null) return -1;
+            return a.odds_line.localeCompare(b.odds_line);
+          });
 
           // 실시간 배당 소켓 전달
           ioSocket.emit("sportsInplayData", {
@@ -642,7 +658,7 @@ exports.getInplayData = async () => {
     ];
 
     const marketArr = await SportsMarket.findAll({
-      attributes: ["market_id", "type", "period", "name"],
+      attributes: ["market_id", "type", "period", "name", "order"],
     });
 
     for (const sports of sportsArr) {
