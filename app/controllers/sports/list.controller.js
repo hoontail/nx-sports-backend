@@ -211,6 +211,7 @@ exports.getSportsListForUser = async (req, res) => {
             "연장포함"
           );
         }
+        return arr;
       },
     };
 
@@ -239,32 +240,6 @@ exports.getSportsListForUser = async (req, res) => {
           x.status_kr !== "경기중"
       );
     }
-
-    // if (gameType === "라이브") {
-    //   findSportsMatches.forEach((match) => {
-    //     const { sports_name } = match;
-
-    //     const unablePeriodsFunc = unablePeriodMap[sports_name];
-
-    //     if (unablePeriodsFunc) {
-    //       const unablePeriods = unablePeriodsFunc(match);
-
-    //       match.setDataValue(
-    //         "sports_odds",
-    //         match.sports_odds.filter(
-    //           (odds) => !unablePeriods.includes(odds.sports_market.period)
-    //         )
-    //       );
-    //     }
-    //   });
-
-    //   // soccer, esports + 경기중은 제외
-    //   findSportsMatches = findSportsMatches.filter(
-    //     (x) =>
-    //       (x.sports_name !== "soccer" && x.sports_name !== "esports") ||
-    //       x.status_kr !== "경기중"
-    //   );
-    // }
 
     // 종목별 경기수
     const sportsCount = getSportsCount(findSportsMatches, false);
