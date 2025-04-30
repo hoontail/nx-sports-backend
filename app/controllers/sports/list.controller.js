@@ -57,6 +57,14 @@ exports.getSportsListForUser = async (req, res) => {
     if (gameType === "승무패") marketCondition.is_winlose = 1;
     if (gameType === "핸디캡") marketCondition.is_handicap = 1;
   } else if (gameType === "스페셜") {
+    condition.sports_name = [
+      "soccer",
+      "baseball",
+      "icehockey",
+      "basketball",
+      "volleyball",
+      "esports",
+    ];
     condition.status_kr = ["경기전", "경기중"];
     condition.start_datetime = {
       [Op.between]: [
@@ -181,23 +189,29 @@ exports.getSportsListForUser = async (req, res) => {
         if (p >= 505) arr.push("5세트");
         return arr;
       },
+      esports: (x) => {
+        const arr = [];
+        if (
+          x.status_kr !== "경기전" ||
+          moment.utc(match.start_datetime).format("YYYY-MM-DD HH:mm:ss") <
+            moment().format("YYYY-MM-DD HH:mm:ss")
+        ) {
+          arr.push(
+            "1세트",
+            "2세트",
+            "3세트",
+            "4세트",
+            "5세트",
+            "연장제외",
+            "연장포함"
+          );
+        }
+      },
     };
 
     if (gameType === "스페셜") {
       findSportsMatches.forEach((match) => {
         const { sports_name } = match;
-
-        if (sports_name === "esports") {
-          const isInvalid =
-            match.status_kr !== "경기전" ||
-            moment.utc(match.start_datetime).format("YYYY-MM-DD HH:mm:ss") <
-              moment().format("YYYY-MM-DD HH:mm:ss");
-
-          if (isInvalid) {
-            match.setDataValue("sports_odds", []);
-            return;
-          }
-        }
 
         const unablePeriodsFunc = unablePeriodMap[sports_name];
 
