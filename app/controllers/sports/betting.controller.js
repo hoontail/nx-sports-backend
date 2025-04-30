@@ -199,7 +199,11 @@ exports.bettingSports = async (req, res) => {
       if (gameType === "스페셜") {
         const unablePeriodMap = {
           soccer: (x) =>
-            x.status_kr === "경기중" ? ["전반전", "연장제외", "연장포함"] : [],
+            x.status_kr === "경기중" ||
+            moment.utc(x.start_datetime).format("YYYY-MM-DD HH:mm:ss") <=
+              moment().format("YYYY-MM-DD HH:mm:ss")
+              ? ["전반전", "연장제외", "연장포함"]
+              : [],
           baseball: (x) => {
             const arr = [];
             const p = x.period_id;
