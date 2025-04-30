@@ -386,8 +386,7 @@ exports.getSpecialData = async () => {
       "esports",
     ];
 
-    const findSportsMarket = await SportsMarket.findAll();
-    const marketArr = findSportsMarket.map((x) => x.market_id);
+    const marketArr = await SportsMarket.findAll();
 
     for await (const sports of sportsArr) {
       const endPoint = `${process.env.SPORTS_URL}/${sports}/special?token=${process.env.SPORTS_TOKEN}`;
@@ -440,25 +439,42 @@ const connectInplaySocketWithRedis = async (sports, marketArr) => {
             EX: 60 * 60 * 24 * 3,
           });
         };
-
         const createOdds = async () => {
           const createOddsData = [];
-          const deleteSameLineOdds = [];
+          const socketOddsData = [];
 
           for (const market of jsonData.od) {
             if (!market.l) continue;
 
-            if (!marketArr.includes(market.m)) continue;
+            const matchedMarket = marketArr.find(
+              (m) => m.market_id === market.m
+            );
+            if (!matchedMarket) continue;
 
             for (const odds of market.l) {
               const oddsKey = `${matchId}_${market.m}${
                 odds.n ? `_${odds.n}` : ""
               }`;
-
-              const isUnder = odds.o[0].n === "Under";
+              const isUnder = odds.o[0]?.n === "Under";
               const isThreeWay = odds.o.length === 3;
 
-              createOddsData.push({
+              const homeOdds = isUnder ? odds.o[1]?.v : odds.o[0]?.v;
+              const drawOdds = isThreeWay ? odds.o[1]?.v : null;
+              const awayOdds = isUnder
+                ? odds.o[0]?.v
+                : isThreeWay
+                ? odds.o[2]?.v
+                : odds.o[1]?.v;
+
+              const isHomeStop = isUnder ? odds.o[1]?.s : odds.o[0]?.s;
+              const isDrawStop = isThreeWay ? odds.o[1]?.s : 0;
+              const isAwayStop = isUnder
+                ? odds.o[0]?.s
+                : isThreeWay
+                ? odds.o[2]?.s
+                : odds.o[1]?.s;
+
+              const baseData = {
                 odds_key: oddsKey,
                 match_id: matchId,
                 market_id: market.m,
@@ -466,127 +482,43 @@ const connectInplaySocketWithRedis = async (sports, marketArr) => {
                 is_odds_stop: odds.s,
                 is_delete: 0,
                 odds_line: odds.n,
-                home_odds: isUnder ? odds.o[1].v : odds.o[0].v,
-                draw_odds: isThreeWay ? odds.o[1].v : null,
-                away_odds: isUnder
-                  ? odds.o[0].v
-                  : isThreeWay
-                  ? odds.o[2].v
-                  : odds.o[1].v,
+                home_odds: homeOdds,
+                draw_odds: drawOdds,
+                away_odds: awayOdds,
                 updated_at: moment().format("YYYY-MM-DD HH:mm:ss"),
-                is_home_stop: isUnder ? odds.o[1].s : odds.o[0].s,
-                is_draw_stop: isThreeWay ? odds.o[1].s : 0,
-                is_away_stop: isUnder
-                  ? odds.o[0].s
-                  : isThreeWay
-                  ? odds.o[2].s
-                  : odds.o[1].s,
-              });
+                is_home_stop: isHomeStop,
+                is_draw_stop: isDrawStop,
+                is_away_stop: isAwayStop,
+              };
 
-              // if (odds.n) {
-              //   deleteSameLineOdds.push({
-              //     match_id: matchId,
-              //     market_id: market.m,
-              //     odds_line: odds.n,
-              //   });
-              // }
+              createOddsData.push(baseData);
+              socketOddsData.push({
+                ...baseData,
+                sports_market: matchedMarket,
+              });
             }
           }
 
-          // 소켓 전달
+          // 실시간 배당 소켓 전달
           ioSocket.emit("sportsInplayData", {
             type: "odds",
             match_id: matchId,
-            sports_odds: createOddsData,
+            sports_odds: socketOddsData,
           });
 
+          // 기존 실시간 배당 삭제
+          await db.sequelize.query(`
+            DELETE FROM sports_odds
+            WHERE match_id = ${matchId}
+              AND market_id IN (
+                SELECT market_id FROM sports_market WHERE is_inplay = 1
+              )
+          `);
+
+          // 새로운 배당 저장
           if (createOddsData.length > 0) {
-            const oddsValues = createOddsData
-              .map(
-                (o) => `(
-                      '${o.odds_key}',
-                      ${o.match_id},
-                      ${o.market_id},
-                      ${o.is_market_stop},
-                      ${o.is_odds_stop},
-                      ${o.odds_line ? `'${o.odds_line}'` : "NULL"},
-                      ${
-                        o.home_odds != null && o.home_odds !== ""
-                          ? o.home_odds
-                          : "NULL"
-                      },
-                      ${
-                        o.draw_odds != null && o.draw_odds !== ""
-                          ? o.draw_odds
-                          : "NULL"
-                      },
-                      ${
-                        o.away_odds != null && o.away_odds !== ""
-                          ? o.away_odds
-                          : "NULL"
-                      },
-                      '${o.updated_at}',
-                      ${o.is_home_stop},
-                      ${o.is_draw_stop},
-                      ${o.is_away_stop}
-                    )`
-              )
-              .join(",\n");
-
-            const createOddsQuery = `
-              MERGE INTO sports_odds AS target
-              USING (VALUES 
-              ${oddsValues}
-              ) AS source (
-              odds_key, match_id, market_id, is_market_stop, is_odds_stop,
-              odds_line, home_odds, draw_odds, away_odds, updated_at, is_home_stop, is_draw_stop, is_away_stop
-              )
-              ON target.odds_key = source.odds_key
-              WHEN MATCHED THEN
-              UPDATE SET 
-                  match_id = source.match_id,
-                  market_id = source.market_id,
-                  is_market_stop = source.is_market_stop,
-                  is_odds_stop = source.is_odds_stop,
-                  odds_line = source.odds_line,
-                  home_odds = source.home_odds,
-                  draw_odds = source.draw_odds,
-                  away_odds = source.away_odds,
-                  updated_at = source.updated_at,
-                  is_home_stop = source.is_home_stop,
-                  is_draw_stop = source.is_draw_stop,
-                  is_away_stop = source.is_away_stop
-              WHEN NOT MATCHED THEN
-              INSERT (
-                  odds_key, match_id, market_id, is_market_stop, is_odds_stop,
-                  odds_line, home_odds, draw_odds, away_odds, updated_at, is_home_stop, is_draw_stop, is_away_stop
-              )
-              VALUES (
-                  source.odds_key, source.match_id, source.market_id,
-                  source.is_market_stop, source.is_odds_stop,
-                  source.odds_line, source.home_odds,
-                  source.draw_odds, source.away_odds, source.updated_at, source.is_home_stop, source.is_draw_stop, source.is_away_stop
-              );
-            `;
-
-            await db.sequelize.query(createOddsQuery);
+            await SportsOdds.bulkCreate(createOddsData);
           }
-
-          // if (deleteSameLineOdds.length > 0) {
-          //   const whereConditions = deleteSameLineOdds.map(
-          //     (o) =>
-          //       `(match_id = ${o.match_id} AND market_id = ${o.market_id} AND odds_line != '${o.odds_line}')`
-          //   );
-
-          //   await SportsOdds.update(
-          //     {
-          //       is_delete: 1,
-          //     },
-          //     {
-          //       where: literal(whereConditions.join(" OR ")),
-          //     }
-          //   );
-          // }
         };
 
         const createStatus = () => {
@@ -708,7 +640,9 @@ exports.getInplayData = async () => {
       "volleyball",
     ];
 
-    const findSportsMarket = await SportsMarket.findAll();
+    const findSportsMarket = await SportsMarket.findAll({
+      attributes: ["market_id", "type", "period", "name"],
+    });
     const marketArr = findSportsMarket.map((x) => x.market_id);
 
     for (const sports of sportsArr) {

@@ -118,7 +118,7 @@ exports.getSportsListForUser = async (req, res) => {
             is_odds_stop: 0,
             is_delete: 0,
           },
-          required: false,
+          required: gameType === "스페셜" ? false : true,
         },
       ],
       attributes: [
