@@ -182,7 +182,7 @@ const soccerResultProcess = async (match) => {
     }
 
     // 배당 결과값 수정
-    await updateOddsResult(odds, result);
+    await updateOddsResult(match, odds, result);
   }
 
   // 경기 결과처리 수정
@@ -344,7 +344,7 @@ const baseballResultProcess = async (match) => {
     }
 
     // 배당 결과값 수정
-    await updateOddsResult(odds, result);
+    await updateOddsResult(match, odds, result);
   }
 
   // 경기 결과처리 수정
@@ -424,7 +424,7 @@ const icehockeyResultProcess = async (match) => {
     }
 
     // 배당 결과값 수정
-    await updateOddsResult(odds, result);
+    await updateOddsResult(match, odds, result);
   }
 
   // 경기 결과처리 수정
@@ -515,7 +515,7 @@ const basketballResultProcess = async (match) => {
     }
 
     // 배당 결과값 수정
-    await updateOddsResult(odds, result);
+    await updateOddsResult(match, odds, result);
   }
 
   // 경기 결과처리 수정
@@ -651,7 +651,7 @@ const volleyballResultProcess = async (match) => {
     }
 
     // 배당 결과값 수정
-    await updateOddsResult(odds, result);
+    await updateOddsResult(match, odds, result);
   }
 
   // 경기 결과처리 수정
@@ -702,7 +702,7 @@ const tabletennisResultProcess = async (match) => {
     }
 
     // 배당 결과값 수정
-    await updateOddsResult(odds, result);
+    await updateOddsResult(match, odds, result);
   }
 
   // 경기 결과처리 수정
@@ -781,7 +781,7 @@ const tennisResultProcess = async (match) => {
     }
 
     // 배당 결과값 수정
-    await updateOddsResult(odds, result);
+    await updateOddsResult(match, odds, result);
   }
 
   // 경기 결과처리 수정
@@ -858,7 +858,7 @@ const americanfootballResultProcess = async (match) => {
     }
 
     // 배당 결과값 수정
-    await updateOddsResult(odds, result);
+    await updateOddsResult(match, odds, result);
   }
 
   // 경기 결과처리 수정
@@ -889,7 +889,7 @@ const boxingResultProcess = async (match) => {
     }
 
     // 배당 결과값 수정
-    await updateOddsResult(odds, result);
+    await updateOddsResult(match, odds, result);
   }
 
   // 경기 결과처리 수정
@@ -991,7 +991,7 @@ const esportsResultProcess = async (match) => {
     }
 
     // 배당 결과값 수정
-    await updateOddsResult(odds, result);
+    await updateOddsResult(match, odds, result);
   }
 
   // 경기 결과처리 수정
@@ -999,7 +999,7 @@ const esportsResultProcess = async (match) => {
 };
 
 // 배당 결과값 수정
-const updateOddsResult = async (odds, result) => {
+const updateOddsResult = async (match, odds, result) => {
   await SportsOdds.update(
     {
       result,
@@ -1011,7 +1011,7 @@ const updateOddsResult = async (odds, result) => {
     }
   );
 
-  await betDetailResultProcess(odds, result);
+  await betDetailResultProcess(match, odds, result);
 };
 
 // 경기 결과처리 수정
@@ -1038,7 +1038,7 @@ const updateMatchResult = async (match) => {
 };
 
 // 베팅 상세내역 결과 처리
-const betDetailResultProcess = async (odds, result) => {
+const betDetailResultProcess = async (match, odds, result) => {
   const findSportsBetDetail = await SportsBetDetail.findAll({
     include: {
       model: SportsMarket,
@@ -1074,7 +1074,7 @@ const betDetailResultProcess = async (odds, result) => {
 
       await SportsBetDetail.update(
         {
-          score: odds.sports_match.score,
+          score: match.score,
           result_type: result,
           status: status,
           resulted_at: moment().format("YYYY-MM-DD HH:mm:ss"),
