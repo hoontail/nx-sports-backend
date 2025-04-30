@@ -500,7 +500,6 @@ const connectInplaySocketWithRedis = async (sports, marketArr) => {
               });
             }
           }
-
           socketOddsData.sort((a, b) => {
             // 1차: sports_market.order 기준 오름차순
             const orderA = a.sports_market?.order ?? Number.MAX_SAFE_INTEGER;
@@ -510,10 +509,17 @@ const connectInplaySocketWithRedis = async (sports, marketArr) => {
               return orderA - orderB;
             }
 
-            // 2차: odds_line 기준 오름차순 (null은 마지막)
-            if (a.odds_line == null) return 1;
-            if (b.odds_line == null) return -1;
-            return a.odds_line.localeCompare(b.odds_line);
+            // 2차: odds_line을 숫자로 변환 후 오름차순 정렬 (null은 마지막)
+            const oddsLineA =
+              a.odds_line != null
+                ? Number(a.odds_line)
+                : Number.POSITIVE_INFINITY;
+            const oddsLineB =
+              b.odds_line != null
+                ? Number(b.odds_line)
+                : Number.POSITIVE_INFINITY;
+
+            return oddsLineA - oddsLineB;
           });
 
           // 실시간 배당 소켓 전달
