@@ -495,7 +495,7 @@ const checkCombine = async (gameType, bettingArr) => {
       ) {
         continue;
       }
-
+      console.log(odds.market_type);
       const pass1 =
         (combine.market_type_1 === "전체" ||
           combine.market_type_1 === odds.market_type) &&
@@ -521,7 +521,7 @@ const checkCombine = async (gameType, bettingArr) => {
             combine.period_type_2 === o.period)
       );
 
-      if (!foundSecond) {
+      if (foundSecond) {
         isValid = false;
         break outer;
       }
