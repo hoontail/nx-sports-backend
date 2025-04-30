@@ -386,7 +386,8 @@ exports.getSpecialData = async () => {
       "esports",
     ];
 
-    const marketArr = await SportsMarket.findAll();
+    const findSportsMarket = await SportsMarket.findAll();
+    const marketArr = findSportsMarket.map((x) => x.market_id);
 
     for await (const sports of sportsArr) {
       const endPoint = `${process.env.SPORTS_URL}/${sports}/special?token=${process.env.SPORTS_TOKEN}`;
@@ -640,10 +641,9 @@ exports.getInplayData = async () => {
       "volleyball",
     ];
 
-    const findSportsMarket = await SportsMarket.findAll({
+    const marketArr = await SportsMarket.findAll({
       attributes: ["market_id", "type", "period", "name"],
     });
-    const marketArr = findSportsMarket.map((x) => x.market_id);
 
     for (const sports of sportsArr) {
       connectInplaySocketWithRedis(sports, marketArr);
