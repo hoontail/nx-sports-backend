@@ -1074,7 +1074,7 @@ const betDetailResultProcess = async (match, odds, result) => {
 
       await SportsBetDetail.update(
         {
-          score: match.score,
+          score: JSON.stringify(match.score),
           result_type: result,
           status: status,
           resulted_at: moment().format("YYYY-MM-DD HH:mm:ss"),
