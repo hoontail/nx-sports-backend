@@ -449,7 +449,7 @@ const connectInplaySocketWithRedis = async (sports, marketArr) => {
             if (!market.l) continue;
 
             const matchedMarket = marketArr.find(
-              (m) => m.market_id === market.m
+              (m) => m.market_id === market.m && m.is_inplay === 1
             );
             if (!matchedMarket) continue;
 
