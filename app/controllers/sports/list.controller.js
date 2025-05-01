@@ -96,7 +96,15 @@ exports.getSportsListForUser = async (req, res) => {
         {
           include: [
             {
-              attributes: ["type", "period", "name"],
+              attributes: [
+                "type",
+                "period",
+                "name",
+                "is_cross",
+                "is_winlose",
+                "is_handicap",
+                "is_inplay",
+              ],
               model: SportsMarket,
               where: marketCondition,
             },

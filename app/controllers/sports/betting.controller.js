@@ -196,6 +196,17 @@ exports.bettingSports = async (req, res) => {
         });
       }
 
+      if (
+        (gameType === "크로스" && !odds.sports_market.is_cross) ||
+        (gameType === "승무패" && !odds.sports_market.is_winlose) ||
+        (gameType === "핸디캡" && !odds.sports_market.is_handicap) ||
+        (gameType === "라이브" && !odds.sports_market.is_inplay)
+      ) {
+        return res.status(400).send({
+          message: "배팅이 불가능한 배당입니다",
+        });
+      }
+
       if (gameType === "스페셜") {
         const unablePeriodMap = {
           soccer: (x) =>

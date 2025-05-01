@@ -664,7 +664,17 @@ exports.getInplayData = async () => {
     ];
 
     const marketArr = await SportsMarket.findAll({
-      attributes: ["market_id", "type", "period", "name", "order"],
+      attributes: [
+        "market_id",
+        "type",
+        "period",
+        "name",
+        "order",
+        "is_cross",
+        "is_winlose",
+        "is_handicap",
+        "is_inplay",
+      ],
     });
 
     for (const sports of sportsArr) {
