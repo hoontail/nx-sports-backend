@@ -6,53 +6,12 @@ const SportsMatches = db.sports_matches;
 const SportsOdds = db.sports_odds;
 const SportsMarket = db.sports_market;
 
+const helpers = require("../../helpers");
 const redisClient = require("../../helpers/redisClient");
 const WebSocket = require("ws");
 const moment = require("moment");
 const socketIO = require("socket.io-client");
 const ioSocket = socketIO("http://localhost:3001");
-
-const translateSportsName = (name) => {
-  let nameKr = "";
-
-  switch (name) {
-    case "soccer":
-      nameKr = "축구";
-      break;
-    case "americanfootball":
-      nameKr = "미식축구";
-      break;
-    case "boxingufc":
-      nameKr = "복싱/UFC";
-      break;
-    case "tennis":
-      nameKr = "테니스";
-      break;
-    case "baseball":
-      nameKr = "야구";
-      break;
-    case "icehockey":
-      nameKr = "아이스하키";
-      break;
-    case "basketball":
-      nameKr = "농구";
-      break;
-    case "handball":
-      nameKr = "핸드볼";
-      break;
-    case "volleyball":
-      nameKr = "배구";
-      break;
-    case "tabletennis":
-      nameKr = "탁구";
-      break;
-    case "esports":
-      nameKr = "E-스포츠";
-      break;
-  }
-
-  return nameKr;
-};
 
 const updateSportsData = async (endPoint, marketArr) => {
   const axiosInstance = axios.create({
@@ -71,7 +30,7 @@ const updateSportsData = async (endPoint, marketArr) => {
         createMatchData.push({
           match_id: match.id,
           sports_name: match.sport,
-          sports_name_kr: translateSportsName(match.sport),
+          sports_name_kr: helpers.translateSportsName(match.sport),
           prematch_id: match.prematch_id,
           inplay_id: match.inplay_id,
           status_id: match.status_id,

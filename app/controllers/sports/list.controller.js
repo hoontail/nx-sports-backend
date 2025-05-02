@@ -9,6 +9,7 @@ const SportsCombine = db.sports_combine;
 const SportsConfigs = db.sports_configs;
 const Users = db.up_users;
 
+const helpers = require("../../helpers");
 const moment = require("moment");
 
 exports.getSportsListForUser = async (req, res) => {
@@ -380,6 +381,223 @@ exports.getMySportsConfigForUser = async (req, res) => {
     config.two_minus_odds = findSportsConfig.two_minus_odds;
 
     return res.status(200).send(config);
+  } catch {
+    return res.status(500).send({
+      message: "Server Error",
+    });
+  }
+};
+
+exports.getSportsConfigForAdmin = async (req, res) => {
+  try {
+    const findSportsConfig = await SportsConfigs.findOne();
+
+    return res.status(200).send(findSportsConfig);
+  } catch {
+    return res.status(500).send({
+      message: "Server Error",
+    });
+  }
+};
+
+exports.getBonusListForAdmin = async (req, res) => {
+  try {
+    const findBonusOddsList = await SportsBonusOdds.findAll();
+
+    return res.status(200).send(findBonusOddsList);
+  } catch {
+    return res.status(500).send({
+      message: "Server Error",
+    });
+  }
+};
+
+exports.getBonusViewForAdmin = async (req, res) => {
+  const { id } = req.query;
+  try {
+    const findBonus = await SportsBonusOdds.findOne({
+      where: {
+        id,
+      },
+    });
+
+    if (!findBonus) {
+      return res.status(400).send({
+        message: "존재하지 않는 보너스입니다",
+      });
+    }
+
+    return res.status(200).send(findBonus);
+  } catch {
+    return res.status(500).send({
+      message: "Server Error",
+    });
+  }
+};
+
+exports.getCombineListForAdmin = async (req, res) => {
+  const { page, size, gameType, sportsName, status, market, period, betType } =
+    req.query;
+  const { offset, limit } = helpers.getPagination(page, size);
+  const condition = {};
+  const andConditions = [];
+
+  if (market) {
+    andConditions.push({
+      [Op.or]: [{ market_type_1: market }, { market_type_2: market }],
+    });
+  }
+
+  if (period) {
+    andConditions.push({
+      [Op.or]: [{ period_type_1: period }, { period_type_2: period }],
+    });
+  }
+
+  if (betType) {
+    andConditions.push({
+      [Op.or]: [{ bet_type_1: betType }, { bet_type_2: betType }],
+    });
+  }
+
+  if (gameType) {
+    condition.game_type = gameType;
+  }
+
+  if (sportsName) {
+    condition.sports_name = sportsName;
+  }
+
+  if (status) {
+    condition.status = status;
+  }
+
+  if (andConditions.length > 0) {
+    condition[Op.and] = andConditions;
+  }
+
+  try {
+    const findCombineList = await SportsCombine.findAndCountAll({
+      where: condition,
+      offset,
+      limit,
+      order: [["created_at", "desc"]],
+    });
+
+    const data = helpers.getPagingData(findCombineList, page, limit);
+    return res.status(200).send(data);
+  } catch {
+    return res.status(500).send({
+      message: "Server Error",
+    });
+  }
+};
+
+exports.getCombineViewForAdmin = async (req, res) => {
+  const { id } = req.query;
+
+  try {
+    const findCombine = await SportsCombine.findOne({
+      where: {
+        id,
+      },
+    });
+
+    if (!findCombine) {
+      return res.status(400).send({
+        message: "존재하지 않는 스포츠 조합 설정입니다",
+      });
+    }
+
+    return res.status(200).send(findCombine);
+  } catch {
+    return res.status(500).send({
+      message: "Server Error",
+    });
+  }
+};
+
+exports.getMarketListForAdmin = async (req, res) => {
+  const {
+    page,
+    size,
+    sportsName,
+    type,
+    period,
+    isCross,
+    isWinlose,
+    isHandicap,
+    isSpecial,
+    isInplay,
+  } = req.query;
+  const { offset, limit } = helpers.getPagination(page, size);
+  const condition = {};
+
+  if (sportsName) {
+    condition.sports_name = sportsName;
+  }
+
+  if (type) {
+    condition.type = type;
+  }
+
+  if (period) {
+    condition.period = period;
+  }
+
+  if (isCross) {
+    condition.is_cross = isCross;
+  }
+
+  if (isWinlose) {
+    condition.is_winlose = isWinlose;
+  }
+
+  if (isHandicap) {
+    condition.is_handicap = isHandicap;
+  }
+
+  if (isSpecial) {
+    condition.is_special = isSpecial;
+  }
+
+  if (isInplay) {
+    condition.is_inplay = isInplay;
+  }
+  try {
+    const findMarketList = await SportsMarket.findAndCountAll({
+      where: condition,
+      offset,
+      limit,
+      order: [["order", "asc"]],
+    });
+
+    const data = helpers.getPagingData(findMarketList, page, limit);
+    return res.status(200).send(data);
+  } catch {
+    return res.status(500).send({
+      message: "Server Error",
+    });
+  }
+};
+
+exports.getMarketViewForAdmin = async (req, res) => {
+  const { id } = req.query;
+
+  try {
+    const findMarket = await SportsMarket.findOne({
+      where: {
+        id,
+      },
+    });
+
+    if (!findMarket) {
+      return res.status(400).send({
+        message: "존재하지 않는 마켓입니다",
+      });
+    }
+
+    return res.status(200).send(findMarket);
   } catch {
     return res.status(500).send({
       message: "Server Error",
