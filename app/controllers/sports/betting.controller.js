@@ -160,10 +160,7 @@ exports.bettingSports = async (req, res) => {
 
     const createBetDetailData = [];
 
-    if (
-      findSportsOdds.length !==
-      bettingArrParse.filter((x) => x.match.match_id !== "보너스").length
-    ) {
+    if (findSportsOdds.length !== bettingArrParse.length) {
       return res.status(400).send({
         message: "삭제된 배당은 배팅이 불가합니다",
       });
