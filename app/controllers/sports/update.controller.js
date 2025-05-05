@@ -5,6 +5,8 @@ const SportsCombine = db.sports_combine;
 const SportsMarket = db.sports_market;
 const SportsMatches = db.sports_matches;
 const SportsOdds = db.sports_odds;
+const SportsBetHistory = db.sports_bet_history;
+const SportsBetDetail = db.sports_bet_detail;
 const socketIO = require("socket.io-client");
 const ioSocket = socketIO("http://localhost:3001");
 
@@ -644,6 +646,83 @@ exports.updateOddsForAdmin = async (req, res) => {
 
     return res.status(200).send({
       message: "배당이 수정되었습니다",
+    });
+  } catch {
+    return res.status(500).send({
+      message: "Server Error",
+    });
+  }
+};
+
+exports.updateBetHistory = async (req, res) => {
+  const { id, status, winAmount } = req.body;
+
+  try {
+    const findHistory = await SportsBetHistory.findOne({
+      where: {
+        id,
+      },
+    });
+
+    if (!findHistory) {
+      return res.status(400).send({
+        message: "존재하지 않는 베팅내역입니다",
+      });
+    }
+
+    await SportsBetHistory.update(
+      {
+        status,
+        win_amount: winAmount,
+        updated_at: moment().format("YYYY-MM-DD HH:mm:ss"),
+      },
+      {
+        where: {
+          id,
+        },
+      }
+    );
+
+    return res.status(200).send({
+      message: "베팅내역이 수정되었습니다",
+    });
+  } catch {
+    return res.status(500).send({
+      message: "Server Error",
+    });
+  }
+};
+
+exports.updateBetDetail = async (req, res) => {
+  const { id, status } = req.body;
+
+  try {
+    const findDetail = await SportsBetDetail.findOne({
+      where: {
+        id,
+      },
+    });
+
+    if (!findDetail) {
+      return res.status(400).send({
+        message: "존재하지 않는 베팅 상세 내역입니다",
+      });
+    }
+
+    await SportsBetDetail.update(
+      {
+        status,
+        updated_at: moment().format("YYYY-MM-DD HH:mm:ss"),
+      },
+      {
+        where: {
+          id,
+        },
+      }
+    );
+
+    return res.status(200).send({
+      message: "베팅 상세 내역이 수정되었습니다",
     });
   } catch {
     return res.status(500).send({

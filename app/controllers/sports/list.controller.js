@@ -672,17 +672,23 @@ exports.getSportsMatchListForAdmin = async (req, res) => {
   }
 
   const betAmountQuery = literal(`(
-    SELECT ISNULL(SUM(DISTINCT bh.bet_amount), 0)
-    FROM sports_bet_detail bd
-    JOIN sports_bet_history bh ON bd.sports_bet_history_id = bh.id
-    WHERE bd.match_id = sports_matches.match_id and bh.status != 3
+    SELECT ISNULL(SUM(distinct_bets.bet_amount), 0)
+    FROM (
+      SELECT DISTINCT bh.id, bh.bet_amount
+      FROM sports_bet_detail bd
+      JOIN sports_bet_history bh ON bd.sports_bet_history_id = bh.id
+      WHERE bd.match_id = sports_matches.match_id AND bh.status != 3
+    ) AS distinct_bets
   )`);
 
   const winAmountQuery = literal(`(
-    SELECT ISNULL(SUM(DISTINCT bh.win_amount), 0)
-    FROM sports_bet_detail bd
-    JOIN sports_bet_history bh ON bd.sports_bet_history_id = bh.id
-    WHERE bd.match_id = sports_matches.match_id and bh.status != 3
+    SELECT ISNULL(SUM(distinct_bets.win_amount), 0)
+    FROM (
+      SELECT DISTINCT bh.id, bh.win_amount
+      FROM sports_bet_detail bd
+      JOIN sports_bet_history bh ON bd.sports_bet_history_id = bh.id
+      WHERE bd.match_id = sports_matches.match_id AND bh.status != 3
+    ) AS distinct_bets
   )`);
 
   if (sort && order) {
@@ -712,6 +718,7 @@ exports.getSportsMatchListForAdmin = async (req, res) => {
     const data = helpers.getPagingData(findSportsMatches, page, limit);
     return res.status(200).send(data);
   } catch (err) {
+    console.log(err);
     return res.status(500).send({
       message: "Server Error",
     });
@@ -723,18 +730,24 @@ exports.getSportsMatchViewForAdmin = async (req, res) => {
 
   try {
     const betAmountQuery = literal(`(
-    SELECT ISNULL(SUM(DISTINCT bh.bet_amount), 0)
-    FROM sports_bet_detail bd
-    JOIN sports_bet_history bh ON bd.sports_bet_history_id = bh.id
-    WHERE bd.match_id = sports_matches.match_id and bh.status != 3
-  )`);
+      SELECT ISNULL(SUM(distinct_bets.bet_amount), 0)
+      FROM (
+        SELECT DISTINCT bh.id, bh.bet_amount
+        FROM sports_bet_detail bd
+        JOIN sports_bet_history bh ON bd.sports_bet_history_id = bh.id
+        WHERE bd.match_id = sports_matches.match_id AND bh.status != 3
+      ) AS distinct_bets
+    )`);
 
     const winAmountQuery = literal(`(
-    SELECT ISNULL(SUM(DISTINCT bh.win_amount), 0)
-    FROM sports_bet_detail bd
-    JOIN sports_bet_history bh ON bd.sports_bet_history_id = bh.id
-    WHERE bd.match_id = sports_matches.match_id and bh.status != 3
-  )`);
+      SELECT ISNULL(SUM(distinct_bets.win_amount), 0)
+      FROM (
+        SELECT DISTINCT bh.id, bh.win_amount
+        FROM sports_bet_detail bd
+        JOIN sports_bet_history bh ON bd.sports_bet_history_id = bh.id
+        WHERE bd.match_id = sports_matches.match_id AND bh.status != 3
+      ) AS distinct_bets
+    )`);
 
     const findMatch = await SportsMatches.findOne({
       attributes: {
@@ -773,19 +786,20 @@ exports.getSportsMatchViewForAdmin = async (req, res) => {
 };
 
 exports.getSportsBetHistoryForAdmin = async (req, res) => {
-  const { page, size, from, to, status, username, key, sort, order } =
+  const { page, size, from, to, status, username, key, sort, order, matchId } =
     req.query;
   const { offset, limit } = helpers.getPagination(page, size);
   const condition = {};
+  const detailCondition = {};
   let orderInit = ["created_at", "desc"];
 
   if (from && to) {
-    condition.start_datetime = {
+    condition.created_at = {
       [Op.between]: [from, to],
     };
   }
 
-  if (status !== "") {
+  if (status && status !== "") {
     condition.status = status;
   }
 
@@ -801,6 +815,10 @@ exports.getSportsBetHistoryForAdmin = async (req, res) => {
     orderInit = [sort, order];
   }
 
+  if (matchId) {
+    detailCondition.match_id = matchId;
+  }
+
   try {
     const findSportsBetHistory = await SportsBetHistory.findAndCountAll({
       include: {
@@ -808,11 +826,13 @@ exports.getSportsBetHistoryForAdmin = async (req, res) => {
           model: SportsMarket,
         },
         model: SportsBetDetail,
+        where: detailCondition,
       },
       where: condition,
       offset,
       limit,
       order: [orderInit],
+      distinct: true,
     });
 
     const data = helpers.getPagingData(findSportsBetHistory, page, limit);

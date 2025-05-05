@@ -154,4 +154,18 @@ router.get(
   sportsListController.getSportsBetHistoryForAdmin
 );
 
+// 배팅내역 수정
+router.patch(
+  "/history",
+  [rateLimit.apiLimiter, authJwt.adminVerifyToken],
+  sportsUpdateController.updateBetHistory
+);
+
+// 배팅내역 상세 수정
+router.patch(
+  "/history/detail",
+  [rateLimit.apiLimiter, authJwt.adminVerifyToken],
+  sportsUpdateController.updateBetDetail
+);
+
 module.exports = router;
