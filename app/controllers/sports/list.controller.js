@@ -7,12 +7,14 @@ const SportsMarket = db.sports_market;
 const SportsBonusOdds = db.sports_bonus_odds;
 const SportsCombine = db.sports_combine;
 const SportsConfigs = db.sports_configs;
+const SportsBetHistory = db.sports_bet_history;
+const SportsBetDetail = db.sports_bet_detail;
 const Users = db.up_users;
 
 const helpers = require("../../helpers");
 const moment = require("moment");
 
-exports.getSportsListForUser = async (req, res) => {
+exports.getSportsMatchListForUser = async (req, res) => {
   const { sports, gameType } = req.query;
   const sportsNames = [
     "soccer",
@@ -599,6 +601,224 @@ exports.getMarketViewForAdmin = async (req, res) => {
 
     return res.status(200).send(findMarket);
   } catch {
+    return res.status(500).send({
+      message: "Server Error",
+    });
+  }
+};
+
+exports.getSportsMatchListForAdmin = async (req, res) => {
+  const {
+    page,
+    size,
+    from,
+    to,
+    statusId,
+    sportsName,
+    teamName,
+    leagueName,
+    country,
+    isDelete,
+    sort,
+    order,
+  } = req.query;
+  const { offset, limit } = helpers.getPagination(page, size);
+  const condition = {};
+  let orderInit = ["start_datetime", "desc"];
+
+  if (from && to) {
+    condition.start_datetime = {
+      [Op.between]: [from, to],
+    };
+  }
+
+  if (sportsName) {
+    condition.sports_name = sportsName;
+  }
+
+  if (statusId) {
+    condition.status_id = JSON.parse(statusId);
+  }
+
+  if (teamName) {
+    condition[Op.or] = [
+      {
+        home_name: {
+          [Op.like]: `%${teamName}%`,
+        },
+      },
+      {
+        away_name: {
+          [Op.like]: `%${teamName}%`,
+        },
+      },
+    ];
+  }
+
+  if (leagueName) {
+    condition.league_name = {
+      [Op.like]: `%${leagueName}%`,
+    };
+  }
+
+  if (country) {
+    condition.country_kr = {
+      [Op.like]: `%${country}%`,
+    };
+  }
+
+  if (isDelete) {
+    condition.is_delete = isDelete;
+  }
+
+  const betAmountQuery = literal(`(
+    SELECT ISNULL(SUM(DISTINCT bh.bet_amount), 0)
+    FROM sports_bet_detail bd
+    JOIN sports_bet_history bh ON bd.sports_bet_history_id = bh.id
+    WHERE bd.match_id = sports_matches.match_id and bh.status != 3
+  )`);
+
+  const winAmountQuery = literal(`(
+    SELECT ISNULL(SUM(DISTINCT bh.win_amount), 0)
+    FROM sports_bet_detail bd
+    JOIN sports_bet_history bh ON bd.sports_bet_history_id = bh.id
+    WHERE bd.match_id = sports_matches.match_id and bh.status != 3
+  )`);
+
+  if (sort && order) {
+    if (sort === "bet_amount") {
+      orderInit = [betAmountQuery, order];
+    } else if (sort === "win_amount") {
+      orderInit = [winAmountQuery, order];
+    } else {
+      orderInit = [sort, order];
+    }
+  }
+
+  try {
+    const findSportsMatches = await SportsMatches.findAndCountAll({
+      attributes: {
+        include: [
+          [betAmountQuery, "bet_amount"],
+          [winAmountQuery, "win_amount"],
+        ],
+      },
+      where: condition,
+      offset,
+      limit,
+      order: [orderInit],
+    });
+
+    const data = helpers.getPagingData(findSportsMatches, page, limit);
+    return res.status(200).send(data);
+  } catch (err) {
+    return res.status(500).send({
+      message: "Server Error",
+    });
+  }
+};
+
+exports.getSportsMatchViewForAdmin = async (req, res) => {
+  const { id } = req.query;
+
+  try {
+    const betAmountQuery = literal(`(
+    SELECT ISNULL(SUM(DISTINCT bh.bet_amount), 0)
+    FROM sports_bet_detail bd
+    JOIN sports_bet_history bh ON bd.sports_bet_history_id = bh.id
+    WHERE bd.match_id = sports_matches.match_id and bh.status != 3
+  )`);
+
+    const winAmountQuery = literal(`(
+    SELECT ISNULL(SUM(DISTINCT bh.win_amount), 0)
+    FROM sports_bet_detail bd
+    JOIN sports_bet_history bh ON bd.sports_bet_history_id = bh.id
+    WHERE bd.match_id = sports_matches.match_id and bh.status != 3
+  )`);
+
+    const findMatch = await SportsMatches.findOne({
+      attributes: {
+        include: [
+          [betAmountQuery, "bet_amount"],
+          [winAmountQuery, "win_amount"],
+        ],
+      },
+      include: {
+        include: {
+          model: SportsMarket,
+        },
+        model: SportsOdds,
+      },
+      where: {
+        id,
+      },
+      order: [
+        [SportsOdds, SportsMarket, "order", "ASC"],
+        [literal("CAST([sports_odds].[odds_line] AS FLOAT)"), "ASC"],
+      ],
+    });
+
+    if (!findMatch) {
+      return res.status(400).send({
+        message: "존재하지 않는 경기입니다",
+      });
+    }
+
+    return res.status(200).send(findMatch);
+  } catch {
+    return res.status(500).send({
+      message: "Server Error",
+    });
+  }
+};
+
+exports.getSportsBetHistoryForAdmin = async (req, res) => {
+  const { page, size, from, to, status, username, key, sort, order } =
+    req.query;
+  const { offset, limit } = helpers.getPagination(page, size);
+  const condition = {};
+  let orderInit = ["created_at", "desc"];
+
+  if (from && to) {
+    condition.start_datetime = {
+      [Op.between]: [from, to],
+    };
+  }
+
+  if (status !== "") {
+    condition.status = status;
+  }
+
+  if (username) {
+    condition.username = username;
+  }
+
+  if (key) {
+    condition.key = key;
+  }
+
+  if (sort && order) {
+    orderInit = [sort, order];
+  }
+
+  try {
+    const findSportsBetHistory = await SportsBetHistory.findAndCountAll({
+      include: {
+        include: {
+          model: SportsMarket,
+        },
+        model: SportsBetDetail,
+      },
+      where: condition,
+      offset,
+      limit,
+      order: [orderInit],
+    });
+
+    const data = helpers.getPagingData(findSportsBetHistory, page, limit);
+    return res.status(200).send(data);
+  } catch (err) {
+    console.log(err);
     return res.status(500).send({
       message: "Server Error",
     });

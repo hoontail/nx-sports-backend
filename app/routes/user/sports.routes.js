@@ -16,7 +16,7 @@ router.use(function (req, res, next) {
 router.get(
   "/",
   [rateLimit.apiLimiter],
-  sportsListController.getSportsListForUser
+  sportsListController.getSportsMatchListForUser
 );
 
 // 스포츠 배팅

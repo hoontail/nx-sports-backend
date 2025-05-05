@@ -148,6 +148,11 @@ module.exports = function (sequelize, DataTypes) {
         allowNull: true,
         defaultValue: 0,
       },
+      is_auto: {
+        type: DataTypes.TINYINT,
+        allowNull: true,
+        defaultValue: 1,
+      },
     },
     {
       sequelize,

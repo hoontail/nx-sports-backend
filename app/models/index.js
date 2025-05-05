@@ -76,4 +76,14 @@ db.sports_bet_detail.hasOne(db.sports_market, {
   sourceKey: "market_id",
 });
 
+db.sports_bet_history.hasMany(db.sports_bet_detail, {
+  foreignKey: "sports_bet_history_id",
+  sourceKey: "id",
+});
+
+db.sports_bet_detail.belongsTo(db.sports_bet_history, {
+  foreignKey: "sports_bet_history_id",
+  targetKey: "id",
+});
+
 module.exports = db;

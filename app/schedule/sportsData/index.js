@@ -144,7 +144,7 @@ const updateSportsData = async (endPoint, marketArr) => {
               start_datetime, score, updated_at
             )
             ON target.match_id = source.match_id
-            WHEN MATCHED THEN
+            WHEN MATCHED AND target.is_auto = 1 THEN
             UPDATE SET
               sports_name = source.sports_name,
               sports_name_kr = source.sports_name_kr,

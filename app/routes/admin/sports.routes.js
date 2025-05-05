@@ -118,4 +118,40 @@ router.patch(
   [rateLimit.apiLimiter, authJwt.adminVerifyToken],
   sportsUpdateController.updateMarketForAdmin
 );
+
+// 경기 목록
+router.get(
+  "/match",
+  [rateLimit.apiLimiter, authJwt.adminVerifyToken],
+  sportsListController.getSportsMatchListForAdmin
+);
+
+// 경기 상세
+router.get(
+  "/match/view",
+  [rateLimit.apiLimiter, authJwt.adminVerifyToken],
+  sportsListController.getSportsMatchViewForAdmin
+);
+
+// 경기 수정
+router.patch(
+  "/match",
+  [rateLimit.apiLimiter, authJwt.adminVerifyToken],
+  sportsUpdateController.updateMatchForAdmin
+);
+
+// 배당 수정
+router.patch(
+  "/odds",
+  [rateLimit.apiLimiter, authJwt.adminVerifyToken],
+  sportsUpdateController.updateOddsForAdmin
+);
+
+// 배팅내역
+router.get(
+  "/history",
+  [rateLimit.apiLimiter, authJwt.adminVerifyToken],
+  sportsListController.getSportsBetHistoryForAdmin
+);
+
 module.exports = router;
