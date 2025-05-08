@@ -381,109 +381,102 @@ exports.bettingSports = async (req, res) => {
     }
 
     await db.sequelize.transaction(async (t) => {
-      try {
-        // -보유머니 + 총배팅
-        await Users.decrement(
-          {
-            balance: amount,
-            bet_total: -amount,
+      // -보유머니 + 총배팅
+      await Users.decrement(
+        {
+          balance: amount,
+          bet_total: -amount,
+        },
+        {
+          where: {
+            username: findUser.username,
           },
-          {
-            where: {
-              username: findUser.username,
-            },
-            transaction: t,
-          }
-        );
-
-        // 배팅 내역
-        const createBetHistoryData = {
-          username: findUser.username,
-          key,
-          game_type: gameType,
-          bet_amount: amount,
-          total_odds: totalOdds,
-          bonus_odds: findSportsBonusOdds ? findSportsBonusOdds.odds : null,
-          prev_balance: findUser.balance,
-          after_balance: findUser.balance - amount,
-          created_ip: ip,
-        };
-
-        const createBetHistory = await SportsBetHistory.create(
-          createBetHistoryData,
-          {
-            transaction: t,
-          }
-        );
-
-        // 배팅 내역 상세
-        createBetDetailData.forEach((x) => {
-          x.sports_bet_history_id = createBetHistory.id;
-        });
-
-        await SportsBetDetail.bulkCreate(createBetDetailData, {
           transaction: t,
-        });
-
-        // 배팅 머니로그
-        const createBalanceLogData = {
-          username: findUser.username,
-          amount,
-          system_note: `SPORTS ${key}`,
-          admin_id: "시스템",
-          created_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
-          updated_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
-          record_type: "베팅",
-          prev_balance: findUser.balance,
-          after_balance: findUser.balance - amount,
-        };
-
-        await BalanceLogs.create(createBalanceLogData, {
-          transaction: t,
-        });
-
-        // 롤링 지급
-        if (rollingPercentage > 0) {
-          const rollingAmount = (amount * rollingPercentage) / 100;
-
-          if (rollingAmount > 0) {
-            await Users.increment(
-              {
-                rolling_point: rollingAmount,
-              },
-              {
-                where: {
-                  username: findUser.username,
-                },
-              }
-            );
-
-            const createRollingLogData = {
-              username: findUser.username,
-              amount: rollingAmount,
-              system_note: `${key}-${rollingType}${
-                rollingType === "LEVEL" ? `^${findUser.user_level}` : ""
-              }`,
-              admin_id: "시스템",
-              created_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
-              updated_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
-              vendor_key: "sports",
-              record_type: "베팅",
-              rolling_percentage: rollingPercentage,
-              prev_rolling_point: findUser.rolling_point,
-              bet_amount: amount,
-            };
-
-            await RollingPoints.create(createRollingLogData, {
-              transaction: t,
-            });
-          }
         }
-      } catch {
-        await t.rollback();
-        return res.status(400).send({
-          message: "배팅에 실패하였습니다",
-        });
+      );
+
+      // 배팅 내역
+      const createBetHistoryData = {
+        username: findUser.username,
+        key,
+        game_type: gameType,
+        bet_amount: amount,
+        total_odds: totalOdds,
+        bonus_odds: findSportsBonusOdds ? findSportsBonusOdds.odds : null,
+        prev_balance: findUser.balance,
+        after_balance: findUser.balance - amount,
+        created_ip: ip,
+      };
+
+      const createBetHistory = await SportsBetHistory.create(
+        createBetHistoryData,
+        {
+          transaction: t,
+        }
+      );
+
+      // 배팅 내역 상세
+      createBetDetailData.forEach((x) => {
+        x.sports_bet_history_id = createBetHistory.id;
+      });
+
+      await SportsBetDetail.bulkCreate(createBetDetailData, {
+        transaction: t,
+      });
+
+      // 배팅 머니로그
+      const createBalanceLogData = {
+        username: findUser.username,
+        amount,
+        system_note: `SPORTS ${key}`,
+        admin_id: "시스템",
+        created_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
+        updated_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
+        record_type: "베팅",
+        prev_balance: findUser.balance,
+        after_balance: findUser.balance - amount,
+      };
+
+      await BalanceLogs.create(createBalanceLogData, {
+        transaction: t,
+      });
+
+      // 롤링 지급
+      if (rollingPercentage > 0) {
+        const rollingAmount = (amount * rollingPercentage) / 100;
+
+        if (rollingAmount > 0) {
+          await Users.increment(
+            {
+              rolling_point: rollingAmount,
+            },
+            {
+              where: {
+                username: findUser.username,
+              },
+            }
+          );
+
+          const createRollingLogData = {
+            username: findUser.username,
+            amount: rollingAmount,
+            system_note: `${key}-${rollingType}${
+              rollingType === "LEVEL" ? `^${findUser.user_level}` : ""
+            }`,
+            admin_id: "시스템",
+            created_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
+            updated_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
+            vendor_key: "sports",
+            record_type: "베팅",
+            rolling_percentage: rollingPercentage,
+            prev_rolling_point: findUser.rolling_point,
+            bet_amount: amount,
+          };
+
+          await RollingPoints.create(createRollingLogData, {
+            transaction: t,
+          });
+        }
       }
     });
 
