@@ -664,10 +664,7 @@ const tabletennisResultProcess = async (match) => {
 
   // 0: 패, 1: 승, 2: 무
   let result;
-  console.log(
-    parseInt(resultJson.home["5_set"]),
-    parseInt(resultJson.home["6_set"])
-  );
+
   let homeScore =
     parseInt(resultJson.home["1_set"] ?? "0") +
     parseInt(resultJson.home["2_set"] ?? "0") +
