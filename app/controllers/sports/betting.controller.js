@@ -12,6 +12,8 @@ const SportsBetDetail = db.sports_bet_detail;
 const SportsCombine = db.sports_combine;
 const BalanceLogs = db.balance_logs;
 const RollingPoints = db.rolling_points;
+const socketIO = require("socket.io-client");
+const ioSocket = socketIO("http://localhost:3001");
 
 const utils = require("../../utils");
 const moment = require("moment");
@@ -484,6 +486,15 @@ exports.bettingSports = async (req, res) => {
         });
       }
     });
+
+    if (amount >= findSportsConfig.alert_bet_amount) {
+      ioSocket.emit(
+        "sportsBettingAlert",
+        `${findUser.username}[${
+          findUser.user_real_name
+        }] - 스포츠 베팅 ${commaNumber(amount)}원`
+      );
+    }
 
     return res.status(200).send({
       message: "배팅이 완료되었습니다",

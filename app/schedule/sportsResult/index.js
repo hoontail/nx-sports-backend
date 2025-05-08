@@ -1159,7 +1159,7 @@ exports.betHistoryResultProcess = async (historyId) => {
   const findSportsBetHistory = await SportsBetHistory.findOne({
     include: [
       {
-        model: User,
+        model: Users,
       },
     ],
     where: {
@@ -1170,7 +1170,7 @@ exports.betHistoryResultProcess = async (historyId) => {
 
   if (findSportsBetDetail.length === 0 || !findSportsBetHistory) return;
 
-  const findSportsConfigs = await SportsConfigs.findOne();
+  const findSportsConfig = await SportsConfigs.findOne();
 
   // 낙첨처리
   if (findSportsBetDetail.some((x) => x.status === 2)) {
@@ -1188,10 +1188,10 @@ exports.betHistoryResultProcess = async (historyId) => {
     );
 
     // 낙첨 포인트 지급
-    if (findSportsConfigs.lose_point_percentage > 0) {
+    if (findSportsConfig.lose_point_percentage > 0) {
       const losingPoint =
         (findSportsBetHistory.bet_amount *
-          findSportsConfigs.lose_point_percentage) /
+          findSportsConfig.lose_point_percentage) /
         100;
 
       if (losingPoint > 0) {
@@ -1215,7 +1215,7 @@ exports.betHistoryResultProcess = async (historyId) => {
           updated_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
           vendor_key: "sports",
           record_type: "낙첨 보너스",
-          rolling_percentage: findSportsConfigs.lose_point_percentage,
+          rolling_percentage: findSportsConfig.lose_point_percentage,
           prev_rolling_point: findSportsBetHistory.up_user.rolling_point,
           bet_amount: findSportsBetHistory.bet_amount,
         };
@@ -1230,6 +1230,13 @@ exports.betHistoryResultProcess = async (historyId) => {
   }
 
   let totalOdds = 1;
+  let betType;
+
+  if (findSportsBetDetail.length === 1) {
+    betType = "single";
+  } else if (findSportsBetDetail.length > 1) {
+    betType = "multi";
+  }
 
   // 대기상태의 배당이 없을 때 결과처리
   if (!findSportsBetDetail.some((x) => x.status === 0)) {
@@ -1243,20 +1250,17 @@ exports.betHistoryResultProcess = async (historyId) => {
       totalOdds = totalOdds * findSportsBetHistory.bonus_odds;
     }
 
-    if (
-      findSportsBetDetail.length === 1 &&
-      findSportsConfigs.single_minus_odds > 0
-    ) {
-      totalOdds -= findSportsConfigs.single_minus_odds;
+    if (betType === "single" && findSportsConfig.single_minus_odds > 0) {
+      totalOdds -= findSportsConfig.single_minus_odds;
 
       if (totalOdds < 1) {
         totalOdds = 1;
       }
     } else if (
       findSportsBetDetail.length === 2 &&
-      findSportsConfigs.two_minus_odds > 0
+      findSportsConfig.two_minus_odds > 0
     ) {
-      totalOdds -= findSportsConfigs.two_minus_odds;
+      totalOdds -= findSportsConfig.two_minus_odds;
 
       if (totalOdds < 1) {
         totalOdds = 1;
@@ -1266,6 +1270,15 @@ exports.betHistoryResultProcess = async (historyId) => {
     totalOdds = totalOdds.toFixed(2);
 
     let winAmount = Math.floor(findSportsBetHistory.bet_amount * totalOdds);
+    let maxWinAmount;
+
+    maxWinAmount =
+      findSportsBetHistory.up_user[`sports_${betType}_max_win_amount`] ??
+      findSportsConfig[`${betType}_max_win_amount`];
+
+    if (winAmount > maxWinAmount) {
+      winAmount = maxWinAmount;
+    }
 
     await SportsBetHistory.update(
       {
