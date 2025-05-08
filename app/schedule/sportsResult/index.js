@@ -1183,6 +1183,7 @@ exports.betHistoryResultProcess = async (historyId) => {
     await SportsBetHistory.update(
       {
         status: 2,
+        win_amount: 0,
         resulted_at: moment().format("YYYY-MM-DD HH:mm:ss"),
       },
       {
