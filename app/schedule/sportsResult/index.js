@@ -530,29 +530,29 @@ const volleyballResultProcess = async (match) => {
   let result;
 
   let homeScore =
-    parseInt(resultJson.home["1"]) +
-    parseInt(resultJson.home["2"]) +
-    parseInt(resultJson.home["3"]) +
-    parseInt(resultJson.home["4"]) +
-    parseInt(resultJson.home["5"]);
+    parseInt(resultJson.home["1"] ?? "0") +
+    parseInt(resultJson.home["2"] ?? "0") +
+    parseInt(resultJson.home["3"] ?? "0") +
+    parseInt(resultJson.home["4"] ?? "0") +
+    parseInt(resultJson.home["5"] ?? "0");
   let awayScore =
-    parseInt(resultJson.away["1"]) +
-    parseInt(resultJson.away["2"]) +
-    parseInt(resultJson.away["3"]) +
-    parseInt(resultJson.away["4"]) +
-    parseInt(resultJson.away["5"]);
+    parseInt(resultJson.away["1"] ?? "0") +
+    parseInt(resultJson.away["2"] ?? "0") +
+    parseInt(resultJson.away["3"] ?? "0") +
+    parseInt(resultJson.away["4"] ?? "0") +
+    parseInt(resultJson.away["5"] ?? "0");
   let homeSetScore =
-    parseInt(resultJson.home["1_set"]) +
-    parseInt(resultJson.home["2_set"]) +
-    parseInt(resultJson.home["3_set"]) +
-    parseInt(resultJson.home["4_set"]) +
-    parseInt(resultJson.home["5_set"]);
+    parseInt(resultJson.home["1_set"] ?? "0") +
+    parseInt(resultJson.home["2_set"] ?? "0") +
+    parseInt(resultJson.home["3_set"] ?? "0") +
+    parseInt(resultJson.home["4_set"] ?? "0") +
+    parseInt(resultJson.home["5_set"] ?? "0");
   let awaySetScore =
-    parseInt(resultJson.away["1_set"]) +
-    parseInt(resultJson.away["2_set"]) +
-    parseInt(resultJson.away["3_set"]) +
-    parseInt(resultJson.away["4_set"]) +
-    parseInt(resultJson.away["5_set"]);
+    parseInt(resultJson.away["1_set"] ?? "0") +
+    parseInt(resultJson.away["2_set"] ?? "0") +
+    parseInt(resultJson.away["3_set"] ?? "0") +
+    parseInt(resultJson.away["4_set"] ?? "0") +
+    parseInt(resultJson.away["5_set"] ?? "0");
 
   for await (const odds of match.sports_odds) {
     const marketType = odds.sports_market.type;
@@ -664,23 +664,26 @@ const tabletennisResultProcess = async (match) => {
 
   // 0: 패, 1: 승, 2: 무
   let result;
-
+  console.log(
+    parseInt(resultJson.home["5_set"]),
+    parseInt(resultJson.home["6_set"])
+  );
   let homeScore =
-    parseInt(resultJson.home["1_set"]) +
-    parseInt(resultJson.home["2_set"]) +
-    parseInt(resultJson.home["3_set"]) +
-    parseInt(resultJson.home["4_set"]) +
-    parseInt(resultJson.home["5_set"]) +
-    parseInt(resultJson.home["6_set"]) +
-    parseInt(resultJson.home["7_set"]);
+    parseInt(resultJson.home["1_set"] ?? "0") +
+    parseInt(resultJson.home["2_set"] ?? "0") +
+    parseInt(resultJson.home["3_set"] ?? "0") +
+    parseInt(resultJson.home["4_set"] ?? "0") +
+    parseInt(resultJson.home["5_set"] ?? "0") +
+    parseInt(resultJson.home["6_set"] ?? "0") +
+    parseInt(resultJson.home["7_set"] ?? "0");
   let awayScore =
-    parseInt(resultJson.away["1_set"]) +
-    parseInt(resultJson.away["2_set"]) +
-    parseInt(resultJson.away["3_set"]) +
-    parseInt(resultJson.away["4_set"]) +
-    parseInt(resultJson.away["5_set"]) +
-    parseInt(resultJson.away["6_set"]) +
-    parseInt(resultJson.away["7_set"]);
+    parseInt(resultJson.away["1_set"] ?? "0") +
+    parseInt(resultJson.away["2_set"] ?? "0") +
+    parseInt(resultJson.away["3_set"] ?? "0") +
+    parseInt(resultJson.away["4_set"] ?? "0") +
+    parseInt(resultJson.away["5_set"] ?? "0") +
+    parseInt(resultJson.away["6_set"] ?? "0") +
+    parseInt(resultJson.away["7_set"] ?? "0");
 
   for await (const odds of match.sports_odds) {
     const marketType = odds.sports_market.type;
@@ -717,30 +720,30 @@ const tennisResultProcess = async (match) => {
   let result;
 
   let homeScore =
-    parseInt(resultJson.home["1"]) +
-    parseInt(resultJson.home["2"]) +
-    parseInt(resultJson.home["3"]) +
-    parseInt(resultJson.home["4"]) +
-    parseInt(resultJson.home["5"]);
+    parseInt(resultJson.home["1"] ?? "0") +
+    parseInt(resultJson.home["2"] ?? "0") +
+    parseInt(resultJson.home["3"] ?? "0") +
+    parseInt(resultJson.home["4"] ?? "0") +
+    parseInt(resultJson.home["5"] ?? "0");
   let awayScore =
-    parseInt(resultJson.away["1"]) +
-    parseInt(resultJson.away["2"]) +
-    parseInt(resultJson.away["3"]) +
-    parseInt(resultJson.away["4"]) +
-    parseInt(resultJson.away["5"]);
+    parseInt(resultJson.away["1"] ?? "0") +
+    parseInt(resultJson.away["2"] ?? "0") +
+    parseInt(resultJson.away["3"] ?? "0") +
+    parseInt(resultJson.away["4"] ?? "0") +
+    parseInt(resultJson.away["5"] ?? "0");
 
   let homeSetScore =
-    parseInt(resultJson.home["1_set"]) +
-    parseInt(resultJson.home["2_set"]) +
-    parseInt(resultJson.home["3_set"]) +
-    parseInt(resultJson.home["4_set"]) +
-    parseInt(resultJson.home["5_set"]);
+    parseInt(resultJson.home["1_set"] ?? "0") +
+    parseInt(resultJson.home["2_set"] ?? "0") +
+    parseInt(resultJson.home["3_set"] ?? "0") +
+    parseInt(resultJson.home["4_set"] ?? "0") +
+    parseInt(resultJson.home["5_set"] ?? "0");
   let awaySetScore =
-    parseInt(resultJson.away["1_set"]) +
-    parseInt(resultJson.away["2_set"]) +
-    parseInt(resultJson.away["3_set"]) +
-    parseInt(resultJson.away["4_set"]) +
-    parseInt(resultJson.away["5_set"]);
+    parseInt(resultJson.away["1_set"] ?? "0") +
+    parseInt(resultJson.away["2_set"] ?? "0") +
+    parseInt(resultJson.away["3_set"] ?? "0") +
+    parseInt(resultJson.away["4_set"] ?? "0") +
+    parseInt(resultJson.away["5_set"] ?? "0");
 
   for await (const odds of match.sports_odds) {
     const marketType = odds.sports_market.type;
