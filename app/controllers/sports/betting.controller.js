@@ -454,6 +454,7 @@ exports.bettingSports = async (req, res) => {
               where: {
                 username: findUser.username,
               },
+              transaction: t,
             }
           );
 
