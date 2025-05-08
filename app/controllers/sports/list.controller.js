@@ -786,8 +786,19 @@ exports.getSportsMatchViewForAdmin = async (req, res) => {
 };
 
 exports.getSportsBetHistoryForAdmin = async (req, res) => {
-  const { page, size, from, to, status, username, key, sort, order, matchId } =
-    req.query;
+  const {
+    page,
+    size,
+    from,
+    to,
+    gameType,
+    status,
+    username,
+    key,
+    sort,
+    order,
+    matchId,
+  } = req.query;
   const { offset, limit } = helpers.getPagination(page, size);
   const condition = {};
   const detailCondition = {};
@@ -797,6 +808,10 @@ exports.getSportsBetHistoryForAdmin = async (req, res) => {
     condition.created_at = {
       [Op.between]: [from, to],
     };
+  }
+
+  if (gameType) {
+    condition.game_type = gameType;
   }
 
   if (status && status !== "") {

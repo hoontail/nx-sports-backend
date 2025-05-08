@@ -11,7 +11,7 @@ const SportsBetHistory = db.sports_bet_history;
 const SportsBetDetail = db.sports_bet_detail;
 const SportsCombine = db.sports_combine;
 const BalanceLogs = db.balance_logs;
-const RollingPoints = db.rolling_points;
+const KoscaLogs = db.kosca_logs;
 const socketIO = require("socket.io-client");
 const ioSocket = socketIO("http://localhost:3001");
 
@@ -29,7 +29,6 @@ exports.bettingSports = async (req, res) => {
     let minBetAmount;
     let maxBetAmount;
     let rollingPercentage = 0;
-    let rollingType = "LEVEL";
     let totalOdds = 1;
 
     if (
@@ -68,6 +67,27 @@ exports.bettingSports = async (req, res) => {
 
     const isSingle = bettingArrParse.length === 1;
     const betType = isSingle ? "single" : "multi";
+    const rollingType = findUser.rolling_point_type;
+    let systemNote;
+    if (rollingType === "LEVEL") {
+      systemNote = `${key}-${rollingType}^${findUser.user_level}`;
+      rollingPercentage =
+        findLevelConfig[`sports_${betType}_rolling_percentage`];
+    } else if (rollingType === "AGENT") {
+      const findAgent = await findUser.findOne({
+        where: {
+          username: findUser.agent_username,
+        },
+      });
+
+      if (findAgent) {
+        systemNote = `${key}-${rollingType}^${findUser.agent_username}`;
+        rollingPercentage = findAgent[`sports_${betType}_rolling_percentage`];
+      }
+    } else if (rollingType === "INDIVIDUAL") {
+      systemNote = `${key}-${rollingType}`;
+      rollingPercentage = findUser[`sports_${betType}_rolling_percentage`];
+    }
 
     minBetAmount =
       findUser[`sports_${betType}_min_bet_amount`] ??
@@ -76,12 +96,6 @@ exports.bettingSports = async (req, res) => {
     maxBetAmount =
       findUser[`sports_${betType}_max_bet_amount`] ??
       findSportsConfig[`${betType}_max_bet_amount`];
-
-    rollingPercentage =
-      findUser[`sports_${betType}_rolling_percentage`] ??
-      findLevelConfig[`sports_${betType}_rolling_percentage`];
-
-    if (findUser[`sports_${betType}_rolling_percentage`]) rollingType = "USER";
 
     if (minBetAmount > amount) {
       return res.status(400).send({
@@ -334,7 +348,9 @@ exports.bettingSports = async (req, res) => {
         away_image: match.away_image,
         league_name: match.league_name,
         league_image: match.league_image,
-        start_datetime: match.start_datetime,
+        start_datetime: moment
+          .utc(match.start_datetime)
+          .format("YYYY-MM-DD HH:mm:ss"),
         home_odds: odds.home_odds,
         draw_odds: odds.draw_odds,
         away_odds: odds.away_odds,
@@ -428,7 +444,7 @@ exports.bettingSports = async (req, res) => {
       const createBalanceLogData = {
         username: findUser.username,
         amount,
-        system_note: `SPORTS ${key}`,
+        system_note: `KSPORTS ${key}`,
         admin_id: "시스템",
         created_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
         updated_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
@@ -441,40 +457,30 @@ exports.bettingSports = async (req, res) => {
         transaction: t,
       });
 
-      // 롤링 지급
+      // 롤링
       if (rollingPercentage > 0) {
-        const rollingAmount = (amount * rollingPercentage) / 100;
+        const rollingAmount = amount * rollingPercentage;
 
         if (rollingAmount > 0) {
-          await Users.increment(
-            {
-              rolling_point: rollingAmount,
-            },
-            {
-              where: {
-                username: findUser.username,
-              },
-              transaction: t,
-            }
-          );
-
-          const createRollingLogData = {
+          const createKoscaLogData = {
+            user_id: findUser.username,
             username: findUser.username,
-            amount: rollingAmount,
-            system_note: `${key}-${rollingType}${
-              rollingType === "LEVEL" ? `^${findUser.user_level}` : ""
-            }`,
-            admin_id: "시스템",
+            game_id: "ksports",
+            amount,
+            transaction_id: key,
             created_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
-            updated_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
-            vendor_key: "sports",
-            record_type: "베팅",
-            rolling_percentage: rollingPercentage,
-            prev_rolling_point: findUser.rolling_point,
-            bet_amount: amount,
+            status: 1,
+            rolling_point: rollingAmount,
+            rolling_point_percentage: rollingPercentage,
+            game_category: "sports",
+            bet_date: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
+            save_log_date: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
+            is_live: gameType === "라이브" ? 1 : 0,
+            odds_total: totalOdds,
+            expected_amount: Math.floor(amount * totalOdds),
           };
 
-          await RollingPoints.create(createRollingLogData, {
+          await KoscaLogs.create(createKoscaLogData, {
             transaction: t,
           });
         }
@@ -552,19 +558,4 @@ const checkCombine = async (gameType, bettingArr) => {
   }
 
   return isValid;
-};
-
-exports.bettingSportsTest = async (req, res) => {
-  const ip = utils.getIp(req);
-  const findOdds = await SportsOdds.findOne({
-    include: [
-      {
-        model: SportsMatches,
-      },
-      {
-        model: SportsMarket,
-      },
-    ],
-  });
-  return res.status(200).send(findOdds);
 };
