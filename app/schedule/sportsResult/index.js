@@ -147,6 +147,8 @@ const soccerResultProcess = async (match) => {
 // 야구 결과처리
 const baseballResultProcess = async (match) => {
   for await (const odds of match.sports_odds) {
+    const marketPeriod = odds.sports_market.period;
+
     if (match.status_kr !== "경기종료") {
       let endMarketArr = [];
       if (match.period_id > 201) {
@@ -192,6 +194,8 @@ const baseballResultProcess = async (match) => {
 // 아이스하키 결과처리
 const icehockeyResultProcess = async (match) => {
   for await (const odds of match.sports_odds) {
+    const marketPeriod = odds.sports_market.period;
+
     if (match.status_kr !== "경기종료") {
       let endMarketArr = [];
       if (match.period_id > 401 && match.period_id !== 404) {
@@ -222,6 +226,8 @@ const icehockeyResultProcess = async (match) => {
 // 농구 결과처리
 const basketballResultProcess = async (match) => {
   for await (const odds of match.sports_odds) {
+    const marketPeriod = odds.sports_market.period;
+
     if (match.status_kr !== "경기종료") {
       let endMarketArr = [];
       if (match.period_id > 301) {
@@ -255,6 +261,8 @@ const basketballResultProcess = async (match) => {
 // 배구 결과처리
 const volleyballResultProcess = async (match) => {
   for await (const odds of match.sports_odds) {
+    const marketPeriod = odds.sports_market.period;
+
     if (match.status_kr !== "경기종료") {
       let endMarketArr = [];
       if (match.period_id > 501) {
@@ -314,6 +322,8 @@ const tennisResultProcess = async (match) => {
 // 미식축구 결과처리
 const americanfootballResultProcess = async (match) => {
   for await (const odds of match.sports_odds) {
+    const marketPeriod = odds.sports_market.period;
+
     if (match.status_kr !== "경기종료") {
       let endMarketArr = [];
       if (match.period_id > 901) {
