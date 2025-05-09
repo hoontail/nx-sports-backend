@@ -836,13 +836,19 @@ exports.getSportsBetHistoryForAdmin = async (req, res) => {
 
   try {
     const findSportsBetHistory = await SportsBetHistory.findAndCountAll({
-      include: {
-        include: {
-          model: SportsMarket,
+      include: [
+        {
+          attributes: ["id"],
+          model: Users,
         },
-        model: SportsBetDetail,
-        where: detailCondition,
-      },
+        {
+          include: {
+            model: SportsMarket,
+          },
+          model: SportsBetDetail,
+          where: detailCondition,
+        },
+      ],
       where: condition,
       offset,
       limit,

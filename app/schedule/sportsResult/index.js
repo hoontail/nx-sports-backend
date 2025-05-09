@@ -113,13 +113,13 @@ exports.sportsResultProcess = async () => {
 const soccerResultProcess = async (match) => {
   const resultJson = JSON.parse(match.score);
 
-  // 0: 패, 1: 승, 2: 무
-  let result;
-
-  let homeScore = parseInt(resultJson.home.ft);
-  let awayScore = parseInt(resultJson.away.ft);
-
   for await (const odds of match.sports_odds) {
+    // 0: 패, 1: 승, 2: 무
+    let result;
+
+    let homeScore = parseInt(resultJson.home.ft);
+    let awayScore = parseInt(resultJson.away.ft);
+
     const marketType = odds.sports_market.type;
     const marketPeriod = odds.sports_market.period;
     const oddsLine = parseFloat(odds.odds_line);
@@ -193,13 +193,13 @@ const soccerResultProcess = async (match) => {
 const baseballResultProcess = async (match) => {
   const resultJson = JSON.parse(match.score);
 
-  // 0: 패, 1: 승, 2: 무
-  let result;
-
-  let homeScore = parseInt(resultJson.home.ft);
-  let awayScore = parseInt(resultJson.away.ft);
-
   for await (const odds of match.sports_odds) {
+    // 0: 패, 1: 승, 2: 무
+    let result;
+
+    let homeScore = parseInt(resultJson.home.ft);
+    let awayScore = parseInt(resultJson.away.ft);
+
     const marketType = odds.sports_market.type;
     const marketPeriod = odds.sports_market.period;
     const oddsLine = parseFloat(odds.odds_line);
@@ -355,13 +355,13 @@ const baseballResultProcess = async (match) => {
 const icehockeyResultProcess = async (match) => {
   const resultJson = JSON.parse(match.score);
 
-  // 0: 패, 1: 승, 2: 무
-  let result;
-
-  let homeScore = parseInt(resultJson.home.ft);
-  let awayScore = parseInt(resultJson.away.ft);
-
   for await (const odds of match.sports_odds) {
+    // 0: 패, 1: 승, 2: 무
+    let result;
+
+    let homeScore = parseInt(resultJson.home.ft);
+    let awayScore = parseInt(resultJson.away.ft);
+
     const marketType = odds.sports_market.type;
     const marketPeriod = odds.sports_market.period;
     const oddsLine = parseFloat(odds.odds_line);
@@ -435,13 +435,13 @@ const icehockeyResultProcess = async (match) => {
 const basketballResultProcess = async (match) => {
   const resultJson = JSON.parse(match.score);
 
-  // 0: 패, 1: 승, 2: 무
-  let result;
-
-  let homeScore = parseInt(resultJson.home.ft);
-  let awayScore = parseInt(resultJson.away.ft);
-
   for await (const odds of match.sports_odds) {
+    // 0: 패, 1: 승, 2: 무
+    let result;
+
+    let homeScore = parseInt(resultJson.home.ft);
+    let awayScore = parseInt(resultJson.away.ft);
+
     const marketType = odds.sports_market.type;
     const marketPeriod = odds.sports_market.period;
     const oddsLine = parseFloat(odds.odds_line);
@@ -526,35 +526,35 @@ const basketballResultProcess = async (match) => {
 const volleyballResultProcess = async (match) => {
   const resultJson = JSON.parse(match.score);
 
-  // 0: 패, 1: 승, 2: 무
-  let result;
-
-  let homeScore =
-    parseInt(resultJson.home["1"] ?? "0") +
-    parseInt(resultJson.home["2"] ?? "0") +
-    parseInt(resultJson.home["3"] ?? "0") +
-    parseInt(resultJson.home["4"] ?? "0") +
-    parseInt(resultJson.home["5"] ?? "0");
-  let awayScore =
-    parseInt(resultJson.away["1"] ?? "0") +
-    parseInt(resultJson.away["2"] ?? "0") +
-    parseInt(resultJson.away["3"] ?? "0") +
-    parseInt(resultJson.away["4"] ?? "0") +
-    parseInt(resultJson.away["5"] ?? "0");
-  let homeSetScore =
-    parseInt(resultJson.home["1_set"] ?? "0") +
-    parseInt(resultJson.home["2_set"] ?? "0") +
-    parseInt(resultJson.home["3_set"] ?? "0") +
-    parseInt(resultJson.home["4_set"] ?? "0") +
-    parseInt(resultJson.home["5_set"] ?? "0");
-  let awaySetScore =
-    parseInt(resultJson.away["1_set"] ?? "0") +
-    parseInt(resultJson.away["2_set"] ?? "0") +
-    parseInt(resultJson.away["3_set"] ?? "0") +
-    parseInt(resultJson.away["4_set"] ?? "0") +
-    parseInt(resultJson.away["5_set"] ?? "0");
-
   for await (const odds of match.sports_odds) {
+    // 0: 패, 1: 승, 2: 무
+    let result;
+
+    let homeScore =
+      parseInt(resultJson.home["1"] ?? "0") +
+      parseInt(resultJson.home["2"] ?? "0") +
+      parseInt(resultJson.home["3"] ?? "0") +
+      parseInt(resultJson.home["4"] ?? "0") +
+      parseInt(resultJson.home["5"] ?? "0");
+    let awayScore =
+      parseInt(resultJson.away["1"] ?? "0") +
+      parseInt(resultJson.away["2"] ?? "0") +
+      parseInt(resultJson.away["3"] ?? "0") +
+      parseInt(resultJson.away["4"] ?? "0") +
+      parseInt(resultJson.away["5"] ?? "0");
+    let homeSetScore =
+      parseInt(resultJson.home["1_set"] ?? "0") +
+      parseInt(resultJson.home["2_set"] ?? "0") +
+      parseInt(resultJson.home["3_set"] ?? "0") +
+      parseInt(resultJson.home["4_set"] ?? "0") +
+      parseInt(resultJson.home["5_set"] ?? "0");
+    let awaySetScore =
+      parseInt(resultJson.away["1_set"] ?? "0") +
+      parseInt(resultJson.away["2_set"] ?? "0") +
+      parseInt(resultJson.away["3_set"] ?? "0") +
+      parseInt(resultJson.away["4_set"] ?? "0") +
+      parseInt(resultJson.away["5_set"] ?? "0");
+
     const marketType = odds.sports_market.type;
     const marketPeriod = odds.sports_market.period;
     const marketId = odds.market_id;
@@ -662,27 +662,27 @@ const volleyballResultProcess = async (match) => {
 const tabletennisResultProcess = async (match) => {
   const resultJson = JSON.parse(match.score);
 
-  // 0: 패, 1: 승, 2: 무
-  let result;
-
-  let homeScore =
-    parseInt(resultJson.home["1_set"] ?? "0") +
-    parseInt(resultJson.home["2_set"] ?? "0") +
-    parseInt(resultJson.home["3_set"] ?? "0") +
-    parseInt(resultJson.home["4_set"] ?? "0") +
-    parseInt(resultJson.home["5_set"] ?? "0") +
-    parseInt(resultJson.home["6_set"] ?? "0") +
-    parseInt(resultJson.home["7_set"] ?? "0");
-  let awayScore =
-    parseInt(resultJson.away["1_set"] ?? "0") +
-    parseInt(resultJson.away["2_set"] ?? "0") +
-    parseInt(resultJson.away["3_set"] ?? "0") +
-    parseInt(resultJson.away["4_set"] ?? "0") +
-    parseInt(resultJson.away["5_set"] ?? "0") +
-    parseInt(resultJson.away["6_set"] ?? "0") +
-    parseInt(resultJson.away["7_set"] ?? "0");
-
   for await (const odds of match.sports_odds) {
+    // 0: 패, 1: 승, 2: 무
+    let result;
+
+    let homeScore =
+      parseInt(resultJson.home["1_set"] ?? "0") +
+      parseInt(resultJson.home["2_set"] ?? "0") +
+      parseInt(resultJson.home["3_set"] ?? "0") +
+      parseInt(resultJson.home["4_set"] ?? "0") +
+      parseInt(resultJson.home["5_set"] ?? "0") +
+      parseInt(resultJson.home["6_set"] ?? "0") +
+      parseInt(resultJson.home["7_set"] ?? "0");
+    let awayScore =
+      parseInt(resultJson.away["1_set"] ?? "0") +
+      parseInt(resultJson.away["2_set"] ?? "0") +
+      parseInt(resultJson.away["3_set"] ?? "0") +
+      parseInt(resultJson.away["4_set"] ?? "0") +
+      parseInt(resultJson.away["5_set"] ?? "0") +
+      parseInt(resultJson.away["6_set"] ?? "0") +
+      parseInt(resultJson.away["7_set"] ?? "0");
+
     const marketType = odds.sports_market.type;
     const marketPeriod = odds.sports_market.period;
 
@@ -713,36 +713,36 @@ const tabletennisResultProcess = async (match) => {
 const tennisResultProcess = async (match) => {
   const resultJson = JSON.parse(match.score);
 
-  // 0: 패, 1: 승, 2: 무
-  let result;
-
-  let homeScore =
-    parseInt(resultJson.home["1"] ?? "0") +
-    parseInt(resultJson.home["2"] ?? "0") +
-    parseInt(resultJson.home["3"] ?? "0") +
-    parseInt(resultJson.home["4"] ?? "0") +
-    parseInt(resultJson.home["5"] ?? "0");
-  let awayScore =
-    parseInt(resultJson.away["1"] ?? "0") +
-    parseInt(resultJson.away["2"] ?? "0") +
-    parseInt(resultJson.away["3"] ?? "0") +
-    parseInt(resultJson.away["4"] ?? "0") +
-    parseInt(resultJson.away["5"] ?? "0");
-
-  let homeSetScore =
-    parseInt(resultJson.home["1_set"] ?? "0") +
-    parseInt(resultJson.home["2_set"] ?? "0") +
-    parseInt(resultJson.home["3_set"] ?? "0") +
-    parseInt(resultJson.home["4_set"] ?? "0") +
-    parseInt(resultJson.home["5_set"] ?? "0");
-  let awaySetScore =
-    parseInt(resultJson.away["1_set"] ?? "0") +
-    parseInt(resultJson.away["2_set"] ?? "0") +
-    parseInt(resultJson.away["3_set"] ?? "0") +
-    parseInt(resultJson.away["4_set"] ?? "0") +
-    parseInt(resultJson.away["5_set"] ?? "0");
-
   for await (const odds of match.sports_odds) {
+    // 0: 패, 1: 승, 2: 무
+    let result;
+
+    let homeScore =
+      parseInt(resultJson.home["1"] ?? "0") +
+      parseInt(resultJson.home["2"] ?? "0") +
+      parseInt(resultJson.home["3"] ?? "0") +
+      parseInt(resultJson.home["4"] ?? "0") +
+      parseInt(resultJson.home["5"] ?? "0");
+    let awayScore =
+      parseInt(resultJson.away["1"] ?? "0") +
+      parseInt(resultJson.away["2"] ?? "0") +
+      parseInt(resultJson.away["3"] ?? "0") +
+      parseInt(resultJson.away["4"] ?? "0") +
+      parseInt(resultJson.away["5"] ?? "0");
+
+    let homeSetScore =
+      parseInt(resultJson.home["1_set"] ?? "0") +
+      parseInt(resultJson.home["2_set"] ?? "0") +
+      parseInt(resultJson.home["3_set"] ?? "0") +
+      parseInt(resultJson.home["4_set"] ?? "0") +
+      parseInt(resultJson.home["5_set"] ?? "0");
+    let awaySetScore =
+      parseInt(resultJson.away["1_set"] ?? "0") +
+      parseInt(resultJson.away["2_set"] ?? "0") +
+      parseInt(resultJson.away["3_set"] ?? "0") +
+      parseInt(resultJson.away["4_set"] ?? "0") +
+      parseInt(resultJson.away["5_set"] ?? "0");
+
     const marketType = odds.sports_market.type;
     const marketPeriod = odds.sports_market.period;
     const oddsLine = parseFloat(odds.odds_line);
@@ -755,11 +755,11 @@ const tennisResultProcess = async (match) => {
     }
 
     if (marketType === "승패") {
-      if (homeSetScore > homeSetScore) {
+      if (homeSetScore > awaySetScore) {
         result = 1;
-      } else if (homeSetScore < homeSetScore) {
+      } else if (homeSetScore < awaySetScore) {
         result = 0;
-      } else if (homeSetScore === homeSetScore) {
+      } else if (homeSetScore === awaySetScore) {
         result = 2;
       }
     } else if (marketType === "핸디캡") {
@@ -792,13 +792,13 @@ const tennisResultProcess = async (match) => {
 const americanfootballResultProcess = async (match) => {
   const resultJson = JSON.parse(match.score);
 
-  // 0: 패, 1: 승, 2: 무
-  let result;
-
-  let homeScore = parseInt(resultJson.home.ft);
-  let awayScore = parseInt(resultJson.away.ft);
-
   for await (const odds of match.sports_odds) {
+    // 0: 패, 1: 승, 2: 무
+    let result;
+
+    let homeScore = parseInt(resultJson.home.ft);
+    let awayScore = parseInt(resultJson.away.ft);
+
     const marketType = odds.sports_market.type;
     const marketPeriod = odds.sports_market.period;
     const oddsLine = parseFloat(odds.odds_line);
@@ -869,13 +869,13 @@ const americanfootballResultProcess = async (match) => {
 const boxingResultProcess = async (match) => {
   const resultJson = JSON.parse(match.score);
 
-  // 0: 패, 1: 승, 2: 무
-  let result;
-
-  let homeScore = parseInt(resultJson.home.score);
-  let awayScore = parseInt(resultJson.away.score);
-
   for await (const odds of match.sports_odds) {
+    // 0: 패, 1: 승, 2: 무
+    let result;
+
+    let homeScore = parseInt(resultJson.home.score);
+    let awayScore = parseInt(resultJson.away.score);
+
     const marketType = odds.sports_market.type;
 
     if (marketType === "승패") {
@@ -900,13 +900,12 @@ const boxingResultProcess = async (match) => {
 const esportsResultProcess = async (match) => {
   const resultJson = JSON.parse(match.score);
 
-  // 0: 패, 1: 승, 2: 무
-  let result;
-
-  let homeScore = parseInt(resultJson.home.score);
-  let awayScore = parseInt(resultJson.away.score);
-
   for await (const odds of match.sports_odds) {
+    // 0: 패, 1: 승, 2: 무
+    let result;
+    let homeScore = parseInt(resultJson.home.score);
+    let awayScore = parseInt(resultJson.away.score);
+
     const marketType = odds.sports_market.type;
     const marketPeriod = odds.sports_market.period;
     const oddsLine = parseFloat(odds.odds_line);
@@ -937,25 +936,37 @@ const esportsResultProcess = async (match) => {
     } else if (marketPeriod === "2세트" && marketType === "승패") {
       homeScore = parseInt(resultJson.home["2"]);
       awayScore = parseInt(resultJson.away["2"]);
-    } else if (marketPeriod === "2세트" && marketType === "킬 합계") {
+    } else if (
+      marketPeriod === "2세트" &&
+      (marketType === "킬 합계" || marketType === "킬 핸디캡")
+    ) {
       homeScore = parseInt(resultJson.home["k2"]);
       awayScore = parseInt(resultJson.away["k2"]);
     } else if (marketPeriod === "3세트" && marketType === "승패") {
       homeScore = parseInt(resultJson.home["3"]);
       awayScore = parseInt(resultJson.away["3"]);
-    } else if (marketPeriod === "3세트" && marketType === "킬 합계") {
+    } else if (
+      marketPeriod === "3세트" &&
+      (marketType === "킬 합계" || marketType === "킬 핸디캡")
+    ) {
       homeScore = parseInt(resultJson.home["k3"]);
       awayScore = parseInt(resultJson.away["k3"]);
     } else if (marketPeriod === "4세트" && marketType === "승패") {
       homeScore = parseInt(resultJson.home["4"]);
       awayScore = parseInt(resultJson.away["4"]);
-    } else if (marketPeriod === "4세트" && marketType === "킬 합계") {
+    } else if (
+      marketPeriod === "4세트" &&
+      (marketType === "킬 합계" || marketType === "킬 핸디캡")
+    ) {
       homeScore = parseInt(resultJson.home["k4"]);
       awayScore = parseInt(resultJson.away["k4"]);
     } else if (marketPeriod === "5세트" && marketType === "승패") {
       homeScore = parseInt(resultJson.home["5"]);
       awayScore = parseInt(resultJson.away["5"]);
-    } else if (marketPeriod === "5세트" && marketType === "킬 합계") {
+    } else if (
+      marketPeriod === "5세트" &&
+      (marketType === "킬 합계" || marketType === "킬 핸디캡")
+    ) {
       homeScore = parseInt(resultJson.home["k5"]);
       awayScore = parseInt(resultJson.away["k5"]);
     }
