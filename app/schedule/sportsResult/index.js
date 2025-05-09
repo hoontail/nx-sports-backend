@@ -122,6 +122,8 @@ exports.sportsResultProcess = async () => {
 // 축구 결과처리
 const soccerResultProcess = async (match) => {
   for await (const odds of match.sports_odds) {
+    const marketPeriod = odds.sports_market.period;
+
     if (match.period_id < 102 && marketPeriod === "전반전") continue;
 
     if (match.status_kr !== "경기종료" && marketPeriod === "후반전") continue;
