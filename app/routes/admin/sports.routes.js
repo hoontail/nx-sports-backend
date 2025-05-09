@@ -168,4 +168,18 @@ router.patch(
   sportsUpdateController.updateBetDetail
 );
 
+// 스코어 수정 미리보기
+router.get(
+  "/score/preview",
+  [rateLimit.apiLimiter, authJwt.adminVerifyToken],
+  sportsListController.getUpdateScorePerview
+);
+
+// 스코어 수정 미리보기
+router.patch(
+  "/score",
+  [rateLimit.apiLimiter, authJwt.adminVerifyToken],
+  sportsUpdateController.updateMatchScore
+);
+
 module.exports = router;

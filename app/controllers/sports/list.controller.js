@@ -11,6 +11,7 @@ const SportsBetHistory = db.sports_bet_history;
 const SportsBetDetail = db.sports_bet_detail;
 const Users = db.up_users;
 
+const { getSportsResult } = require("../../helpers/sportsResult");
 const helpers = require("../../helpers");
 const moment = require("moment");
 
@@ -858,6 +859,159 @@ exports.getSportsBetHistoryForAdmin = async (req, res) => {
 
     const data = helpers.getPagingData(findSportsBetHistory, page, limit);
     return res.status(200).send(data);
+  } catch (err) {
+    console.log(err);
+    return res.status(500).send({
+      message: "Server Error",
+    });
+  }
+};
+
+exports.getUpdateScorePerview = async (req, res) => {
+  const { id, score } = req.query;
+
+  try {
+    const findMatch = await SportsMatches.findOne({
+      where: {
+        id,
+      },
+    });
+
+    if (!findMatch) {
+      return res.status(400).send({
+        message: "존재하지 않는 경기입니다",
+      });
+    }
+
+    const findSportsBetDetail = await SportsBetDetail.findAll({
+      include: [
+        {
+          include: {
+            model: Users,
+          },
+          model: SportsBetHistory,
+        },
+        {
+          model: SportsMarket,
+        },
+      ],
+      where: {
+        match_id: findMatch.match_id,
+      },
+    });
+
+    const diffResultHistory = [];
+
+    for await (const detail of findSportsBetDetail) {
+      const result = getSportsResult(detail.sports_name, detail, score);
+
+      if (detail.result_type !== result) {
+        let status;
+        if (detail.bet_type === result) {
+          // 적중
+          status = 1;
+        } else if (!detail.draw_odds && result === 2) {
+          // 적특
+          status = 3;
+        } else {
+          // 낙첨
+          status = 2;
+        }
+
+        detail.setDataValue("update_result_type", result);
+        detail.setDataValue("update_status", status);
+
+        const historyStatus = detail.sports_bet_history.status;
+        if ([0, 1, 2, 3].includes(historyStatus)) {
+          // 적중, 적특 => 낙첨
+          if ((historyStatus === 1 || historyStatus === 3) && status === 2) {
+            detail.sports_bet_history.setDataValue("update_win_amount", 0);
+          }
+
+          // 적중 체크
+          if (status === 1 || status === 3) {
+            const findOtherDetail = await SportsBetDetail.findAll({
+              where: {
+                sports_bet_history_id: detail.sports_bet_history_id,
+                id: {
+                  [Op.ne]: detail.id,
+                },
+              },
+            });
+
+            // 취소 (적특)
+            const isAllCanceled = findOtherDetail.every((x) => x.status === 3);
+            if (status === 3 && isAllCanceled) {
+              detail.sports_bet_history.setDataValue(
+                "update_win_amount",
+                detail.sports_bet_history.bet_amount
+              );
+            } else if (
+              !findOtherDetail.some((x) => x.status === 0 || x.status === 2)
+            ) {
+              const findSportsConfig = await SportsConfigs.findOne();
+
+              // 적중
+              let totalOdds = 1;
+
+              if (status === 1) {
+                totalOdds *= detail.odds;
+              }
+
+              findOtherDetail.forEach((x) => {
+                if (x.status === 1) {
+                  totalOdds *= x.odds;
+                }
+              });
+
+              let betType;
+              if (findOtherDetail.length === 1) betType = "single";
+              if (findOtherDetail.length > 1) betType = "multi";
+
+              // 단폴 배당 차감
+              if (betType === "single" && findSportsConfig.single_minus_odds) {
+                totalOdds -= findSportsConfig.single_minus_odds;
+              } else if (
+                findOtherDetail.length === 1 &&
+                findSportsConfig.two_minus_odds
+              ) {
+                // 두폴 배당 차감
+                totalOdds -= findSportsConfig.two_minus_odds;
+              }
+
+              if (totalOdds < 1) {
+                totalOdds = 1;
+              }
+
+              totalOdds = parseFloat(totalOdds.toFixed(2));
+
+              let winAmount = Math.floor(
+                detail.sports_bet_history.bet_amount * totalOdds
+              );
+              let maxWinAmount;
+
+              maxWinAmount =
+                detail.sports_bet_history.up_user[
+                  `sports_${betType}_max_win_amount`
+                ] ?? findSportsConfig[`${betType}_max_win_amount`];
+
+              if (winAmount > maxWinAmount) {
+                winAmount = maxWinAmount;
+              }
+
+              detail.sports_bet_history.setDataValue(
+                "update_win_amount",
+                winAmount
+              );
+            }
+          }
+        }
+
+        diffResultHistory.push(detail);
+      }
+    }
+
+    return res.status(200).send(diffResultHistory);
   } catch (err) {
     console.log(err);
     return res.status(500).send({
