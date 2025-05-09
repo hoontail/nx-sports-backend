@@ -678,7 +678,7 @@ exports.getSportsMatchListForAdmin = async (req, res) => {
       SELECT DISTINCT bh.id, bh.bet_amount
       FROM sports_bet_detail bd
       JOIN sports_bet_history bh ON bd.sports_bet_history_id = bh.id
-      WHERE bd.match_id = sports_matches.match_id AND bh.status != 3
+      WHERE bd.match_id = sports_matches.match_id AND bh.status NOT IN (4, 5)
     ) AS distinct_bets
   )`);
 
@@ -688,7 +688,7 @@ exports.getSportsMatchListForAdmin = async (req, res) => {
       SELECT DISTINCT bh.id, bh.win_amount
       FROM sports_bet_detail bd
       JOIN sports_bet_history bh ON bd.sports_bet_history_id = bh.id
-      WHERE bd.match_id = sports_matches.match_id AND bh.status != 3
+      WHERE bd.match_id = sports_matches.match_id AND bh.status NOT IN (4, 5)
     ) AS distinct_bets
   )`);
 
@@ -716,10 +716,50 @@ exports.getSportsMatchListForAdmin = async (req, res) => {
       order: [orderInit],
     });
 
+    const matchIdsResult = await SportsMatches.findAll({
+      where: condition,
+      attributes: ["match_id"],
+    });
+
+    const matchIds = matchIdsResult.map((row) => row.match_id);
+
+    let totalSummary = {
+      total_bet_amount: 0,
+      total_win_amount: 0,
+    };
+
+    if (matchIds.length > 0) {
+      const findDetails = await SportsBetDetail.findAll({
+        attributes: ["sports_bet_history_id"],
+        include: {
+          attributes: ["id", "bet_amount", "win_amount"],
+          model: SportsBetHistory,
+          where: {
+            status: {
+              [Op.notIn]: [4, 5],
+            },
+          },
+        },
+        where: {
+          match_id: matchIds,
+        },
+      });
+
+      const historyIds = [];
+      findDetails.forEach((x) => {
+        if (!historyIds.includes(x.sports_bet_history_id)) {
+          historyIds.push(x.sports_bet_history_id);
+          totalSummary.total_bet_amount += x.sports_bet_history.bet_amount;
+          totalSummary.total_win_amount += x.sports_bet_history.win_amount;
+        }
+      });
+    }
+
     const data = helpers.getPagingData(findSportsMatches, page, limit);
+    data.total_bet_amount = totalSummary.total_bet_amount || 0;
+    data.total_win_amount = totalSummary.total_win_amount || 0;
     return res.status(200).send(data);
   } catch (err) {
-    console.log(err);
     return res.status(500).send({
       message: "Server Error",
     });
@@ -736,7 +776,7 @@ exports.getSportsMatchViewForAdmin = async (req, res) => {
         SELECT DISTINCT bh.id, bh.bet_amount
         FROM sports_bet_detail bd
         JOIN sports_bet_history bh ON bd.sports_bet_history_id = bh.id
-        WHERE bd.match_id = sports_matches.match_id AND bh.status != 3
+        WHERE bd.match_id = sports_matches.match_id AND bh.status NOT IN (4, 5)
       ) AS distinct_bets
     )`);
 
@@ -746,7 +786,7 @@ exports.getSportsMatchViewForAdmin = async (req, res) => {
         SELECT DISTINCT bh.id, bh.win_amount
         FROM sports_bet_detail bd
         JOIN sports_bet_history bh ON bd.sports_bet_history_id = bh.id
-        WHERE bd.match_id = sports_matches.match_id AND bh.status != 3
+        WHERE bd.match_id = sports_matches.match_id AND bh.status NOT IN (4, 5)
       ) AS distinct_bets
     )`);
 
@@ -857,7 +897,30 @@ exports.getSportsBetHistoryForAdmin = async (req, res) => {
       distinct: true,
     });
 
+    const totalSummary = await SportsBetHistory.findAll({
+      attributes: [
+        [
+          literal(
+            `SUM(CASE WHEN status NOT IN (4, 5) THEN bet_amount ELSE 0 END)`
+          ),
+          "total_bet_amount",
+        ],
+        [
+          literal(
+            `SUM(CASE WHEN status NOT IN (4, 5) THEN win_amount ELSE 0 END)`
+          ),
+          "total_win_amount",
+        ],
+      ],
+      where: condition,
+      raw: true,
+    });
+
+    const [summary] = totalSummary;
+
     const data = helpers.getPagingData(findSportsBetHistory, page, limit);
+    data.total_bet_amount = summary.total_bet_amount || 0;
+    data.total_win_amount = summary.total_win_amount || 0;
     return res.status(200).send(data);
   } catch (err) {
     console.log(err);
