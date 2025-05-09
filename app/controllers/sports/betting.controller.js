@@ -300,7 +300,7 @@ exports.bettingSports = async (req, res) => {
           unablePeriodMap[odds.sports_match.sports_name];
 
         if (unablePeriodsFunc) {
-          const unablePeriods = unablePeriodsFunc(match);
+          const unablePeriods = unablePeriodsFunc(odds.sports_match);
 
           if (unablePeriods.includes(odds.sports_market.period)) {
             return res.status(400).send({
@@ -500,6 +500,7 @@ exports.bettingSports = async (req, res) => {
       message: "배팅이 완료되었습니다",
     });
   } catch (err) {
+    console.log(err);
     return res.status(500).send({
       message: "Server Error",
     });
