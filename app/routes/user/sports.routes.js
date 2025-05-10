@@ -3,6 +3,7 @@ const router = express.Router();
 const { rateLimit, authJwt } = require("../../middleware");
 const sportsListController = require("../../controllers/sports/list.controller");
 const sportsBettingController = require("../../controllers/sports/betting.controller");
+const sportsDeleteController = require("../../controllers/sports/delete.controller");
 
 router.use(function (req, res, next) {
   res.header(
@@ -52,6 +53,34 @@ router.get(
   "/result",
   [rateLimit.apiLimiter, authJwt.userVerifyToken],
   sportsListController.getResultListForUser
+);
+
+// 베팅내역
+router.get(
+  "/history",
+  [rateLimit.apiLimiter, authJwt.userVerifyToken],
+  sportsListController.getSportsBetHistoryForUser
+);
+
+// 베팅내역 삭제
+router.delete(
+  "/history/:key",
+  [rateLimit.apiLimiter, authJwt.userVerifyToken],
+  sportsDeleteController.deleteSportsBetHistoryForUser
+);
+
+// 스포츠 배팅 취소
+router.post(
+  "/betting/cancel",
+  [rateLimit.apiLimiter, authJwt.userVerifyToken],
+  sportsBettingController.cancelBetHistoryForUser
+);
+
+// 스포츠 배팅 취소 확인
+router.post(
+  "/betting/cancel/check",
+  [rateLimit.apiLimiter, authJwt.userVerifyToken],
+  sportsBettingController.checkCancelBettingHistoryForUser
 );
 
 module.exports = router;

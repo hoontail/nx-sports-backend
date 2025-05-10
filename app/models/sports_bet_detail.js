@@ -74,15 +74,15 @@ module.exports = function (sequelize, DataTypes) {
         allowNull: false,
       },
       home_odds: {
-        type: DataTypes.DECIMAL(38, 2),
+        type: DataTypes.STRING(50),
         allowNull: true,
       },
       draw_odds: {
-        type: DataTypes.DECIMAL(38, 2),
+        type: DataTypes.STRING(50),
         allowNull: true,
       },
       away_odds: {
-        type: DataTypes.DECIMAL(38, 2),
+        type: DataTypes.STRING(50),
         allowNull: true,
       },
       odds_line: {

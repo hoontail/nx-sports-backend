@@ -26,11 +26,11 @@ module.exports = function (sequelize, DataTypes) {
         allowNull: false,
       },
       total_odds: {
-        type: DataTypes.DECIMAL(38, 2),
+        type: DataTypes.STRING(50),
         allowNull: false,
       },
       bonus_odds: {
-        type: DataTypes.DECIMAL(38, 2),
+        type: DataTypes.STRING(50),
         allowNull: true,
       },
       win_amount: {

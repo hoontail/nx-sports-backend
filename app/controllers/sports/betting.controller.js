@@ -363,8 +363,6 @@ exports.bettingSports = async (req, res) => {
       });
     }
 
-    totalOdds = totalOdds.toFixed(2);
-
     if (
       createBetDetailData.length === 1 &&
       findSportsConfig.single_minus_odds > 0
@@ -384,6 +382,8 @@ exports.bettingSports = async (req, res) => {
         totalOdds = 1;
       }
     }
+
+    totalOdds = totalOdds.toFixed(2);
 
     // 조합 체크
     if (createBetDetailData.length > 1) {
@@ -559,4 +559,207 @@ const checkCombine = async (gameType, bettingArr) => {
   }
 
   return isValid;
+};
+
+exports.cancelBetHistoryForUser = async (req, res) => {
+  const { key } = req.body;
+  const ip = utils.getIp(req);
+
+  try {
+    const findHistory = await SportsBetHistory.findOne({
+      include: [
+        {
+          model: Users,
+        },
+        {
+          model: SportsBetDetail,
+        },
+      ],
+      where: {
+        key,
+        username: req.username,
+        is_delete: 0,
+      },
+    });
+
+    if (!findHistory) {
+      return res.status(400).send({
+        message: "존재하지 않는 베팅내역입니다",
+      });
+    }
+
+    if (findHistory.status !== 0) {
+      return res.status(400).send({
+        message: "이미 처리된 베팅내역입니다",
+      });
+    }
+
+    const findSportsConfig = await SportsConfigs.findOne();
+
+    const findCanceledHistoryCount = await SportsBetHistory.count({
+      where: {
+        username: req.username,
+        status: 4,
+        canceled_at: {
+          [Op.between]: [
+            moment().format("YYYY-MM-DD 00:00:00"),
+            moment().format("YYYY-MM-DD 23:59:59"),
+          ],
+        },
+      },
+    });
+
+    if (findCanceledHistoryCount >= findSportsConfig.cancel_daily_count) {
+      return res.status(400).send({
+        message: `베팅취소는 하루 최대 ${findSportsConfig.cancel_daily_count}번입니다`,
+      });
+    }
+
+    if (
+      moment.utc(findHistory.created_at).format("YYYY-MM-DD HH:mm:ss") <
+      moment()
+        .subtract(findSportsConfig.cancel_after_bet_time, "minutes")
+        .format("YYYY-MM-DD HH:mm:ss")
+    ) {
+      return res.status(400).send({
+        message: `베팅 ${findSportsConfig.cancel_after_bet_time}분 이후는 취소가 불가능합니다`,
+      });
+    }
+
+    for (const detail of findHistory.sports_bet_details) {
+      if (
+        moment
+          .utc(detail.start_datetime)
+          .subtract(findSportsConfig.cancel_before_start_time, "minutes")
+          .format("YYYY-MM-DD HH:mm:ss") <
+        moment().format("YYYY-MM-DD HH:mm:ss")
+      ) {
+        return res.status(400).send({
+          message: `경기시작 ${findSportsConfig.cancel_before_start_time}분 전까지만 취소가 가능합니다`,
+        });
+      }
+
+      if (
+        moment.utc(detail.start_datetime).format("YYYY-MM-DD HH:mm:ss") <
+        moment().format("YYYY-MM-DD HH:mm:ss")
+      ) {
+        return res.status(400).send({
+          message: "이미 시직된 경기는 취소가 불가능합니다",
+        });
+      }
+    }
+
+    await db.sequelize.transaction(async (t) => {
+      await SportsBetHistory.update(
+        {
+          status: 4,
+          canceled_at: moment().format("YYYY-MM-DD HH:mm:ss"),
+          canceled_ip: ip,
+        },
+        {
+          where: {
+            key,
+          },
+          transaction: t,
+        }
+      );
+
+      await Users.increment(
+        {
+          balance: findHistory.bet_amount,
+          bet_total: -findHistory.bet_amount,
+        },
+        {
+          where: {
+            username: req.username,
+          },
+          transaction: t,
+        }
+      );
+
+      // 배팅취소 머니로그
+      const createBalanceLogData = {
+        username: findHistory.username,
+        amount: findHistory.bet_amount,
+        system_note: `KSPORTS ${key}`,
+        admin_id: "시스템",
+        created_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
+        updated_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
+        record_type: "베팅취소",
+        prev_balance: findHistory.up_user.balance,
+        after_balance: findHistory.up_user.balance + findHistory.bet_amount,
+      };
+
+      await BalanceLogs.create(createBalanceLogData, {
+        transaction: t,
+      });
+
+      // 롤링로그 체크
+      const findKoscaLogs = await KoscaLogs.findOne({
+        where: {
+          username: req.username,
+          transaction_id: key,
+          game_id: "ksports",
+          status: 1,
+        },
+        transaction: t,
+      });
+
+      if (findKoscaLogs) {
+        await KoscaLogs.update(
+          {
+            status: 3,
+            bet_result: findHistory.bet_amount,
+            net_loss: 0,
+            updated_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
+          },
+          {
+            where: {
+              id: findKoscaLogs.id,
+            },
+            transaction: t,
+          }
+        );
+      }
+    });
+
+    return res.status(200).send({
+      message: "베팅이 취소되었습니다",
+    });
+  } catch (err) {
+    console.log(err);
+    return res.status(500).send({
+      message: "Server Error",
+    });
+  }
+};
+
+exports.checkCancelBettingHistoryForUser = async (req, res) => {
+  try {
+    const findSportsConfig = await SportsConfigs.findOne();
+
+    const findCanceledHistoryCount = await SportsBetHistory.count({
+      where: {
+        username: req.username,
+        status: 4,
+        canceled_at: {
+          [Op.between]: [
+            moment().format("YYYY-MM-DD 00:00:00"),
+            moment().format("YYYY-MM-DD 23:59:59"),
+          ],
+        },
+      },
+    });
+
+    return res.status(200).send({
+      message: findSportsConfig.cancel_message.replace(
+        "{count}",
+        findSportsConfig.cancel_daily_count - findCanceledHistoryCount
+      ),
+    });
+  } catch {
+    return res.status(500).send({
+      message: "Server Error",
+    });
+  }
 };

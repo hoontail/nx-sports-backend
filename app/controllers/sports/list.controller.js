@@ -214,7 +214,7 @@ exports.getSportsMatchListForUser = async (req, res) => {
         const arr = [];
         if (
           x.status_kr !== "경기전" ||
-          moment.utc(match.start_datetime).format("YYYY-MM-DD HH:mm:ss") <
+          moment.utc(x.start_datetime).format("YYYY-MM-DD HH:mm:ss") <
             moment().format("YYYY-MM-DD HH:mm:ss")
         ) {
           arr.push(
@@ -1176,6 +1176,72 @@ exports.getResultListForUser = async (req, res) => {
     return res.status(200).send(data);
   } catch {
     return res.statsu(500).send({
+      message: "Server Error",
+    });
+  }
+};
+
+exports.getSportsBetHistoryForUser = async (req, res) => {
+  const { page } = req.query;
+  const { offset, limit } = helpers.getPagination(page, 20);
+  const condition = {
+    is_delete: 0,
+    username: req.username,
+  };
+
+  try {
+    const findHistory = await SportsBetHistory.findAndCountAll({
+      include: {
+        include: {
+          attributes: ["type", "period"],
+          model: SportsMarket,
+        },
+        attributes: [
+          "sports_name",
+          "sports_name_kr",
+          "country_kr",
+          "country_image",
+          "home_name",
+          "home_image",
+          "away_name",
+          "away_image",
+          "league_name",
+          "league_image",
+          "score",
+          "start_datetime",
+          "home_odds",
+          "draw_odds",
+          "away_odds",
+          "odds_line",
+          "odds",
+          "bet_type",
+          "result_type",
+          "status",
+        ],
+        model: SportsBetDetail,
+      },
+      attributes: [
+        "key",
+        "game_type",
+        "bet_amount",
+        "win_amount",
+        "total_odds",
+        "bonus_odds",
+        "status",
+        "created_at",
+      ],
+      where: condition,
+      limit,
+      offset,
+      order: [["created_at", "desc"]],
+      distinct: true,
+    });
+
+    const data = helpers.getPagingData(findHistory, page, limit);
+
+    return res.status(200).send(data);
+  } catch {
+    return res.status(500).send({
       message: "Server Error",
     });
   }
