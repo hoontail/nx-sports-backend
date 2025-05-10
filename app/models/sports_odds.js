@@ -79,6 +79,10 @@ module.exports = function (sequelize, DataTypes) {
         allowNull: true,
         defaultValue: 0,
       },
+      score: {
+        type: DataTypes.STRING(100),
+        allowNull: true,
+      },
     },
     {
       sequelize,

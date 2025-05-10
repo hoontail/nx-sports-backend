@@ -47,4 +47,11 @@ router.get(
   sportsListController.getMySportsConfigForUser
 );
 
+// 결과 목록
+router.get(
+  "/result",
+  [rateLimit.apiLimiter, authJwt.userVerifyToken],
+  sportsListController.getResultListForUser
+);
+
 module.exports = router;

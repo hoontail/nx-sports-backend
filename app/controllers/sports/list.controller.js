@@ -966,7 +966,8 @@ exports.getUpdateScorePerview = async (req, res) => {
     const diffResultHistory = [];
 
     for await (const detail of findSportsBetDetail) {
-      const result = getSportsResult(detail.sports_name, detail, score);
+      const getResult = getSportsResult(detail.sports_name, detail, score);
+      const result = getResult.result;
 
       if (detail.result_type !== result) {
         let status;
@@ -1076,8 +1077,73 @@ exports.getUpdateScorePerview = async (req, res) => {
 
     return res.status(200).send(diffResultHistory);
   } catch (err) {
-    console.log(err);
     return res.status(500).send({
+      message: "Server Error",
+    });
+  }
+};
+
+exports.getResultListForUser = async (req, res) => {
+  const { page, size, sportsName, teamName, leagueName } = req.query;
+  const { offset, limit } = helpers.getPagination(page, size);
+  const condition = {
+    result: {
+      [Op.ne]: null,
+    },
+    is_delete: 0,
+  };
+  const matchCondition = {};
+
+  if (sportsName) {
+    matchCondition.sports_name = sportsName;
+  }
+
+  if (teamName) {
+    matchCondition[Op.or] = [
+      {
+        home_name: {
+          [Op.like]: `%${teamName}%`,
+        },
+      },
+      {
+        away_name: {
+          [Op.like]: `%${teamName}%`,
+        },
+      },
+    ];
+  }
+
+  if (leagueName) {
+    matchCondition.league_name = {
+      [Op.like]: `%${leagueName}%`,
+    };
+  }
+
+  try {
+    const findOddsList = await SportsOdds.findAndCountAll({
+      attributes: [
+        "home_odds",
+        "draw_odds",
+        "away_odds",
+        "odds_line",
+        "result",
+      ],
+      include: [
+        {
+          attributes: ["type", "period"],
+          model: SportsMarket,
+        },
+      ],
+      where: condition,
+      limit,
+      offset,
+    });
+
+    const data = helpers.getPagingData(findOddsList, page, limit);
+
+    return res.status(200).send(data);
+  } catch {
+    return res.statsu(500).send({
       message: "Server Error",
     });
   }

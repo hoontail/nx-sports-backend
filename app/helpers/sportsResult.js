@@ -97,7 +97,10 @@ exports.soccerResult = (odds, score) => {
     }
   }
 
-  return result;
+  return {
+    result,
+    score: `${homeScore}:${awayScore}`,
+  };
 };
 
 exports.baseballResult = (odds, score) => {
@@ -220,7 +223,10 @@ exports.baseballResult = (odds, score) => {
     }
   }
 
-  return result;
+  return {
+    result,
+    score: `${homeScore}:${awayScore}`,
+  };
 };
 
 exports.icehockeyResult = (odds, score) => {
@@ -276,7 +282,10 @@ exports.icehockeyResult = (odds, score) => {
     }
   }
 
-  return result;
+  return {
+    result,
+    score: `${homeScore}:${awayScore}`,
+  };
 };
 
 exports.basketballResult = (odds, score) => {
@@ -338,7 +347,10 @@ exports.basketballResult = (odds, score) => {
     }
   }
 
-  return result;
+  return {
+    result,
+    score: `${homeScore}:${awayScore}`,
+  };
 };
 
 exports.volleyballResult = (odds, score) => {
@@ -447,7 +459,13 @@ exports.volleyballResult = (odds, score) => {
     }
   }
 
-  return result;
+  return {
+    result,
+    score:
+      marketType === "승패" || marketType === "승무패" || marketId === 18002
+        ? `${homeSetScore}:${awaySetScore}`
+        : `${homeScore}:${awayScore}`,
+  };
 };
 
 exports.tabletennisResult = (odds, score) => {
@@ -491,7 +509,10 @@ exports.tabletennisResult = (odds, score) => {
     }
   }
 
-  return result;
+  return {
+    result,
+    score: `${homeScore}:${awayScore}`,
+  };
 };
 
 exports.tennisResult = (odds, score) => {
@@ -563,7 +584,13 @@ exports.tennisResult = (odds, score) => {
     }
   }
 
-  return result;
+  return {
+    result,
+    score:
+      marketType === "승패"
+        ? `${homeSetScore}:${awaySetScore}`
+        : `${homeScore}:${awayScore}`,
+  };
 };
 
 exports.americanfootballResult = (odds, score) => {
@@ -616,7 +643,10 @@ exports.americanfootballResult = (odds, score) => {
     }
   }
 
-  return result;
+  return {
+    result,
+    score: `${homeScore}:${awayScore}`,
+  };
 };
 
 exports.boxingResult = (odds, score) => {
@@ -640,7 +670,10 @@ exports.boxingResult = (odds, score) => {
     }
   }
 
-  return result;
+  return {
+    result,
+    score: `${homeScore}:${awayScore}`,
+  };
 };
 
 exports.esportsResult = (odds, score) => {
@@ -744,5 +777,8 @@ exports.esportsResult = (odds, score) => {
     }
   }
 
-  return result;
+  return {
+    result,
+    score: `${homeScore}:${awayScore}`,
+  };
 };

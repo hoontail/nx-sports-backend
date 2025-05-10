@@ -768,7 +768,8 @@ exports.updateMatchScore = async (req, res) => {
     });
 
     for await (const detail of findSportsBetDetail) {
-      const result = getSportsResult(detail.sports_name, detail, score);
+      const getResult = getSportsResult(detail.sports_name, detail, score);
+      const result = getResult.result;
 
       if (detail.result_type !== result) {
         let status;
@@ -786,7 +787,7 @@ exports.updateMatchScore = async (req, res) => {
         let detailUpdateData = {
           result_type: result,
           status: status,
-          score: score,
+          score: getResult.score,
           resulted_at: moment().format("YYYY-MM-DD HH:mm:ss"),
         };
 
