@@ -1084,15 +1084,22 @@ exports.getUpdateScorePerview = async (req, res) => {
 };
 
 exports.getResultListForUser = async (req, res) => {
-  const { page, size, sportsName, teamName, leagueName } = req.query;
-  const { offset, limit } = helpers.getPagination(page, size);
+  const { page, sportsName, teamName, leagueName } = req.query;
+  const { offset, limit } = helpers.getPagination(page, 100);
   const condition = {
     result: {
       [Op.ne]: null,
     },
     is_delete: 0,
   };
-  const matchCondition = {};
+  const matchCondition = {
+    start_datetime: {
+      [Op.between]: [
+        moment().subtract(7, "days").format("YYYY-MM-DD HH:mm:ss"),
+        moment().format("YYYY-MM-DD HH:mm:ss"),
+      ],
+    },
+  };
 
   if (sportsName) {
     matchCondition.sports_name = sportsName;
@@ -1127,8 +1134,32 @@ exports.getResultListForUser = async (req, res) => {
         "away_odds",
         "odds_line",
         "result",
+        "score",
       ],
       include: [
+        {
+          attributes: [
+            "match_id",
+            "sports_name",
+            "sports_name_kr",
+            "status_kr",
+            "period_id",
+            "period_kr",
+            "league_id",
+            "league_name",
+            "league_image",
+            "home_name",
+            "home_image",
+            "away_name",
+            "away_image",
+            "country",
+            "country_kr",
+            "country_image",
+            "start_datetime",
+          ],
+          model: SportsMatches,
+          where: matchCondition,
+        },
         {
           attributes: ["type", "period"],
           model: SportsMarket,
@@ -1137,6 +1168,7 @@ exports.getResultListForUser = async (req, res) => {
       where: condition,
       limit,
       offset,
+      order: [[SportsMatches, "start_datetime", "desc"]],
     });
 
     const data = helpers.getPagingData(findOddsList, page, limit);
