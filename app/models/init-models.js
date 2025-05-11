@@ -11,6 +11,10 @@ var _sports_matches = require("./sports_matches");
 var _sports_odds = require("./sports_odds");
 var _up_users = require("./up_users");
 var _kosca_logs = require("./kosca_logs");
+var _mini_bet_history = require("./mini_bet_history");
+var _mini_bet_type = require("./mini_bet_type");
+var _mini_configs = require("./mini_configs");
+var _mini_games = require("./mini_games");
 
 function initModels(sequelize) {
   var balance_logs = _balance_logs(sequelize, DataTypes);
@@ -25,6 +29,10 @@ function initModels(sequelize) {
   var sports_odds = _sports_odds(sequelize, DataTypes);
   var up_users = _up_users(sequelize, DataTypes);
   var kosca_logs = _kosca_logs(sequelize, DataTypes);
+  var mini_bet_history = _mini_bet_history(sequelize, DataTypes);
+  var mini_bet_type = _mini_bet_type(sequelize, DataTypes);
+  var mini_configs = _mini_configs(sequelize, DataTypes);
+  var mini_games = _mini_games(sequelize, DataTypes);
 
   return {
     balance_logs,
@@ -39,6 +47,10 @@ function initModels(sequelize) {
     sports_odds,
     up_users,
     kosca_logs,
+    mini_bet_history,
+    mini_bet_type,
+    mini_configs,
+    mini_games,
   };
 }
 module.exports = initModels;

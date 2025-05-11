@@ -728,7 +728,6 @@ exports.cancelBetHistoryForUser = async (req, res) => {
       message: "베팅이 취소되었습니다",
     });
   } catch (err) {
-    console.log(err);
     return res.status(500).send({
       message: "Server Error",
     });

@@ -10,6 +10,8 @@ const userRoutes = require("./app/routes/user");
 const adminRoutes = require("./app/routes/admin");
 const sportsDataSchedule = require("./app/schedule/sportsData");
 const sportsResultSchedule = require("./app/schedule/sportsResult");
+const MiniDataSchedule = require("./app/schedule/miniData");
+const MiniResultSchedule = require("./app/schedule/miniResult");
 
 const app = express();
 const server = http.createServer(app);
@@ -46,6 +48,18 @@ if (process.env.INSTANCE_ID == 1) {
   schedule.scheduleJob({ hour: 00, minute: 00 }, function () {
     sportsDataSchedule.deleteOldSportsOdds();
   });
+}
+
+if (process.env.INSTANCE_ID == 2) {
+  schedule.scheduleJob({ hour: 23, minute: 59 }, function () {
+    MiniDataSchedule.addCoinPowerball();
+    MiniDataSchedule.addCoinLadder();
+    MiniDataSchedule.addEosPowerball();
+  });
+
+  MiniResultSchedule.coinPowerballResult();
+  MiniResultSchedule.coinLadderResult();
+  MiniResultSchedule.eosPowerballResult();
 }
 
 const PORT = process.env.PORT || 10010;
