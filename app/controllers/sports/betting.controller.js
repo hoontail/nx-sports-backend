@@ -653,6 +653,7 @@ exports.cancelBetHistoryForUser = async (req, res) => {
       await SportsBetHistory.update(
         {
           status: 4,
+          win_amount: findHistory.bet_amount,
           canceled_at: moment().format("YYYY-MM-DD HH:mm:ss"),
           canceled_ip: ip,
         },
