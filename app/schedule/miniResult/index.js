@@ -116,7 +116,7 @@ exports.coinLadderResult = async () => {
             }
           );
 
-          await ladderCalc("coin_ladder", minute, data);
+          await this.ladderCalc("coin_ladder", minute, data);
         }
       }
     }
