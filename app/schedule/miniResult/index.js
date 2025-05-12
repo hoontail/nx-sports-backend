@@ -2,6 +2,7 @@ const db = require("../../models");
 const MiniGames = db.mini_games;
 const MiniBetHistory = db.mini_bet_history;
 const MiniBetType = db.mini_bet_type;
+const MiniConfigs = db.mini_configs;
 const Users = db.up_users;
 const BalanceLogs = db.balance_logs;
 const KoscaLogs = db.kosca_logs;
@@ -210,6 +211,8 @@ exports.powerballCalc = async (game, minute, data) => {
       },
     });
 
+    const findMiniConfigs = await MiniConfigs.findOne();
+
     const pb = data.pb;
     let nSize;
     let pOddEven;
@@ -312,9 +315,14 @@ exports.powerballCalc = async (game, minute, data) => {
       const checkFn = conditionMap[type];
 
       const isWin = checkFn ? checkFn() : false;
-      const winAmount = isWin
-        ? Math.floor(history.bet_amount * history.odds)
-        : 0;
+      let winAmount = isWin ? Math.floor(history.bet_amount * history.odds) : 0;
+      const maxWinAmount =
+        history.up_user[`mini_max_win_amount`] ??
+        findMiniConfigs[`max_win_amount`];
+
+      if (winAmount > maxWinAmount) {
+        winAmount = maxWinAmount;
+      }
 
       const updateHistoryData = {
         status: isWin ? 1 : 2,
@@ -415,6 +423,8 @@ exports.ladderCalc = async (game, minute, data) => {
       },
     });
 
+    const findMiniConfigs = await MiniConfigs.findOne();
+
     const lr = data.lr;
     const line = data.line;
     const oe = data.oe;
@@ -437,9 +447,14 @@ exports.ladderCalc = async (game, minute, data) => {
       const checkFn = conditionMap[type];
 
       const isWin = checkFn ? checkFn() : false;
-      const winAmount = isWin
-        ? Math.floor(history.bet_amount * history.odds)
-        : 0;
+      let winAmount = isWin ? Math.floor(history.bet_amount * history.odds) : 0;
+      const maxWinAmount =
+        history.up_user[`mini_max_win_amount`] ??
+        findMiniConfigs[`max_win_amount`];
+
+      if (winAmount > maxWinAmount) {
+        winAmount = maxWinAmount;
+      }
 
       const updateHistoryData = {
         status: isWin ? 1 : 2,
