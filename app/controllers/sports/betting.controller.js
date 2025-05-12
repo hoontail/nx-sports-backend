@@ -68,9 +68,7 @@ exports.bettingSports = async (req, res) => {
     const isSingle = bettingArrParse.length === 1;
     const betType = isSingle ? "single" : "multi";
     const rollingType = findUser.rolling_point_type;
-    let systemNote;
     if (rollingType === "LEVEL") {
-      systemNote = `${key}-${rollingType}^${findUser.user_level}`;
       rollingPercentage =
         findLevelConfig[`sports_${betType}_rolling_percentage`];
     } else if (rollingType === "AGENT") {
@@ -81,11 +79,9 @@ exports.bettingSports = async (req, res) => {
       });
 
       if (findAgent) {
-        systemNote = `${key}-${rollingType}^${findUser.agent_username}`;
         rollingPercentage = findAgent[`sports_${betType}_rolling_percentage`];
       }
     } else if (rollingType === "INDIVIDUAL") {
-      systemNote = `${key}-${rollingType}`;
       rollingPercentage = findUser[`sports_${betType}_rolling_percentage`];
     }
 

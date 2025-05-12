@@ -555,6 +555,18 @@ module.exports = function (sequelize, DataTypes) {
         type: DataTypes.DECIMAL(5, 3),
         allowNull: true,
       },
+      mini_min_bet_amount: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
+      mini_max_bet_amount: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
+      mini_max_win_amount: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
     },
     {
       sequelize,
