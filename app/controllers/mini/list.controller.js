@@ -1,4 +1,6 @@
 const db = require("../../models");
+const Op = db.Sequelize.Op;
+const literal = db.Sequelize.literal;
 const MiniGames = db.mini_games;
 const MiniConfigs = db.mini_configs;
 const MiniBetType = db.mini_bet_type;
@@ -162,6 +164,182 @@ exports.getMiniConfigForUser = async (req, res) => {
 
     return res.status(200).send(config);
   } catch {
+    return res.status(500).send({
+      message: "Server Error",
+    });
+  }
+};
+
+exports.getMiniConfigForAdmin = async (req, res) => {
+  try {
+    const findMiniConfigs = await MiniConfigs.findOne();
+
+    return res.status(200).send(findMiniConfigs);
+  } catch {
+    return res.status(500).send({
+      message: "Server Error",
+    });
+  }
+};
+
+exports.getMiniBetTypeListForAdmin = async (req, res) => {
+  const { page, size, game, name, status } = req.query;
+  const { offset, limit } = helpers.getPagination(page, size);
+  const condition = {};
+
+  try {
+    if (game) {
+      condition.game = game;
+    }
+
+    if (name) {
+      condition.name = {
+        [Op.like]: `%${name}%`,
+      };
+    }
+
+    if (status) {
+      condition.status = status;
+    }
+
+    const findBetTypeList = await MiniBetType.findAndCountAll({
+      where: condition,
+      limit,
+      offset,
+      order: [
+        ["game", "asc"],
+        ["order", "asc"],
+      ],
+    });
+
+    const data = helpers.getPagingData(findBetTypeList, page, limit);
+
+    return res.status(200).send(data);
+  } catch {
+    return res.status(500).send({
+      message: "Server Error",
+    });
+  }
+};
+
+exports.getMiniBetTypeViewForAdmin = async (req, res) => {
+  const { id } = req.query;
+
+  try {
+    const findMiniBetType = await MiniBetType.findOne({
+      where: {
+        id,
+      },
+    });
+
+    if (!findMiniBetType) {
+      return res.status(400).send({
+        message: "존재하지 않는 베팅 타입입니다",
+      });
+    }
+
+    return res.status(200).send(findMiniBetType);
+  } catch {
+    return res.status(500).send({
+      message: "Server Error",
+    });
+  }
+};
+
+exports.getMiniBetHistoryForAdmin = async (req, res) => {
+  const {
+    page,
+    size,
+    from,
+    to,
+    game,
+    minute,
+    betTypeId,
+    username,
+    round,
+    key,
+    status,
+    sort,
+    order,
+  } = req.query;
+  const { offset, limit } = helpers.getPagination(page, size);
+  const condition = {};
+  let orderInit = ["start_datetime", "desc"];
+
+  try {
+    if (from && to) {
+      condition.created_at = {
+        [Op.between]: [from, to],
+      };
+    }
+
+    if (game) {
+      condition.game = game;
+    }
+
+    if (minute) {
+      condition.minute = minute;
+    }
+
+    if (betTypeId) {
+      condition.mini_bet_type_id = betTypeId;
+    }
+
+    if (username) {
+      condition.username = {
+        [Op.like]: `%${username}%`,
+      };
+    }
+
+    if (round) {
+      condition.date_round = round;
+    }
+
+    if (key) {
+      condition.key = key;
+    }
+
+    if (status) {
+      condition.status = status;
+    }
+
+    if (sort && order) {
+      orderInit = [sort, order];
+    }
+
+    const findMiniBetHistory = await MiniBetHistory.findAndCountAll({
+      include: [
+        {
+          model: Users,
+        },
+        {
+          model: MiniBetType,
+        },
+      ],
+      where: condition,
+      limit,
+      offset,
+      order: [orderInit],
+    });
+
+    const totalSummary = await MiniBetHistory.findAll({
+      attributes: [
+        [literal(`SUM(bet_amount)`), "total_bet_amount"],
+        [literal(`SUM(win_amount)`), "total_win_amount"],
+      ],
+      where: condition,
+      raw: true,
+    });
+
+    const [summary] = totalSummary;
+
+    const data = helpers.getPagingData(findMiniBetHistory, page, limit);
+    data.total_bet_amount = summary.total_bet_amount || 0;
+    data.total_win_amount = summary.total_win_amount || 0;
+
+    return res.status(200).send(data);
+  } catch (err) {
+    console.log(err);
     return res.status(500).send({
       message: "Server Error",
     });

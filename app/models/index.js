@@ -91,14 +91,9 @@ db.mini_bet_history.hasOne(db.mini_bet_type, {
   sourceKey: "mini_bet_type_id",
 });
 
-db.up_users.hasMany(db.mini_bet_history, {
+db.mini_bet_history.hasOne(db.up_users, {
   foreignKey: "username",
   sourceKey: "username",
-});
-
-db.mini_bet_history.belongsTo(db.up_users, {
-  foreignKey: "username",
-  targetKey: "username",
 });
 
 module.exports = db;
