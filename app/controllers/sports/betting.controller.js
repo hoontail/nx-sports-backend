@@ -28,6 +28,7 @@ exports.bettingSports = async (req, res) => {
     const ip = utils.getIp(req);
     let minBetAmount;
     let maxBetAmount;
+    let maxWinOdds;
     let rollingPercentage = 0;
     let totalOdds = 1;
 
@@ -92,6 +93,8 @@ exports.bettingSports = async (req, res) => {
     maxBetAmount =
       findUser[`sports_${betType}_max_bet_amount`] ??
       findSportsConfig[`${betType}_max_bet_amount`];
+
+    maxWinOdds = findSportsConfig[`${betType}_max_win_odds`].toFixed(2);
 
     if (minBetAmount > amount) {
       return res.status(400).send({
@@ -380,6 +383,10 @@ exports.bettingSports = async (req, res) => {
     }
 
     totalOdds = totalOdds.toFixed(2);
+
+    if (totalOdds > maxWinOdds) {
+      totalOdds = maxWinOdds;
+    }
 
     // 조합 체크
     if (createBetDetailData.length > 1) {

@@ -48,4 +48,11 @@ router.delete(
   miniDeleteController.deleteHistoryForUser
 );
 
+// 베팅내역 선택 삭제
+router.post(
+  "/history/delete",
+  [rateLimit.apiLimiter, authJwt.userVerifyToken],
+  miniDeleteController.deleteMultiHistoryForUser
+);
+
 module.exports = router;

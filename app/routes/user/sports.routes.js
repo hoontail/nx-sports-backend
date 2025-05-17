@@ -69,6 +69,13 @@ router.delete(
   sportsDeleteController.deleteSportsBetHistoryForUser
 );
 
+// 베팅내역 선택 삭제
+router.post(
+  "/history/delete",
+  [rateLimit.apiLimiter, authJwt.userVerifyToken],
+  sportsDeleteController.deleteMultiSportsBetHistoryForUser
+);
+
 // 스포츠 배팅 취소
 router.post(
   "/betting/cancel",

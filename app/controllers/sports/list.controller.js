@@ -1182,7 +1182,7 @@ exports.getResultListForUser = async (req, res) => {
 };
 
 exports.getSportsBetHistoryForUser = async (req, res) => {
-  const { page } = req.query;
+  const { page, gameType, status } = req.query;
   const { offset, limit } = helpers.getPagination(page, 20);
   const condition = {
     is_delete: 0,
@@ -1190,6 +1190,18 @@ exports.getSportsBetHistoryForUser = async (req, res) => {
   };
 
   try {
+    if (gameType) {
+      condition.game_type = gameType;
+    }
+
+    if (status) {
+      if (status == 4) {
+        condition.status = [4, 5];
+      } else {
+        condition.status = status;
+      }
+    }
+
     const findHistory = await SportsBetHistory.findAndCountAll({
       include: {
         include: {

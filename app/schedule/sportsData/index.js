@@ -65,7 +65,40 @@ const updateSportsData = async (endPoint, marketArr) => {
             }`;
 
             const isUnder = odds.odds[0].name === "Under";
+            const isTwoWay = odds.odds.length === 2;
             const isThreeWay = odds.odds.length === 3;
+
+            let homeOdds = isUnder ? odds.odds[1].value : odds.odds[0].value;
+            let awayOdds = isUnder
+              ? odds.odds[0].value
+              : isTwoWay
+              ? odds.odds[1].value
+              : odds.odds[2].value;
+
+            if (isTwoWay) {
+              const homeValue = parseFloat(homeOdds);
+              const awayValue = parseFloat(awayOdds);
+              const sum = homeValue + awayValue;
+              const targetSum = 3.74;
+
+              if (sum > targetSum) {
+                const diff = sum - targetSum;
+
+                if (homeValue > awayValue) {
+                  homeOdds = (homeValue - diff).toFixed(2);
+                } else {
+                  awayOdds = (awayValue - diff).toFixed(2);
+                }
+              } else if (sum < targetSum) {
+                const diff = targetSum - sum;
+
+                if (homeValue < awayValue) {
+                  homeOdds = (homeValue + diff).toFixed(2);
+                } else {
+                  awayOdds = (awayValue + diff).toFixed(2);
+                }
+              }
+            }
 
             createOddsData.push({
               odds_key: oddsKey,
@@ -74,13 +107,9 @@ const updateSportsData = async (endPoint, marketArr) => {
               is_market_stop: market.stop,
               is_odds_stop: odds.stop,
               odds_line: odds.name,
-              home_odds: isUnder ? odds.odds[1].value : odds.odds[0].value,
+              home_odds: homeOdds,
               draw_odds: isThreeWay ? odds.odds[1].value : null,
-              away_odds: isUnder
-                ? odds.odds[0].value
-                : isThreeWay
-                ? odds.odds[2].value
-                : odds.odds[1].value,
+              away_odds: awayOdds,
               updated_at: moment().format("YYYY-MM-DD HH:mm:ss"),
             });
 
@@ -417,15 +446,41 @@ const connectInplaySocketWithRedis = async (sports, marketArr) => {
                 odds.n ? `_${odds.n}` : ""
               }`;
               const isUnder = odds.o[0]?.n === "Under";
+              const isTwoWay = odds.o.length === 2;
               const isThreeWay = odds.o.length === 3;
 
-              const homeOdds = isUnder ? odds.o[1]?.v : odds.o[0]?.v;
+              let homeOdds = isUnder ? odds.o[1]?.v : odds.o[0]?.v;
               const drawOdds = isThreeWay ? odds.o[1]?.v : null;
-              const awayOdds = isUnder
+              let awayOdds = isUnder
                 ? odds.o[0]?.v
-                : isThreeWay
-                ? odds.o[2]?.v
-                : odds.o[1]?.v;
+                : isTwoWay
+                ? odds.o[1]?.v
+                : odds.o[2]?.v;
+
+              if (isTwoWay) {
+                const homeValue = parseFloat(homeOdds);
+                const awayValue = parseFloat(awayOdds);
+                const sum = homeValue + awayValue;
+                const targetSum = 3.74;
+
+                if (sum > targetSum) {
+                  const diff = sum - targetSum;
+
+                  if (homeValue > awayValue) {
+                    homeOdds = (homeValue - diff).toFixed(2);
+                  } else {
+                    awayOdds = (awayValue - diff).toFixed(2);
+                  }
+                } else if (sum < targetSum) {
+                  const diff = targetSum - sum;
+
+                  if (homeValue < awayValue) {
+                    homeOdds = (homeValue + diff).toFixed(2);
+                  } else {
+                    awayOdds = (awayValue + diff).toFixed(2);
+                  }
+                }
+              }
 
               const isHomeStop = isUnder ? odds.o[1]?.s : odds.o[0]?.s;
               const isDrawStop = isThreeWay ? odds.o[1]?.s : 0;

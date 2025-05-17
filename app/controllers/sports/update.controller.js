@@ -24,6 +24,8 @@ exports.updateSportsConfigForAdmin = async (req, res) => {
     multiMaxBetAmount,
     singleMaxWinAmount,
     multiMaxWinAmount,
+    singleMaxWinOdds,
+    multiMaxWinOdds,
     cancelAfterBetTime,
     cancelBeforeStartTime,
     cancelDailyCount,
@@ -41,6 +43,8 @@ exports.updateSportsConfigForAdmin = async (req, res) => {
     multiMaxBetAmount === "" ||
     singleMaxWinAmount === "" ||
     multiMaxWinAmount === "" ||
+    singleMaxWinOdds === "" ||
+    multiMaxWinOdds === "" ||
     cancelAfterBetTime === "" ||
     cancelBeforeStartTime === "" ||
     cancelDailyCount === "" ||
@@ -63,6 +67,8 @@ exports.updateSportsConfigForAdmin = async (req, res) => {
         mulit_max_bet_amount: multiMaxBetAmount,
         single_max_win_amount: singleMaxWinAmount,
         multi_max_win_amount: multiMaxWinAmount,
+        single_max_win_odds: singleMaxWinOdds,
+        multi_max_win_odds: multiMaxWinOdds,
         cancel_after_bet_time: cancelAfterBetTime,
         cancel_before_start_time: cancelBeforeStartTime,
         cancel_daily_count: cancelDailyCount,

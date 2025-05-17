@@ -738,7 +738,13 @@ exports.betHistoryResultProcess = async (historyId) => {
       }
     }
 
+    const maxWinOdds = findSportsConfig[`${betType}_max_win_odds`];
+
     totalOdds = parseFloat(totalOdds.toFixed(2));
+
+    if (totalOdds > maxWinOdds) {
+      totalOdds = parseFloat(maxWinOdds.toFixed(2));
+    }
 
     let winAmount = Math.floor(findSportsBetHistory.bet_amount * totalOdds);
     const maxWinAmount =

@@ -95,7 +95,7 @@ exports.getNextRoundForUser = async (req, res) => {
 };
 
 exports.getMiniBetHistoryForUser = async (req, res) => {
-  const { page, size } = req.query;
+  const { page, size, game, status } = req.query;
   const { offset, limit } = helpers.getPagination(page, size);
   const condition = {
     is_delete: 0,
@@ -103,6 +103,14 @@ exports.getMiniBetHistoryForUser = async (req, res) => {
   };
 
   try {
+    if (game) {
+      condition.game = game;
+    }
+
+    if (status) {
+      condition.status = status;
+    }
+
     const findHistory = await MiniBetHistory.findAndCountAll({
       include: {
         attributes: ["name"],
