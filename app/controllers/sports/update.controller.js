@@ -15,6 +15,7 @@ const ioSocket = socketIO("http://localhost:3001");
 const { getSportsResult } = require("../../helpers/sportsResult");
 const helpers = require("../../helpers");
 const moment = require("moment");
+const utils = require("../../utils");
 
 exports.updateSportsConfigForAdmin = async (req, res) => {
   const {
@@ -64,7 +65,7 @@ exports.updateSportsConfigForAdmin = async (req, res) => {
         single_min_bet_amount: singleMinBetAmount,
         multi_min_bet_amount: multiMinBetAmount,
         single_max_bet_amount: singleMaxBetAmount,
-        mulit_max_bet_amount: multiMaxBetAmount,
+        multi_max_bet_amount: multiMaxBetAmount,
         single_max_win_amount: singleMaxWinAmount,
         multi_max_win_amount: multiMaxWinAmount,
         single_max_win_odds: singleMaxWinOdds,
@@ -920,6 +921,49 @@ exports.updateMatchScore = async (req, res) => {
 
     return res.status(200).send({
       message: "경기 스코어가 수정되었습니다",
+    });
+  } catch (err) {
+    console.log(err);
+    return res.status(500).send({
+      message: "Server Error",
+    });
+  }
+};
+
+exports.updateMatchDeleteForAdmin = async (req, res) => {
+  const { id, isDelete } = req.body;
+  const ip = utils.getIp(req);
+
+  try {
+    const findMatch = await SportsMatches.findOne({
+      where: {
+        id,
+      },
+    });
+
+    if (!findMatch) {
+      return res.status(400).send({
+        message: "존재하지 않는 경기입니다",
+      });
+    }
+
+    let updateData = {
+      is_delete: isDelete,
+    };
+
+    if (isDelete == 1) {
+      updateData.deleted_at = moment().format("YYYY-MM-DD HH:mm:ss");
+      updateData.deleted_ip = ip;
+    }
+
+    await SportsMatches.update(updateData, {
+      where: {
+        id,
+      },
+    });
+
+    return res.status(200).send({
+      message: "경기가 삭제되었습니다",
     });
   } catch (err) {
     console.log(err);

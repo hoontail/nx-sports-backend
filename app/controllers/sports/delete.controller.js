@@ -2,6 +2,7 @@ const db = require("../../models");
 const SportsBonusOdds = db.sports_bonus_odds;
 const SportsCombine = db.sports_combine;
 const SportsBetHistory = db.sports_bet_history;
+const SportsMatches = db.sports_matches;
 
 const moment = require("moment");
 const utils = require("../../utils");

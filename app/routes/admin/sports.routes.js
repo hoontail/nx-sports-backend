@@ -182,4 +182,11 @@ router.patch(
   sportsUpdateController.updateMatchScore
 );
 
+// 경기 삭제
+router.patch(
+  "/match/delete",
+  [rateLimit.apiLimiter, authJwt.adminVerifyToken],
+  sportsUpdateController.updateMatchDeleteForAdmin
+);
+
 module.exports = router;
