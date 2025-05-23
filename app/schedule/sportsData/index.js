@@ -73,6 +73,7 @@ const updateSportsData = async (endPoint, marketArr, rateConfig) => {
             const isThreeWay = odds.odds.length === 3;
 
             let homeOdds = isUnder ? odds.odds[1].value : odds.odds[0].value;
+            let drawOdds = isThreeWay ? odds.odds[1].value : null;
             let awayOdds = isUnder
               ? odds.odds[0].value
               : isTwoWay
@@ -132,6 +133,9 @@ const updateSportsData = async (endPoint, marketArr, rateConfig) => {
             if (rate > 0) {
               homeOdds = ((parseFloat(homeOdds) * rate) / 100).toFixed(2);
               awayOdds = ((parseFloat(awayOdds) * rate) / 100).toFixed(2);
+              if (drawOdds) {
+                drawOdds = ((parseFloat(drawOdds) * rate) / 100).toFixed(2);
+              }
             }
 
             if (isTwoWay && sum > 0) {
@@ -166,7 +170,7 @@ const updateSportsData = async (endPoint, marketArr, rateConfig) => {
               is_odds_stop: odds.stop,
               odds_line: odds.name,
               home_odds: homeOdds,
-              draw_odds: isThreeWay ? odds.odds[1].value : null,
+              draw_odds: drawOdds,
               away_odds: awayOdds,
               updated_at: moment().format("YYYY-MM-DD HH:mm:ss"),
             });
@@ -540,7 +544,7 @@ const connectInplaySocketWithRedis = async (sports, marketArr, rateConfig) => {
               const isThreeWay = odds.o.length === 3;
 
               let homeOdds = isUnder ? odds.o[1]?.v : odds.o[0]?.v;
-              const drawOdds = isThreeWay ? odds.o[1]?.v : null;
+              let drawOdds = isThreeWay ? odds.o[1]?.v : null;
               let awayOdds = isUnder
                 ? odds.o[0]?.v
                 : isTwoWay
@@ -573,6 +577,9 @@ const connectInplaySocketWithRedis = async (sports, marketArr, rateConfig) => {
               if (rate > 0) {
                 homeOdds = ((parseFloat(homeOdds) * rate) / 100).toFixed(2);
                 awayOdds = ((parseFloat(awayOdds) * rate) / 100).toFixed(2);
+                if (drawOdds) {
+                  drawOdds = ((parseFloat(drawOdds) * rate) / 100).toFixed(2);
+                }
               }
 
               if (isTwoWay && sum > 0) {
