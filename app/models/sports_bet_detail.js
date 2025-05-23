@@ -90,7 +90,7 @@ module.exports = function (sequelize, DataTypes) {
         allowNull: true,
       },
       odds: {
-        type: DataTypes.DECIMAL(38, 2),
+        type: DataTypes.DECIMAL(5, 2),
         allowNull: false,
       },
       bet_type: {

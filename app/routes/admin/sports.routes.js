@@ -119,6 +119,13 @@ router.patch(
   sportsUpdateController.updateMarketForAdmin
 );
 
+// 마켓 상태 수정
+router.patch(
+  "/market/status",
+  [rateLimit.apiLimiter, authJwt.adminVerifyToken],
+  sportsUpdateController.updateMarketStatusForAdmin
+);
+
 // 경기 목록
 router.get(
   "/match",
@@ -187,6 +194,20 @@ router.patch(
   "/match/delete",
   [rateLimit.apiLimiter, authJwt.adminVerifyToken],
   sportsUpdateController.updateMatchDeleteForAdmin
+);
+
+// 환수율 설정
+router.get(
+  "/config/rate",
+  [rateLimit.apiLimiter, authJwt.adminVerifyToken],
+  sportsListController.getSportsRateConfigForAdmin
+);
+
+// 환수율 설정 수정
+router.patch(
+  "/config/rate",
+  [rateLimit.apiLimiter, authJwt.adminVerifyToken],
+  sportsUpdateController.updateSportsRateConfigForAdmin
 );
 
 module.exports = router;

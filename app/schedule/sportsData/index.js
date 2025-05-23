@@ -5,6 +5,7 @@ const literal = db.Sequelize.literal;
 const SportsMatches = db.sports_matches;
 const SportsOdds = db.sports_odds;
 const SportsMarket = db.sports_market;
+const SportsRateConfigs = db.sports_rate_configs;
 
 const helpers = require("../../helpers");
 const redisClient = require("../../helpers/redisClient");
@@ -13,7 +14,7 @@ const moment = require("moment");
 const socketIO = require("socket.io-client");
 const ioSocket = socketIO("http://localhost:3001");
 
-const updateSportsData = async (endPoint, marketArr) => {
+const updateSportsData = async (endPoint, marketArr, rateConfig) => {
   const axiosInstance = axios.create({
     timeout: 10000,
     headers: {
@@ -57,7 +58,10 @@ const updateSportsData = async (endPoint, marketArr) => {
 
         for (const market of match.market) {
           if (!market.list) continue;
-          if (!marketArr.includes(market.market_id)) continue;
+          const matchedMarket = marketArr.find(
+            (x) => x.market_id === market.market_id
+          );
+          if (!matchedMarket) continue;
 
           for (const odds of market.list) {
             const oddsKey = `${match.id}_${market.market_id}${
@@ -75,24 +79,78 @@ const updateSportsData = async (endPoint, marketArr) => {
               ? odds.odds[1].value
               : odds.odds[2].value;
 
-            if (isTwoWay) {
+            // 환수율 조정
+            let rate = 0;
+            let sum = 0;
+            if (
+              matchedMarket.type !== "핸디캡" &&
+              matchedMarket.type !== "언더오버"
+            ) {
+              if (
+                rateConfig.normal_winlose_status === 1 &&
+                matchedMarket.is_special !== 1
+              ) {
+                rate = rateConfig.normal_winlose_rate;
+                sum = rateConfig.normal_winlose_sum;
+              } else if (
+                rateConfig.special_winlose_status === 1 &&
+                matchedMarket.is_special === 1
+              ) {
+                rate = rateConfig.special_winlose_rate;
+                sum = rateConfig.special_winlose_sum;
+              }
+            } else if (matchedMarket.type === "핸디캡") {
+              if (
+                rateConfig.normal_handicap_status === 1 &&
+                matchedMarket.is_special !== 1
+              ) {
+                rate = rateConfig.normal_handicap_rate;
+                sum = rateConfig.normal_handicap_sum;
+              } else if (
+                rateConfig.special_handicap_status === 1 &&
+                matchedMarket.is_special === 1
+              ) {
+                rate = rateConfig.special_handicap_rate;
+                sum = rateConfig.special_handicap_sum;
+              }
+            } else if (matchedMarket.type === "언더오버") {
+              if (
+                rateConfig.normal_underover_status === 1 &&
+                matchedMarket.is_special !== 1
+              ) {
+                rate = rateConfig.normal_underover_rate;
+                sum = rateConfig.normal_underover_sum;
+              } else if (
+                rateConfig.special_underover_status === 1 &&
+                matchedMarket.is_special === 1
+              ) {
+                rate = rateConfig.special_underover_rate;
+                sum = rateConfig.special_underover_sum;
+              }
+            }
+
+            if (rate > 0) {
+              homeOdds = ((parseFloat(homeOdds) * rate) / 100).toFixed(2);
+              awayOdds = ((parseFloat(awayOdds) * rate) / 100).toFixed(2);
+            }
+
+            if (isTwoWay && sum > 0) {
               const homeValue = parseFloat(homeOdds);
               const awayValue = parseFloat(awayOdds);
-              const sum = homeValue + awayValue;
-              const targetSum = 3.74;
+              const oddsSum = homeValue + awayValue;
 
-              if (sum > targetSum) {
-                const diff = sum - targetSum;
+              if (oddsSum > sum) {
+                const diff = oddsSum - sum;
 
-                if (homeValue > awayValue) {
+                if (homeValue >= awayValue) {
                   homeOdds = (homeValue - diff).toFixed(2);
                 } else {
                   awayOdds = (awayValue - diff).toFixed(2);
                 }
-              } else if (sum < targetSum) {
-                const diff = targetSum - sum;
+              } else if (oddsSum < sum) {
+                const diff = sum - oddsSum;
 
-                if (homeValue < awayValue) {
+                if (homeValue <= awayValue) {
                   homeOdds = (homeValue + diff).toFixed(2);
                 } else {
                   awayOdds = (awayValue + diff).toFixed(2);
@@ -308,7 +366,7 @@ const updateSportsData = async (endPoint, marketArr) => {
       if (res.data.result.pagination) {
         const pagination = res.data.result.pagination;
         if (pagination.page < pagination.total_pages) {
-          await updateSportsData(pagination.next_link, marketArr);
+          await updateSportsData(pagination.next_link, marketArr, rateConfig);
         }
       }
     } else {
@@ -335,15 +393,31 @@ exports.getPrematchData = async (isInit) => {
       "esports",
     ];
 
-    const findSportsMarket = await SportsMarket.findAll();
-    const marketArr = findSportsMarket.map((x) => x.market_id);
+    const marketArr = await SportsMarket.findAll({
+      attributes: [
+        "market_id",
+        "type",
+        "period",
+        "name",
+        "order",
+        "is_cross",
+        "is_winlose",
+        "is_handicap",
+        "is_inplay",
+      ],
+    });
+    const findSportsRateConfigs = await SportsRateConfigs.findAll();
 
     const updatePromises = sportsArr.map((sports) => {
       const endPoint = `${process.env.SPORTS_URL}/${sports}/single${
         !isInit ? "/latest" : ""
       }?token=${process.env.SPORTS_TOKEN}${!isInit ? "&ts=180" : ""}`;
 
-      return updateSportsData(endPoint, marketArr).then(() => {
+      const rateConfig = findSportsRateConfigs.find(
+        (x) => x.sports_name === sports
+      );
+
+      return updateSportsData(endPoint, marketArr, rateConfig).then(() => {
         console.log(`프리매치 ${sports} 업데이트 완료`);
       });
     });
@@ -374,13 +448,29 @@ exports.getSpecialData = async () => {
       "esports",
     ];
 
-    const findSportsMarket = await SportsMarket.findAll();
-    const marketArr = findSportsMarket.map((x) => x.market_id);
+    const marketArr = await SportsMarket.findAll({
+      attributes: [
+        "market_id",
+        "type",
+        "period",
+        "name",
+        "order",
+        "is_cross",
+        "is_winlose",
+        "is_handicap",
+        "is_inplay",
+      ],
+    });
+    const findSportsRateConfigs = await SportsRateConfigs.findAll();
 
     for await (const sports of sportsArr) {
       const endPoint = `${process.env.SPORTS_URL}/${sports}/special?token=${process.env.SPORTS_TOKEN}`;
 
-      await updateSportsData(endPoint, marketArr);
+      const rateConfig = findSportsRateConfigs.find(
+        (x) => x.sports_name === sports
+      );
+
+      await updateSportsData(endPoint, marketArr, rateConfig);
 
       console.log(`스페셜 ${sports} 업데이트 완료`);
     }
@@ -393,7 +483,7 @@ exports.getSpecialData = async () => {
   }
 };
 
-const connectInplaySocketWithRedis = async (sports, marketArr) => {
+const connectInplaySocketWithRedis = async (sports, marketArr, rateConfig) => {
   await axios
     .get(
       `${process.env.SPORTS_INPLAY_URL}/getkey/${sports}?token=${process.env.SPORTS_TOKEN}`
@@ -457,24 +547,51 @@ const connectInplaySocketWithRedis = async (sports, marketArr) => {
                 ? odds.o[1]?.v
                 : odds.o[2]?.v;
 
-              if (isTwoWay) {
+              // 환수율 조정
+              let rate = 0;
+              let sum = 0;
+              if (
+                matchedMarket.type !== "핸디캡" &&
+                matchedMarket.type !== "언더오버"
+              ) {
+                if (rateConfig.inplay_winlose_status === 1) {
+                  rate = rateConfig.inplay_winlose_rate;
+                  sum = rateConfig.inplay_winlose_sum;
+                }
+              } else if (matchedMarket.type === "핸디캡") {
+                if (rateConfig.inplay_handicap_status === 1) {
+                  rate = rateConfig.inplay_handicap_rate;
+                  sum = rateConfig.inplay_handicap_sum;
+                }
+              } else if (matchedMarket.type === "언더오버") {
+                if (rateConfig.inplay_underover_status === 1) {
+                  rate = rateConfig.inplay_underover_rate;
+                  sum = rateConfig.inplay_underover_sum;
+                }
+              }
+
+              if (rate > 0) {
+                homeOdds = ((parseFloat(homeOdds) * rate) / 100).toFixed(2);
+                awayOdds = ((parseFloat(awayOdds) * rate) / 100).toFixed(2);
+              }
+
+              if (isTwoWay && sum > 0) {
                 const homeValue = parseFloat(homeOdds);
                 const awayValue = parseFloat(awayOdds);
-                const sum = homeValue + awayValue;
-                const targetSum = 3.74;
+                const oddsSum = homeValue + awayValue;
 
-                if (sum > targetSum) {
-                  const diff = sum - targetSum;
+                if (oddsSum > sum) {
+                  const diff = oddsSum - sum;
 
-                  if (homeValue > awayValue) {
+                  if (homeValue >= awayValue) {
                     homeOdds = (homeValue - diff).toFixed(2);
                   } else {
                     awayOdds = (awayValue - diff).toFixed(2);
                   }
-                } else if (sum < targetSum) {
-                  const diff = targetSum - sum;
+                } else if (oddsSum < sum) {
+                  const diff = sum - oddsSum;
 
-                  if (homeValue < awayValue) {
+                  if (homeValue <= awayValue) {
                     homeOdds = (homeValue + diff).toFixed(2);
                   } else {
                     awayOdds = (awayValue + diff).toFixed(2);
@@ -653,7 +770,7 @@ const connectInplaySocketWithRedis = async (sports, marketArr) => {
       webSocket.on("close", () => {
         // 재연결
         clearInterval(statusInterval);
-        connectInplaySocketWithRedis(sports, marketArr);
+        connectInplaySocketWithRedis(sports, marketArr, rateConfig);
       });
 
       webSocket.on("error", (error) => {
@@ -690,9 +807,14 @@ exports.getInplayData = async () => {
         "is_inplay",
       ],
     });
+    const findSportsRateConfigs = await SportsRateConfigs.findAll();
 
     for (const sports of sportsArr) {
-      connectInplaySocketWithRedis(sports, marketArr);
+      const rateConfig = findSportsRateConfigs.find(
+        (x) => x.sports_name === sports
+      );
+
+      connectInplaySocketWithRedis(sports, marketArr, rateConfig);
     }
   } catch (err) {
     console.log("실시간 데이터 업데이트 실패");

@@ -50,11 +50,11 @@ module.exports = function (sequelize, DataTypes) {
         allowNull: true,
       },
       single_minus_odds: {
-        type: DataTypes.DECIMAL(38, 2),
+        type: DataTypes.DECIMAL(5, 2),
         allowNull: true,
       },
       two_minus_odds: {
-        type: DataTypes.DECIMAL(38, 2),
+        type: DataTypes.DECIMAL(5, 2),
         allowNull: true,
       },
       alert_bet_amount: {
@@ -62,7 +62,7 @@ module.exports = function (sequelize, DataTypes) {
         allowNull: true,
       },
       lose_point_percentage: {
-        type: DataTypes.DECIMAL(38, 2),
+        type: DataTypes.DECIMAL(5, 2),
         allowNull: true,
       },
       updated_at: {
@@ -70,11 +70,11 @@ module.exports = function (sequelize, DataTypes) {
         allowNull: true,
       },
       single_max_win_odds: {
-        type: DataTypes.DECIMAL(38, 2),
+        type: DataTypes.DECIMAL(10, 2),
         allowNull: true,
       },
       multi_max_win_odds: {
-        type: DataTypes.DECIMAL(38, 2),
+        type: DataTypes.DECIMAL(10, 2),
         allowNull: true,
       },
     },

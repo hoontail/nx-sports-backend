@@ -8,6 +8,7 @@ const SportsMatches = db.sports_matches;
 const SportsOdds = db.sports_odds;
 const SportsBetHistory = db.sports_bet_history;
 const SportsBetDetail = db.sports_bet_detail;
+const SportsRateConfigs = db.sports_rate_configs;
 const Users = db.up_users;
 const socketIO = require("socket.io-client");
 const ioSocket = socketIO("http://localhost:3001");
@@ -966,7 +967,145 @@ exports.updateMatchDeleteForAdmin = async (req, res) => {
       message: "경기가 삭제되었습니다",
     });
   } catch (err) {
-    console.log(err);
+    return res.status(500).send({
+      message: "Server Error",
+    });
+  }
+};
+
+exports.updateMarketStatusForAdmin = async (req, res) => {
+  const { id, type, status } = req.body;
+
+  try {
+    const allowedTypes = [
+      "is_cross",
+      "is_winlose",
+      "is_handicap",
+      "is_special",
+      "is_inplay",
+    ];
+    if (!allowedTypes.includes(type)) {
+      return res.status(400).send({
+        message: "허용되지 않은 필드입니다",
+      });
+    }
+
+    const findMarket = await SportsMarket.findOne({
+      where: {
+        id,
+      },
+    });
+
+    if (!findMarket) {
+      return res.status(400).send({
+        message: "존재하지 않는 마켓입니다",
+      });
+    }
+
+    const updateData = {};
+    updateData[type] = status;
+
+    await SportsMarket.update(updateData, {
+      where: {
+        id,
+      },
+    });
+
+    return res.status(200).send({
+      message: "마켓 상태가 변경되었습니다",
+    });
+  } catch {
+    return res.status(500).send({
+      message: "Server Error",
+    });
+  }
+};
+
+exports.updateSportsRateConfigForAdmin = async (req, res) => {
+  const {
+    id,
+    normalWinloseRate,
+    normalWinloseSum,
+    normalWinloseStatus,
+    normalHandicapRate,
+    normalHandicapSum,
+    normalHandicapStatus,
+    normalUnderoverRate,
+    normalUnderoverSum,
+    normalUnderoverStatus,
+    specialWinloseRate,
+    specialWinloseSum,
+    specialWinloseStatus,
+    specialHandicapRate,
+    specialHandicapSum,
+    specialHandicapStatus,
+    specialUnderoverRate,
+    specialUnderoverSum,
+    specialUnderoverStatus,
+    inplayWinloseRate,
+    inplayWinloseSum,
+    inplayWinloseStatus,
+    inplayHandicapRate,
+    inplayHandicapSum,
+    inplayHandicapStatus,
+    inplayUnderoverRate,
+    inplayUnderoverSum,
+    inplayUnderoverStatus,
+  } = req.body;
+
+  try {
+    const findConfig = await SportsRateConfigs.findOne({
+      where: {
+        id,
+      },
+    });
+
+    if (!findConfig) {
+      return res.status(400).send({
+        message: "존재하지 않는 설정입니다",
+      });
+    }
+
+    await SportsRateConfigs.update(
+      {
+        normal_winlose_rate: normalWinloseRate,
+        normal_winlose_sum: normalWinloseSum,
+        normal_winlose_status: normalWinloseStatus,
+        normal_handicap_rate: normalHandicapRate,
+        normal_handicap_sum: normalHandicapSum,
+        normal_handicap_status: normalHandicapStatus,
+        normal_underover_rate: normalUnderoverRate,
+        normal_underover_sum: normalUnderoverSum,
+        normal_underover_status: normalUnderoverStatus,
+        special_winlose_rate: specialWinloseRate,
+        special_winlose_sum: specialWinloseSum,
+        special_winlose_status: specialWinloseStatus,
+        special_handicap_rate: specialHandicapRate,
+        special_handicap_sum: specialHandicapSum,
+        special_handicap_status: specialHandicapStatus,
+        special_underover_rate: specialUnderoverRate,
+        special_underover_sum: specialUnderoverSum,
+        special_underover_status: specialUnderoverStatus,
+        inplay_winlose_rate: inplayWinloseRate,
+        inplay_winlose_sum: inplayWinloseSum,
+        inplay_winlose_status: inplayWinloseStatus,
+        inplay_handicap_rate: inplayHandicapRate,
+        inplay_handicap_sum: inplayHandicapSum,
+        inplay_handicap_status: inplayHandicapStatus,
+        inplay_underover_rate: inplayUnderoverRate,
+        inplay_underover_sum: inplayUnderoverSum,
+        inplay_underover_status: inplayUnderoverStatus,
+        updated_at: moment().format("YYYY-MM-DD HH:mm:ss"),
+      },
+      {
+        where: { id },
+      }
+    );
+
+    return res.status(200).send({
+      message: "환수율 설정이 수정되었습니다",
+    });
+  } catch {
     return res.status(500).send({
       message: "Server Error",
     });

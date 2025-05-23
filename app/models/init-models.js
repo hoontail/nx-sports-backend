@@ -9,6 +9,7 @@ var _sports_configs = require("./sports_configs");
 var _sports_market = require("./sports_market");
 var _sports_matches = require("./sports_matches");
 var _sports_odds = require("./sports_odds");
+var _sports_rate_config = require("./sports_rate_configs");
 var _up_users = require("./up_users");
 var _kosca_logs = require("./kosca_logs");
 var _mini_bet_history = require("./mini_bet_history");
@@ -27,6 +28,7 @@ function initModels(sequelize) {
   var sports_market = _sports_market(sequelize, DataTypes);
   var sports_matches = _sports_matches(sequelize, DataTypes);
   var sports_odds = _sports_odds(sequelize, DataTypes);
+  var sports_rate_configs = _sports_rate_config(sequelize, DataTypes);
   var up_users = _up_users(sequelize, DataTypes);
   var kosca_logs = _kosca_logs(sequelize, DataTypes);
   var mini_bet_history = _mini_bet_history(sequelize, DataTypes);
@@ -45,6 +47,7 @@ function initModels(sequelize) {
     sports_market,
     sports_matches,
     sports_odds,
+    sports_rate_configs,
     up_users,
     kosca_logs,
     mini_bet_history,

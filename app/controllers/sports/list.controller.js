@@ -9,6 +9,7 @@ const SportsCombine = db.sports_combine;
 const SportsConfigs = db.sports_configs;
 const SportsBetHistory = db.sports_bet_history;
 const SportsBetDetail = db.sports_bet_detail;
+const SportsRateConfigs = db.sports_rate_configs;
 const Users = db.up_users;
 
 const { getSportsResult } = require("../../helpers/sportsResult");
@@ -17,31 +18,18 @@ const moment = require("moment");
 
 exports.getSportsMatchListForUser = async (req, res) => {
   const { sports, gameType } = req.query;
-  const sportsNames = [
-    "soccer",
-    "americanfootball",
-    "boxingufc",
-    "tennis",
-    "baseball",
-    "icehockey",
-    "basketball",
-    "handball",
-    "volleyball",
-    "tabletennis",
-    "esports",
-  ];
-
-  const getSportsCount = (matches, isInplay) => {
-    return sportsNames.reduce((acc, name) => {
-      acc[name] = matches.filter(
-        (x) =>
-          x.sports_name === name &&
-          (isInplay
-            ? x.sports_odds.length > 0
-            : x.getDataValue("sports_odds").length > 0)
-      ).length;
-      return acc;
-    }, {});
+  const sportsCount = {
+    soccer: 0,
+    americanfootball: 0,
+    boxingufc: 0,
+    tennis: 0,
+    baseball: 0,
+    icehockey: 0,
+    basketball: 0,
+    handball: 0,
+    volleyball: 0,
+    tabletennis: 0,
+    esports: 0,
   };
 
   let condition = {
@@ -258,7 +246,10 @@ exports.getSportsMatchListForUser = async (req, res) => {
     }
 
     // 종목별 경기수
-    const sportsCount = getSportsCount(findSportsMatches, false);
+    findSportsMatches.forEach((m) => {
+      const name = m.sports_name;
+      sportsCount[name] += m.getDataValue("sports_odds").length;
+    });
 
     // 종목 필터
     if (sports && sports !== "") {
@@ -532,6 +523,7 @@ exports.getMarketListForAdmin = async (req, res) => {
     isHandicap,
     isSpecial,
     isInplay,
+    unUsed,
   } = req.query;
   const { offset, limit } = helpers.getPagination(page, size);
   const condition = {};
@@ -567,6 +559,15 @@ exports.getMarketListForAdmin = async (req, res) => {
   if (isInplay) {
     condition.is_inplay = isInplay;
   }
+
+  if (unUsed == 1) {
+    condition.is_cross = 0;
+    condition.is_winlose = 0;
+    condition.is_handicap = 0;
+    condition.is_special = 0;
+    condition.is_inplay = 0;
+  }
+
   try {
     const findMarketList = await SportsMarket.findAndCountAll({
       where: condition,
@@ -1252,6 +1253,20 @@ exports.getSportsBetHistoryForUser = async (req, res) => {
     const data = helpers.getPagingData(findHistory, page, limit);
 
     return res.status(200).send(data);
+  } catch {
+    return res.status(500).send({
+      message: "Server Error",
+    });
+  }
+};
+
+exports.getSportsRateConfigForAdmin = async (req, res) => {
+  try {
+    const findSportsRateConfig = await SportsRateConfigs.findAll({
+      order: [["id", "asc"]],
+    });
+
+    return res.status(200).send(findSportsRateConfig);
   } catch {
     return res.status(500).send({
       message: "Server Error",
