@@ -1,4 +1,5 @@
 const db = require("../../models");
+const Op = db.Sequelize.Op;
 const MiniGames = db.mini_games;
 
 const moment = require("moment");
@@ -99,5 +100,23 @@ exports.addEosPowerball = async () => {
     console.log("EOS 파워볼 게임 등록 완료");
   } catch (error) {
     console.error("EOS 파워볼 게임 등록 실패", error);
+  }
+};
+
+exports.deleteOldMiniGames = async () => {
+  try {
+    console.log("미니게임 데이터 정리 시작");
+
+    await MiniGames.destroy({
+      where: {
+        start_datetime: {
+          [Op.lt]: moment().subtract(1, "week").format("YYYY-MM-DD HH:mm:ss"),
+        },
+      },
+    });
+
+    console.log("미니게임 데이터 정리 완료");
+  } catch (err) {
+    console.log("미니게임 데이터 정리 실패");
   }
 };
