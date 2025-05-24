@@ -131,11 +131,22 @@ const updateSportsData = async (endPoint, marketArr, rateConfig) => {
             }
 
             if (rate > 0) {
-              homeOdds = ((parseFloat(homeOdds) * rate) / 100).toFixed(2);
-              awayOdds = ((parseFloat(awayOdds) * rate) / 100).toFixed(2);
+              homeOdds = (parseFloat(homeOdds) * rate) / 100;
+              awayOdds = (parseFloat(awayOdds) * rate) / 100;
               if (drawOdds) {
-                drawOdds = ((parseFloat(drawOdds) * rate) / 100).toFixed(2);
+                drawOdds = (parseFloat(drawOdds) * rate) / 100;
+
+                if (drawOdds < 1) drawOdds = 1;
+
+                drawOdds = drawOdds.toFixed(2);
               }
+
+              if (homeOdds < 1) homeOdds = 1;
+
+              if (awayOdds < 1) awayOdds = 1;
+
+              homeOdds = homeOdds.toFixed(2);
+              awayOdds = awayOdds.toFixed(2);
             }
 
             if (isTwoWay && sum > 0) {
@@ -575,11 +586,22 @@ const connectInplaySocketWithRedis = async (sports, marketArr, rateConfig) => {
               }
 
               if (rate > 0) {
-                homeOdds = ((parseFloat(homeOdds) * rate) / 100).toFixed(2);
-                awayOdds = ((parseFloat(awayOdds) * rate) / 100).toFixed(2);
+                homeOdds = (parseFloat(homeOdds) * rate) / 100;
+                awayOdds = (parseFloat(awayOdds) * rate) / 100;
                 if (drawOdds) {
-                  drawOdds = ((parseFloat(drawOdds) * rate) / 100).toFixed(2);
+                  drawOdds = (parseFloat(drawOdds) * rate) / 100;
+
+                  if (drawOdds < 1) drawOdds = 1;
+
+                  drawOdds = drawOdds.toFixed(2);
                 }
+
+                if (homeOdds < 1) homeOdds = 1;
+
+                if (awayOdds < 1) awayOdds = 1;
+
+                homeOdds = homeOdds.toFixed(2);
+                awayOdds = awayOdds.toFixed(2);
               }
 
               if (isTwoWay && sum > 0) {
