@@ -653,7 +653,7 @@ exports.cancelBetHistoryForUser = async (req, res) => {
     }
 
     await db.sequelize.transaction(async (t) => {
-      await SportsBetHistory.update(
+      const updateResult = await SportsBetHistory.update(
         {
           status: 4,
           win_amount: findHistory.bet_amount,
@@ -663,10 +663,17 @@ exports.cancelBetHistoryForUser = async (req, res) => {
         {
           where: {
             key,
+            status: 0,
           },
           transaction: t,
         }
       );
+
+      if (updateResult[0] === 0) {
+        return res.status(400).send({
+          message: "이미 처리된 베팅입니다",
+        });
+      }
 
       await Users.increment(
         {
