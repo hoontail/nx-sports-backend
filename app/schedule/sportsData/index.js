@@ -157,7 +157,7 @@ const updateSportsData = async (endPoint, marketArr, rateConfig) => {
               if (oddsSum > sum) {
                 const diff = oddsSum - sum;
 
-                if (homeValue >= awayValue) {
+                if (homeValue > awayValue) {
                   homeOdds = (homeValue - diff).toFixed(2);
                 } else {
                   awayOdds = (awayValue - diff).toFixed(2);
@@ -165,7 +165,7 @@ const updateSportsData = async (endPoint, marketArr, rateConfig) => {
               } else if (oddsSum < sum) {
                 const diff = sum - oddsSum;
 
-                if (homeValue <= awayValue) {
+                if (homeValue < awayValue) {
                   homeOdds = (homeValue + diff).toFixed(2);
                 } else {
                   awayOdds = (awayValue + diff).toFixed(2);
@@ -612,7 +612,7 @@ const connectInplaySocketWithRedis = async (sports, marketArr, rateConfig) => {
                 if (oddsSum > sum) {
                   const diff = oddsSum - sum;
 
-                  if (homeValue >= awayValue) {
+                  if (homeValue > awayValue) {
                     homeOdds = (homeValue - diff).toFixed(2);
                   } else {
                     awayOdds = (awayValue - diff).toFixed(2);
@@ -620,7 +620,7 @@ const connectInplaySocketWithRedis = async (sports, marketArr, rateConfig) => {
                 } else if (oddsSum < sum) {
                   const diff = sum - oddsSum;
 
-                  if (homeValue <= awayValue) {
+                  if (homeValue < awayValue) {
                     homeOdds = (homeValue + diff).toFixed(2);
                   } else {
                     awayOdds = (awayValue + diff).toFixed(2);
