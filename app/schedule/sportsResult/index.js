@@ -617,7 +617,7 @@ exports.betHistoryResultProcess = async (historyId) => {
         {
           status: 2,
           bet_result: 0,
-          updated_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
+          updated_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS +0000"),
           net_loss: findSportsBetHistory.bet_amount,
         },
         {
@@ -678,8 +678,8 @@ exports.betHistoryResultProcess = async (historyId) => {
       amount: winAmount,
       system_note: `KSPORTS ${key}`,
       admin_id: "시스템",
-      created_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
-      updated_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
+      created_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS +0000"),
+      updated_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS +0000"),
       record_type: "베팅취소",
       prev_balance: findSportsBetHistory.up_user.balance,
       after_balance: findSportsBetHistory.up_user.balance + winAmount,
@@ -693,7 +693,7 @@ exports.betHistoryResultProcess = async (historyId) => {
         {
           status: 3,
           bet_result: winAmount,
-          updated_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
+          updated_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS +0000"),
           net_loss: findSportsBetHistory.bet_amount - winAmount,
         },
         {
@@ -785,8 +785,8 @@ exports.betHistoryResultProcess = async (historyId) => {
       amount: winAmount,
       system_note: `KSPORTS ${key}`,
       admin_id: "시스템",
-      created_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
-      updated_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
+      created_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS +0000"),
+      updated_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS +0000"),
       record_type: "베팅당첨",
       prev_balance: findSportsBetHistory.up_user.balance,
       after_balance: findSportsBetHistory.up_user.balance + winAmount,
@@ -800,7 +800,7 @@ exports.betHistoryResultProcess = async (historyId) => {
         {
           status: 2,
           bet_result: winAmount,
-          updated_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
+          updated_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS +0000"),
           net_loss: findSportsBetHistory.bet_amount - winAmount,
         },
         {

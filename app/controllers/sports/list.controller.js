@@ -724,7 +724,7 @@ exports.getSportsMatchListForAdmin = async (req, res) => {
 
     const matchIds = matchIdsResult.map((row) => row.match_id);
 
-    let totalSummary = {
+    const totalSummary = {
       total_bet_amount: 0,
       total_win_amount: 0,
     };
@@ -898,22 +898,40 @@ exports.getSportsBetHistoryForAdmin = async (req, res) => {
       distinct: true,
     });
 
+    const subIds = await SportsBetHistory.findAll({
+      attributes: ["id"],
+      include: [
+        {
+          model: SportsBetDetail,
+          where: detailCondition,
+          required: true,
+          attributes: [],
+        },
+      ],
+      where: condition,
+      raw: true,
+    });
+
+    const historyIds = subIds.map((row) => row.id);
+
     const totalSummary = await SportsBetHistory.findAll({
       attributes: [
         [
           literal(
-            `SUM(CASE WHEN status NOT IN (4, 5) THEN bet_amount ELSE 0 END)`
+            `SUM(CASE WHEN sports_bet_history.status NOT IN (4, 5) THEN sports_bet_history.bet_amount ELSE 0 END)`
           ),
           "total_bet_amount",
         ],
         [
           literal(
-            `SUM(CASE WHEN status NOT IN (4, 5) THEN win_amount ELSE 0 END)`
+            `SUM(CASE WHEN sports_bet_history.status NOT IN (4, 5) THEN sports_bet_history.win_amount ELSE 0 END)`
           ),
           "total_win_amount",
         ],
       ],
-      where: condition,
+      where: {
+        id: historyIds,
+      },
       raw: true,
     });
 
