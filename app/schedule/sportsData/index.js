@@ -136,14 +136,14 @@ const updateSportsData = async (endPoint, marketArr, rateConfig) => {
               if (drawOdds) {
                 drawOdds = (parseFloat(drawOdds) * rate) / 100;
 
-                if (drawOdds < 1) drawOdds = 1;
+                if (drawOdds < 1.03) drawOdds = 1.03;
 
                 drawOdds = drawOdds.toFixed(2);
               }
 
-              if (homeOdds < 1) homeOdds = 1;
+              if (homeOdds < 1.03) homeOdds = 1.03;
 
-              if (awayOdds < 1) awayOdds = 1;
+              if (awayOdds < 1.03) awayOdds = 1.03;
 
               homeOdds = homeOdds.toFixed(2);
               awayOdds = awayOdds.toFixed(2);
@@ -591,14 +591,14 @@ const connectInplaySocketWithRedis = async (sports, marketArr, rateConfig) => {
                 if (drawOdds) {
                   drawOdds = (parseFloat(drawOdds) * rate) / 100;
 
-                  if (drawOdds < 1) drawOdds = 1;
+                  if (drawOdds < 1.03) drawOdds = 1.03;
 
                   drawOdds = drawOdds.toFixed(2);
                 }
 
-                if (homeOdds < 1) homeOdds = 1;
+                if (homeOdds < 1.03) homeOdds = 1.03;
 
-                if (awayOdds < 1) awayOdds = 1;
+                if (awayOdds < 1.03) awayOdds = 1.03;
 
                 homeOdds = homeOdds.toFixed(2);
                 awayOdds = awayOdds.toFixed(2);
