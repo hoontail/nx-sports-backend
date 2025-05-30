@@ -165,14 +165,14 @@ router.get(
 router.patch(
   "/history",
   [rateLimit.apiLimiter, authJwt.adminVerifyToken],
-  sportsUpdateController.updateBetHistory
+  sportsUpdateController.updateBetHistoryForAdmin
 );
 
 // 배팅내역 상세 수정
 router.patch(
   "/history/detail",
   [rateLimit.apiLimiter, authJwt.adminVerifyToken],
-  sportsUpdateController.updateBetDetail
+  sportsUpdateController.updateBetDetailForAdmin
 );
 
 // 스코어 수정 미리보기
@@ -186,7 +186,7 @@ router.get(
 router.patch(
   "/score",
   [rateLimit.apiLimiter, authJwt.adminVerifyToken],
-  sportsUpdateController.updateMatchScore
+  sportsUpdateController.updateMatchScoreForAdmin
 );
 
 // 경기 삭제

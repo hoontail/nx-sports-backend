@@ -676,7 +676,7 @@ exports.betHistoryResultProcess = async (historyId) => {
     const createBalanceLogData = {
       username: findSportsBetHistory.username,
       amount: winAmount,
-      system_note: `KSPORTS ${key}`,
+      system_note: `KSPORTS ${findSportsBetHistory.key}`,
       admin_id: "시스템",
       created_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS +0000"),
       updated_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS +0000"),
@@ -783,7 +783,7 @@ exports.betHistoryResultProcess = async (historyId) => {
     const createBalanceLogData = {
       username: findSportsBetHistory.username,
       amount: winAmount,
-      system_note: `KSPORTS ${key}`,
+      system_note: `KSPORTS ${findSportsBetHistory.key}`,
       admin_id: "시스템",
       created_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS +0000"),
       updated_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS +0000"),

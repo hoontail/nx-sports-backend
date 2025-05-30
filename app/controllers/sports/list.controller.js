@@ -877,27 +877,6 @@ exports.getSportsBetHistoryForAdmin = async (req, res) => {
   }
 
   try {
-    const findSportsBetHistory = await SportsBetHistory.findAndCountAll({
-      include: [
-        {
-          attributes: ["id"],
-          model: Users,
-        },
-        {
-          include: {
-            model: SportsMarket,
-          },
-          model: SportsBetDetail,
-          where: detailCondition,
-        },
-      ],
-      where: condition,
-      offset,
-      limit,
-      order: [orderInit],
-      distinct: true,
-    });
-
     const subIds = await SportsBetHistory.findAll({
       attributes: ["id"],
       include: [
@@ -913,6 +892,28 @@ exports.getSportsBetHistoryForAdmin = async (req, res) => {
     });
 
     const historyIds = subIds.map((row) => row.id);
+
+    const findSportsBetHistory = await SportsBetHistory.findAndCountAll({
+      include: [
+        {
+          attributes: ["id"],
+          model: Users,
+        },
+        {
+          include: {
+            model: SportsMarket,
+          },
+          model: SportsBetDetail,
+        },
+      ],
+      where: {
+        id: historyIds,
+      },
+      offset,
+      limit,
+      order: [orderInit],
+      distinct: true,
+    });
 
     const totalSummary = await SportsBetHistory.findAll({
       attributes: [
