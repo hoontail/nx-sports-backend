@@ -950,6 +950,42 @@ exports.getSportsBetHistoryForAdmin = async (req, res) => {
   }
 };
 
+exports.getSportsBetHistoryViewForAdmin = async (req, res) => {
+  const { id } = req.query;
+
+  try {
+    const findHistory = await SportsBetHistory.findOne({
+      include: [
+        {
+          attributes: ["id"],
+          model: Users,
+        },
+        {
+          include: {
+            model: SportsMarket,
+          },
+          model: SportsBetDetail,
+        },
+      ],
+      where: {
+        id,
+      },
+    });
+
+    if (!findHistory) {
+      return res.status(400).send({
+        message: "존재하지 않는 베팅내역입니다",
+      });
+    }
+
+    res.status(200).send(findHistory);
+  } catch {
+    return res.status(500).send({
+      message: "Server Error",
+    });
+  }
+};
+
 exports.getUpdateScorePerview = async (req, res) => {
   const { id, score } = req.query;
 

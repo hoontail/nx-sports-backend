@@ -161,6 +161,13 @@ router.get(
   sportsListController.getSportsBetHistoryForAdmin
 );
 
+// 배팅내역 상세
+router.get(
+  "/history/view",
+  [rateLimit.apiLimiter, authJwt.adminVerifyToken],
+  sportsListController.getSportsBetHistoryViewForAdmin
+);
+
 // 배팅내역 수정
 router.patch(
   "/history",
