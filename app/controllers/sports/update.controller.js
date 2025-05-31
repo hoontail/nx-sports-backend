@@ -349,33 +349,33 @@ exports.updateMatchForAdmin = async (req, res) => {
     }
 
     // 결과처리 전 취소
-    if (
-      (findMatch.status_id === 0 || findMatch.status_id === 1) &&
-      ![0, 1, 2].includes(Number(status))
-    ) {
-      const findSportsBetDetail = await SportsBetDetail.findAll({
-        where: {
-          match_id: findMatch.match_id,
-        },
-      });
+    // if (
+    //   (findMatch.status_id === 0 || findMatch.status_id === 1) &&
+    //   ![0, 1, 2].includes(Number(status))
+    // ) {
+    //   const findSportsBetDetail = await SportsBetDetail.findAll({
+    //     where: {
+    //       match_id: findMatch.match_id,
+    //     },
+    //   });
 
-      await SportsBetDetail.update(
-        {
-          result_type: 3,
-          status: 3,
-          resulted_at: moment().format("YYYY-MM-DD HH:mm:ss"),
-        },
-        {
-          where: {
-            match_id: findMatch.match_id,
-          },
-        }
-      );
+    //   await SportsBetDetail.update(
+    //     {
+    //       result_type: 3,
+    //       status: 3,
+    //       resulted_at: moment().format("YYYY-MM-DD HH:mm:ss"),
+    //     },
+    //     {
+    //       where: {
+    //         match_id: findMatch.match_id,
+    //       },
+    //     }
+    //   );
 
-      for (const detail of findSportsBetDetail) {
-        await betHistoryResultProcess(detail.sports_bet_history_id);
-      }
-    }
+    //   for (const detail of findSportsBetDetail) {
+    //     await betHistoryResultProcess(detail.sports_bet_history_id);
+    //   }
+    // }
 
     await SportsMatches.update(
       {
