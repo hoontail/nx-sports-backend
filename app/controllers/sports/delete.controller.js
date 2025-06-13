@@ -1,8 +1,8 @@
 const db = require("../../models");
+const Op = db.Sequelize.Op;
 const SportsBonusOdds = db.sports_bonus_odds;
 const SportsCombine = db.sports_combine;
 const SportsBetHistory = db.sports_bet_history;
-const SportsMatches = db.sports_matches;
 
 const moment = require("moment");
 const utils = require("../../utils");
@@ -76,38 +76,57 @@ exports.deleteSportsBetHistoryForUser = async (req, res) => {
   const ip = utils.getIp(req);
 
   try {
-    const findHistory = await SportsBetHistory.findOne({
-      where: {
-        key,
-        username: req.username,
-        is_delete: 0,
-      },
-    });
-
-    if (!findHistory) {
-      return res.status(400).send({
-        message: "존재하지 않는 베팅내역입니다",
-      });
-    }
-
-    if (findHistory.status === 0) {
-      return res.status(400).send({
-        message: "결과 대기 중인 내역은 삭제할 수 없습니다",
-      });
-    }
-
-    await SportsBetHistory.update(
-      {
-        is_delete: 1,
-        deleted_at: moment().format("YYYY-MM-DD HH:mm:ss"),
-        deleted_ip: ip,
-      },
-      {
+    if (key !== "all") {
+      const findHistory = await SportsBetHistory.findOne({
         where: {
           key,
+          username: req.username,
+          is_delete: 0,
         },
+      });
+
+      if (!findHistory) {
+        return res.status(400).send({
+          message: "존재하지 않는 베팅내역입니다",
+        });
       }
-    );
+
+      if (findHistory.status === 0) {
+        return res.status(400).send({
+          message: "결과 대기 중인 내역은 삭제할 수 없습니다",
+        });
+      }
+
+      await SportsBetHistory.update(
+        {
+          is_delete: 1,
+          deleted_at: moment().format("YYYY-MM-DD HH:mm:ss"),
+          deleted_ip: ip,
+        },
+        {
+          where: {
+            key,
+          },
+        }
+      );
+    } else {
+      await SportsBetHistory.update(
+        {
+          is_delete: 1,
+          deleted_at: moment().format("YYYY-MM-DD HH:mm:ss"),
+          deleted_ip: ip,
+        },
+        {
+          where: {
+            username: req.username,
+            is_delete: 0,
+            status: {
+              [Op.ne]: 0,
+            },
+          },
+        }
+      );
+    }
 
     return res.status(200).send({
       message: "베팅내역이 삭제되었습니다",

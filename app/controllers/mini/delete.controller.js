@@ -10,32 +10,48 @@ exports.deleteHistoryForUser = async (req, res) => {
   const ip = utils.getIp(req);
 
   try {
-    const findHistory = await MiniBetHistory.findOne({
-      where: {
-        username: req.username,
-        key,
-        is_delete: 0,
-      },
-    });
-
-    if (!findHistory) {
-      return res.status(400).send({
-        message: "존재하지 않는 베팅 내역입니다",
-      });
-    }
-
-    await MiniBetHistory.update(
-      {
-        is_delete: 1,
-        deleted_at: moment().format("YYYY-MM-DD HH:mm:ss"),
-        deleted_ip: ip,
-      },
-      {
+    if (key !== "all") {
+      const findHistory = await MiniBetHistory.findOne({
         where: {
+          username: req.username,
           key,
+          is_delete: 0,
         },
+      });
+
+      if (!findHistory) {
+        return res.status(400).send({
+          message: "존재하지 않는 베팅 내역입니다",
+        });
       }
-    );
+
+      await MiniBetHistory.update(
+        {
+          is_delete: 1,
+          deleted_at: moment().format("YYYY-MM-DD HH:mm:ss"),
+          deleted_ip: ip,
+        },
+        {
+          where: {
+            key,
+          },
+        }
+      );
+    } else {
+      await MiniBetHistory.update(
+        {
+          is_delete: 1,
+          deleted_at: moment().format("YYYY-MM-DD HH:mm:ss"),
+          deleted_ip: ip,
+        },
+        {
+          where: {
+            username: req.username,
+            is_delete: 0,
+          },
+        }
+      );
+    }
 
     return res.status(200).send({
       message: "베팅 내역이 삭제되었습니다",

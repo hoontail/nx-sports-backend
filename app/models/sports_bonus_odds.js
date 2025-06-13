@@ -38,6 +38,14 @@ module.exports = function (sequelize, DataTypes) {
         type: DataTypes.DATE,
         allowNull: true,
       },
+      home_name: {
+        type: DataTypes.STRING(255),
+        allowNull: true,
+      },
+      away_name: {
+        type: DataTypes.STRING(255),
+        allowNull: true,
+      },
     },
     {
       sequelize,

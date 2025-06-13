@@ -281,7 +281,14 @@ exports.getSportsMatchListForUser = async (req, res) => {
 exports.getBonusListForUser = async (req, res) => {
   try {
     const findList = await SportsBonusOdds.findAll({
-      attributes: ["folder_count", "odds", "min_odds", "error_message"],
+      attributes: [
+        "folder_count",
+        "odds",
+        "min_odds",
+        "error_message",
+        "home_name",
+        "away_name",
+      ],
       where: {
         status: 1,
       },

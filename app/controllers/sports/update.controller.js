@@ -103,7 +103,16 @@ exports.updateSportsConfigForAdmin = async (req, res) => {
 };
 
 exports.updateBonusForAdmin = async (req, res) => {
-  const { id, folderCount, odds, minOdds, errorMessage, status } = req.body;
+  const {
+    id,
+    folderCount,
+    odds,
+    minOdds,
+    errorMessage,
+    status,
+    homeName,
+    awayName,
+  } = req.body;
   try {
     if (!folderCount || folderCount === "") {
       return res.status(400).send({
@@ -126,6 +135,18 @@ exports.updateBonusForAdmin = async (req, res) => {
     if (errorMessage === "") {
       return res.status(400).send({
         message: "에러 메세지를 입력해주세요",
+      });
+    }
+
+    if (homeName === "") {
+      return res.status(400).send({
+        message: "홈팀명을 입력해주세요",
+      });
+    }
+
+    if (awayName === "") {
+      return res.status(400).send({
+        message: "원정팀명을 입력해주세요",
       });
     }
 
@@ -162,6 +183,8 @@ exports.updateBonusForAdmin = async (req, res) => {
         min_odds: minOdds,
         error_message: errorMessage,
         status,
+        home_name: homeName,
+        away_name: awayName,
         updated_at: moment().format("YYYY-MM-DD HH:mm:ss"),
       },
       {

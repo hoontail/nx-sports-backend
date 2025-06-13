@@ -147,11 +147,25 @@ router.patch(
   sportsUpdateController.updateMatchForAdmin
 );
 
+// 경기 등록
+router.post(
+  "/match",
+  [rateLimit.apiLimiter, authJwt.adminVerifyToken],
+  sportsCreateController.createMatchForAdmin
+);
+
 // 배당 수정
 router.patch(
   "/odds",
   [rateLimit.apiLimiter, authJwt.adminVerifyToken],
   sportsUpdateController.updateOddsForAdmin
+);
+
+// 배당 등록
+router.post(
+  "/odds",
+  [rateLimit.apiLimiter, authJwt.adminVerifyToken],
+  sportsCreateController.createOddsForAdmin
 );
 
 // 배팅내역
