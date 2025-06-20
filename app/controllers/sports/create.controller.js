@@ -172,6 +172,7 @@ exports.createMatchForAdmin = async (req, res) => {
           league_name: league,
           home_name: home,
           away_name: away,
+          country: country,
           country_kr: country,
           start_datetime: startTime,
           created_at: moment().format("YYYY-MM-DD HH:mm:ss"),
@@ -249,7 +250,7 @@ exports.createMatchForAdmin = async (req, res) => {
 
 exports.createOddsForAdmin = async (req, res) => {
   const { matchId, marketId, homeOdds, drawOdds, awayOdds } = req.body;
-  console.log(matchId);
+
   try {
     const findMatch = await SportsMatches.findOne({
       where: {
