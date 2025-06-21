@@ -384,7 +384,7 @@ exports.bettingSports = async (req, res) => {
 
     totalOdds = totalOdds.toFixed(2);
 
-    if (totalOdds > maxWinOdds) {
+    if (Number(totalOdds) > Number(maxWinOdds)) {
       totalOdds = maxWinOdds;
     }
 
