@@ -105,6 +105,7 @@ exports.bettingForUser = async (req, res) => {
         username: req.username,
         game,
         minute,
+        date_round: round,
         created_at: {
           [Op.between]: [
             moment().format("YYYY-MM-DD 00:00:00"),
