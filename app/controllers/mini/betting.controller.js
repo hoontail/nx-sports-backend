@@ -139,6 +139,37 @@ exports.bettingForUser = async (req, res) => {
       });
     }
 
+    // 양방베팅 체크
+    const findTwoWayBetHistory = await MiniBetHistory.findOne({
+      include: {
+        model: MiniBetType,
+        where: {
+          type: {
+            [Op.ne]: type,
+          },
+          market_type: findMiniBetType.market_type,
+        },
+      },
+      where: {
+        username: req.username,
+        game,
+        minute,
+        date_round: round,
+        created_at: {
+          [Op.between]: [
+            moment().format("YYYY-MM-DD 00:00:00"),
+            moment().format("YYYY-MM-DD 23:59:59"),
+          ],
+        },
+      },
+    });
+
+    if (findTwoWayBetHistory) {
+      return res.status(400).send({
+        message: "동일회차 양방향 베팅이 불가합니다",
+      });
+    }
+
     const findLevelConfig = await LevelConfigs.findOne({
       where: {
         level: findUser.user_level,
