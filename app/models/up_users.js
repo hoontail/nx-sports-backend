@@ -12,7 +12,6 @@ module.exports = function (sequelize, DataTypes) {
       username: {
         type: DataTypes.STRING(255),
         allowNull: false,
-        unique: "UQ_Username",
       },
       email: {
         type: DataTypes.STRING(255),
@@ -161,22 +160,22 @@ module.exports = function (sequelize, DataTypes) {
       },
       rolling_slot_percentage: {
         type: DataTypes.DECIMAL(5, 3),
-        allowNull: true,
+        allowNull: false,
         defaultValue: 0,
       },
       rolling_mini_game_percentage: {
         type: DataTypes.DECIMAL(5, 3),
-        allowNull: true,
+        allowNull: false,
         defaultValue: 0,
       },
       rolling_sports_percentage: {
         type: DataTypes.DECIMAL(5, 3),
-        allowNull: true,
+        allowNull: false,
         defaultValue: 0,
       },
       rolling_casino_percentage: {
         type: DataTypes.DECIMAL(5, 3),
-        allowNull: true,
+        allowNull: false,
         defaultValue: 0,
       },
       user_real_name: {
@@ -413,35 +412,34 @@ module.exports = function (sequelize, DataTypes) {
         allowNull: true,
         defaultValue: 0,
       },
+      local_grade_config: {
+        type: DataTypes.STRING(100),
+        allowNull: false,
+        defaultValue: "automatic",
+      },
       local_deposit_method: {
         type: DataTypes.INTEGER,
         allowNull: true,
-        defaultValue: 0,
       },
       local_usdt_deposit_mileage_onoff: {
         type: DataTypes.INTEGER,
         allowNull: true,
-        defaultValue: 0,
       },
       local_usdt_min_deposit_amount: {
         type: DataTypes.DECIMAL(20, 2),
         allowNull: true,
-        defaultValue: 0,
       },
       local_usdt_accumulation: {
         type: DataTypes.DECIMAL(20, 2),
         allowNull: true,
-        defaultValue: 0,
       },
       local_usdt_point: {
-        type: DataTypes.DECIMAL(18, 2),
-        allowNull: false,
-        defaultValue: 0,
+        type: DataTypes.DECIMAL(20, 2),
+        allowNull: true,
       },
       local_rolling_per: {
         type: DataTypes.INTEGER,
-        allowNull: false,
-        defaultValue: 0,
+        allowNull: true,
       },
       rolling_payment_onoff: {
         type: DataTypes.INTEGER,
@@ -449,79 +447,58 @@ module.exports = function (sequelize, DataTypes) {
         defaultValue: 0,
       },
       rolling_payment_live: {
-        type: DataTypes.DECIMAL(5, 2),
+        type: DataTypes.DECIMAL(20, 2),
         allowNull: false,
         defaultValue: 100,
       },
       rolling_payment_slot: {
-        type: DataTypes.DECIMAL(5, 2),
+        type: DataTypes.DECIMAL(20, 2),
         allowNull: false,
         defaultValue: 100,
       },
       rolling_payment_sports: {
-        type: DataTypes.DECIMAL(5, 2),
+        type: DataTypes.DECIMAL(20, 2),
         allowNull: false,
         defaultValue: 100,
       },
       rolling_payment_minigame: {
-        type: DataTypes.DECIMAL(5, 2),
+        type: DataTypes.DECIMAL(20, 2),
         allowNull: false,
         defaultValue: 100,
       },
       rolling_payment_fishing: {
-        type: DataTypes.DECIMAL(5, 2),
+        type: DataTypes.DECIMAL(20, 2),
         allowNull: false,
         defaultValue: 100,
       },
       rolling_payment_board: {
-        type: DataTypes.DECIMAL(5, 2),
+        type: DataTypes.DECIMAL(20, 2),
         allowNull: false,
         defaultValue: 100,
       },
       rolling_payment_etc: {
-        type: DataTypes.DECIMAL(5, 2),
+        type: DataTypes.DECIMAL(20, 2),
         allowNull: false,
         defaultValue: 100,
       },
-      deposit_bank_nickname: {
-        type: DataTypes.STRING(50),
-        allowNull: false,
-        defaultValue: "(Nbank",
-      },
-      deposit_bank_name: {
-        type: DataTypes.STRING(50),
-        allowNull: false,
-        defaultValue: "(N라이브챗 문의 부탁드립니다",
-      },
-      deposit_bank_account: {
-        type: DataTypes.STRING(50),
-        allowNull: false,
-        defaultValue: "(N-",
-      },
-      deposit_bank_holdername: {
-        type: DataTypes.STRING(50),
-        allowNull: false,
-        defaultValue: "(N-",
-      },
-      deposit_usdt_nickname: {
-        type: DataTypes.STRING(50),
-        allowNull: false,
-        defaultValue: "(NUSDT",
-      },
-      deposit_usdt_network: {
-        type: DataTypes.STRING(50),
-        allowNull: false,
-        defaultValue: "(N라이브챗 문의 부탁드립니다",
-      },
-      deposit_usdt_wallet: {
-        type: DataTypes.STRING(500),
-        allowNull: false,
-        defaultValue: "(N-",
-      },
-      local_grade_config: {
-        type: DataTypes.STRING(100),
+      subs_kakao: {
+        type: DataTypes.INTEGER,
         allowNull: true,
-        defaultValue: "automatic",
+        defaultValue: 0,
+      },
+      subs_tele: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        defaultValue: 0,
+      },
+      deposit_count_total: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
+      },
+      userbday: {
+        type: DataTypes.DATEONLY,
+        allowNull: true,
       },
       sports_single_min_bet_amount: {
         type: DataTypes.INTEGER,
@@ -575,14 +552,147 @@ module.exports = function (sequelize, DataTypes) {
       timestamps: false,
       indexes: [
         {
+          name: "account_name",
+          fields: [{ name: "account_name" }],
+        },
+        {
+          name: "account_number",
+          fields: [{ name: "account_number" }],
+        },
+        {
+          name: "admin_level",
+          fields: [{ name: "admin_level" }],
+        },
+        {
+          name: "agent_id",
+          fields: [{ name: "agent_id" }],
+        },
+        {
+          name: "agent_username",
+          fields: [{ name: "agent_username" }],
+        },
+        {
+          name: "bank_name",
+          fields: [{ name: "bank_name" }],
+        },
+        {
+          name: "birthday",
+          fields: [{ name: "birthday" }],
+        },
+        {
+          name: "created_at",
+          fields: [{ name: "created_at" }],
+        },
+        {
+          name: "created_by_id",
+          fields: [{ name: "created_by_id" }],
+        },
+        {
+          name: "email",
+          fields: [{ name: "email" }],
+        },
+        {
+          name: "id",
+          fields: [{ name: "id" }],
+        },
+        {
+          name: "idx_up_users_last_active_at",
+          fields: [{ name: "last_active_at" }],
+        },
+        {
+          name: "IX_up_users_created_at",
+          fields: [{ name: "created_at" }],
+        },
+        {
+          name: "IX_up_users_role_status",
+          fields: [{ name: "role_name" }, { name: "user_status" }],
+        },
+        {
+          name: "IX_up_users_token",
+          fields: [{ name: "token" }],
+        },
+        {
+          name: "IX_up_users_username_unique",
+          unique: true,
+          fields: [{ name: "username" }],
+        },
+        {
+          name: "last_bet_datetime",
+          fields: [{ name: "last_bet_datetime" }],
+        },
+        {
+          name: "last_login",
+          fields: [{ name: "last_login" }],
+        },
+        {
+          name: "phone_number",
+          fields: [{ name: "phone_number" }],
+        },
+        {
           name: "PK__up_users__3213E83F6BC6A4D9",
           unique: true,
           fields: [{ name: "id" }],
         },
         {
+          name: "provider",
+          fields: [{ name: "provider" }],
+        },
+        {
+          name: "referral",
+          fields: [{ name: "referral" }],
+        },
+        {
+          name: "referral_username",
+          fields: [{ name: "referral_username" }],
+        },
+        {
+          name: "role",
+          fields: [{ name: "role" }],
+        },
+        {
+          name: "role_name",
+          fields: [{ name: "role_name" }],
+        },
+        {
+          name: "token",
+          fields: [{ name: "token" }],
+        },
+        {
+          name: "token_expired",
+          fields: [{ name: "token_expired" }],
+        },
+        {
+          name: "token_uid",
+          fields: [{ name: "token_uid" }],
+        },
+        {
+          name: "up_users_parentID_IDX",
+          fields: [{ name: "parentID" }],
+        },
+        {
+          name: "up_users_path_IDX",
+          fields: [{ name: "path" }],
+        },
+        {
+          name: "updated_at",
+          fields: [{ name: "updated_at" }],
+        },
+        {
+          name: "updated_by_id",
+          fields: [{ name: "updated_by_id" }],
+        },
+        {
           name: "UQ_Username",
           unique: true,
           fields: [{ name: "username" }],
+        },
+        {
+          name: "user_level",
+          fields: [{ name: "user_level" }],
+        },
+        {
+          name: "user_status",
+          fields: [{ name: "user_status" }],
         },
       ],
     }
