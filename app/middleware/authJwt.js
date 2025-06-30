@@ -59,9 +59,9 @@ adminVerifyToken = async (req, res, next) => {
     const findUser = await Users.findOne({
       where: {
         token,
-        token_expired: {
-          [Op.gt]: moment().format("YYYY-MM-DD HH:mm:ss"),
-        },
+        // token_expired: {
+        //   [Op.gt]: moment().format("YYYY-MM-DD HH:mm:ss"),
+        // },
         role_name: ["admin", "agent"],
       },
     });
