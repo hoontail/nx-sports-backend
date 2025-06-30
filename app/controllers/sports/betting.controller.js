@@ -385,7 +385,10 @@ exports.bettingSports = async (req, res) => {
     totalOdds = totalOdds.toFixed(2);
 
     if (Number(totalOdds) > Number(maxWinOdds)) {
-      totalOdds = maxWinOdds;
+      return res.status(400).send({
+        message: `최대 당첨 배당은 ${maxWinOdds}배 입니다`,
+      });
+      // totalOdds = maxWinOdds;
     }
 
     // 조합 체크
