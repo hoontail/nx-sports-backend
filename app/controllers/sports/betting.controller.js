@@ -13,7 +13,7 @@ const SportsCombine = db.sports_combine;
 const BalanceLogs = db.balance_logs;
 const KoscaLogs = db.kosca_logs;
 const socketIO = require("socket.io-client");
-const ioSocket = socketIO("http://localhost:3001");
+const ioSocket = socketIO("http://localhost:10020");
 
 const utils = require("../../utils");
 const moment = require("moment");

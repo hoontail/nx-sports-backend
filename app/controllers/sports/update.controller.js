@@ -14,7 +14,7 @@ const BalanceLogs = db.balance_logs;
 const KoscaLogs = db.kosca_logs;
 const { betHistoryResultProcess } = require("../../schedule/sportsResult");
 const socketIO = require("socket.io-client");
-const ioSocket = socketIO("http://localhost:3001");
+const ioSocket = socketIO("http://localhost:10020");
 
 const { getSportsResult } = require("../../helpers/sportsResult");
 const helpers = require("../../helpers");

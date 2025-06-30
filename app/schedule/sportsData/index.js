@@ -12,7 +12,7 @@ const redisClient = require("../../helpers/redisClient");
 const WebSocket = require("ws");
 const moment = require("moment");
 const socketIO = require("socket.io-client");
-const ioSocket = socketIO("http://localhost:3001");
+const ioSocket = socketIO("http://localhost:10020");
 
 const updateSportsData = async (endPoint, marketArr, rateConfig) => {
   const axiosInstance = axios.create({

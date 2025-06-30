@@ -382,7 +382,7 @@ exports.getMySportsConfigForUser = async (req, res) => {
     config.two_minus_odds = findSportsConfig.two_minus_odds;
 
     return res.status(200).send(config);
-  } catch {
+  } catch  {
     return res.status(500).send({
       message: "Server Error",
     });
