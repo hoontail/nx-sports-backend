@@ -61,7 +61,7 @@ exports.sportsResultProcess = async () => {
 
     const findCanceledMatches = await SportsMatches.findAll({
       where: {
-        status_id: [3, 4, 5, 6, 7, 8, 9, 10, 11, 80, 99],
+        status_id: [3, 4, 5, 6, 7, 8, 9, 10, 99],
         is_result: 0,
       },
     });
