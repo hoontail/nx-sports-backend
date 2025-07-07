@@ -345,6 +345,7 @@ const updateSportsData = async (endPoint, marketArr, rateConfig) => {
                     home_odds = source.home_odds,
                     draw_odds = source.draw_odds,
                     away_odds = source.away_odds,
+                    is_delete = 0,
                     updated_at = source.updated_at
                 WHEN NOT MATCHED THEN
                 INSERT (
@@ -366,7 +367,7 @@ const updateSportsData = async (endPoint, marketArr, rateConfig) => {
       if (deleteSameLineOdds.length > 0) {
         const whereConditions = deleteSameLineOdds.map(
           (o) =>
-            `(match_id = ${o.match_id} AND market_id = ${o.market_id} AND odds_line != '${o.odds_line}')`
+            `(match_id = ${o.match_id} AND market_id = ${o.market_id} AND odds_line != '${o.odds_line} AND is_auto = 1')`
         );
 
         await SportsOdds.update(

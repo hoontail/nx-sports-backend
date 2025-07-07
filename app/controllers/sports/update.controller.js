@@ -657,6 +657,7 @@ exports.updateOddsForAdmin = async (req, res) => {
     isDrawStop,
     isAwayStop,
     isAuto,
+    isDelete,
   } = req.body;
 
   try {
@@ -701,6 +702,7 @@ exports.updateOddsForAdmin = async (req, res) => {
         is_draw_stop: isDrawStop,
         is_away_stop: isAwayStop,
         is_auto: isAuto,
+        is_delete: isDelete,
         updated_at: moment().format("YYYY-MM-DD HH:mm:ss"),
       },
       {
