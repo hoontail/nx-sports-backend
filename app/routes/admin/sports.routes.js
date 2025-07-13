@@ -231,4 +231,11 @@ router.patch(
   sportsUpdateController.updateSportsRateConfigForAdmin
 );
 
+// 마켓별 결과처리
+router.patch(
+  "/result/market",
+  [rateLimit.apiLimiter, authJwt.adminVerifyToken],
+  sportsUpdateController.updateBetHistoryResultPerMarket
+);
+
 module.exports = router;

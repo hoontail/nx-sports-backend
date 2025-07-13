@@ -809,6 +809,69 @@ exports.updateBetHistoryForAdmin = async (req, res) => {
         }
       }
 
+      // 당첨처리
+      if (findHistory.status === 0 && status == 1) {
+        if (winAmount > 0) {
+          // +보유머니
+          await Users.increment(
+            {
+              balance: updateWinAmount,
+            },
+            {
+              where: {
+                username: findHistory.username,
+              },
+              transaction: t,
+            }
+          );
+
+          // 배팅 머니로그
+          const createBalanceLogData = {
+            username: findHistory.username,
+            amount: updateWinAmount,
+            system_note: `KSPORTS ${findHistory.key}`,
+            admin_id: "시스템",
+            created_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS +0000"),
+            updated_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS +0000"),
+            record_type: "베팅당첨",
+            prev_balance: findHistory.up_user.balance,
+            after_balance: findHistory.up_user.balance + updateWinAmount,
+          };
+
+          await BalanceLogs.create(createBalanceLogData, {
+            transaction: t,
+          });
+        }
+
+        // 롤링로그 체크
+        const findKoscaLogs = await KoscaLogs.findOne({
+          where: {
+            username: findHistory.username,
+            transaction_id: findHistory.key,
+            game_id: "ksports",
+            status: 1,
+          },
+          transaction: t,
+        });
+
+        if (findKoscaLogs) {
+          await KoscaLogs.update(
+            {
+              status: 2,
+              bet_result: updateWinAmount,
+              net_loss: findHistory.bet_amount - updateWinAmount,
+              updated_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS +0000"),
+            },
+            {
+              where: {
+                id: findKoscaLogs.id,
+              },
+              transaction: t,
+            }
+          );
+        }
+      }
+
       await SportsBetHistory.update(
         {
           status,
@@ -1234,6 +1297,80 @@ exports.updateSportsRateConfigForAdmin = async (req, res) => {
 
     return res.status(200).send({
       message: "환수율 설정이 수정되었습니다",
+    });
+  } catch {
+    return res.status(500).send({
+      message: "Server Error",
+    });
+  }
+};
+
+exports.updateBetHistoryResultPerMarket = async (req, res) => {
+  const { matchId, marketId, status } = req.body;
+
+  try {
+    const findMatch = await SportsMatches.findOne({
+      where: {
+        match_id: matchId,
+      },
+    });
+
+    if (!findMatch) {
+      return res.status(400).send({
+        message: "존재하지 않는 경기입니다",
+      });
+    }
+
+    const findMarket = await SportsMarket.findOne({
+      where: {
+        market_id: marketId,
+      },
+    });
+
+    if (!findMarket) {
+      return res.status(400).send({
+        message: "존재하지 않는 마켓입니다",
+      });
+    }
+
+    if (![1, 2, 3].includes(Number(status))) {
+      return res.status(400).send({
+        message: "잘못된 요청입니다",
+      });
+    }
+
+    const findSportsBetDetail = await SportsBetDetail.findAll({
+      where: {
+        match_id: matchId,
+        market_id: marketId,
+        status: 0,
+      },
+    });
+
+    if (findSportsBetDetail.length === 0) {
+      return res.status(400).send({
+        message: "처리할 배팅내역이 없습니다",
+      });
+    }
+
+    for await (const detail of findSportsBetDetail) {
+      await SportsBetDetail.update(
+        {
+          status,
+          resulted_at: moment().format("YYYY-MM-DD HH:mm:ss"),
+        },
+        {
+          where: {
+            id: detail.id,
+          },
+        }
+      );
+
+      await betHistoryResultProcess(detail.sports_bet_history_id);
+    }
+
+    return res.status(200).send({
+      message: "마켓별 결과처리가 완료되었습니다",
     });
   } catch {
     return res.status(500).send({
