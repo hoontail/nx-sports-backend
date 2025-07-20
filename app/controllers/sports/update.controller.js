@@ -12,7 +12,11 @@ const SportsRateConfigs = db.sports_rate_configs;
 const Users = db.up_users;
 const BalanceLogs = db.balance_logs;
 const KoscaLogs = db.kosca_logs;
-const { betHistoryResultProcess } = require("../../schedule/sportsResult");
+const {
+  betHistoryResultProcess,
+  updateOddsResult,
+} = require("../../schedule/sportsResult");
+const { getResultByScore } = require("../../helpers/sportsResult");
 const socketIO = require("socket.io-client");
 const ioSocket = socketIO("http://localhost:10020");
 
@@ -1306,30 +1310,18 @@ exports.updateSportsRateConfigForAdmin = async (req, res) => {
 };
 
 exports.updateBetHistoryResultPerMarket = async (req, res) => {
-  const { matchId, marketId, status } = req.body;
+  const { oddsKey, status } = req.body;
 
   try {
-    const findMatch = await SportsMatches.findOne({
+    const findOdds = await SportsOdds.findOne({
       where: {
-        match_id: matchId,
+        odds_key: oddsKey,
       },
     });
 
-    if (!findMatch) {
+    if (!findOdds) {
       return res.status(400).send({
-        message: "존재하지 않는 경기입니다",
-      });
-    }
-
-    const findMarket = await SportsMarket.findOne({
-      where: {
-        market_id: marketId,
-      },
-    });
-
-    if (!findMarket) {
-      return res.status(400).send({
-        message: "존재하지 않는 마켓입니다",
+        message: "존재하지 않는 배당입니다",
       });
     }
 
@@ -1341,8 +1333,7 @@ exports.updateBetHistoryResultPerMarket = async (req, res) => {
 
     const findSportsBetDetail = await SportsBetDetail.findAll({
       where: {
-        match_id: matchId,
-        market_id: marketId,
+        odds_key: oddsKey,
         status: 0,
       },
     });
@@ -1368,6 +1359,66 @@ exports.updateBetHistoryResultPerMarket = async (req, res) => {
 
       await betHistoryResultProcess(detail.sports_bet_history_id);
     }
+
+    return res.status(200).send({
+      message: "마켓별 결과처리가 완료되었습니다",
+    });
+  } catch {
+    return res.status(500).send({
+      message: "Server Error",
+    });
+  }
+};
+
+exports.updateBetHistoryResultPerMarketScore = async (req, res) => {
+  const { oddsKey, homeScore, awayScore } = req.body;
+
+  try {
+    const findOdds = await SportsOdds.findOne({
+      include: {
+        model: SportsMarket,
+      },
+      where: {
+        odds_key: oddsKey,
+      },
+    });
+
+    if (!findOdds) {
+      return res.status(400).send({
+        message: "존재하지 않는 배당입니다",
+      });
+    }
+
+    if (homeScore === "" || awayScore === "") {
+      return res.status(400).send({
+        message: "스코어를 입력해주세요",
+      });
+    }
+
+    const findSportsBetDetail = await SportsBetDetail.findAll({
+      where: {
+        odds_key: oddsKey,
+        status: 0,
+      },
+    });
+
+    if (findSportsBetDetail.length === 0) {
+      return res.status(400).send({
+        message: "처리할 배팅내역이 없습니다",
+      });
+    }
+
+    const result = getResultByScore(
+      findOdds.sports_market.type,
+      parseInt(homeScore),
+      parseInt(awayScore),
+      parseFloat(findOdds.odds_line)
+    );
+
+    await updateOddsResult(findOdds, {
+      result,
+      score: `${homeScore}:${awayScore}`,
+    });
 
     return res.status(200).send({
       message: "마켓별 결과처리가 완료되었습니다",

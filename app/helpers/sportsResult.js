@@ -40,9 +40,6 @@ exports.getSportsResult = (sports, odds, score) => {
 exports.soccerResult = (odds, score) => {
   const resultJson = JSON.parse(score);
 
-  // 0: 패, 1: 승, 2: 무
-  let result;
-
   let homeScore = parseInt(resultJson.home.ft);
   let awayScore = parseInt(resultJson.away.ft);
 
@@ -65,37 +62,13 @@ exports.soccerResult = (odds, score) => {
     awayScore = parseInt(resultJson.away["2"]);
   }
 
-  if (marketType === "승무패" || marketType === "더블찬스") {
-    if (homeScore > awayScore) {
-      result = 1;
-    } else if (homeScore === awayScore) {
-      result = 2;
-    } else if (homeScore < awayScore) {
-      result = 0;
-    }
-  } else if (marketType === "양팀모두득점") {
-    if (homeScore > 0 && awayScore > 0) {
-      result = 1;
-    } else {
-      result = 0;
-    }
-  } else if (marketType === "핸디캡") {
-    if (homeScore + oddsLine > awayScore) {
-      result = 1;
-    } else if (homeScore + oddsLine < awayScore) {
-      result = 0;
-    } else {
-      result = 2;
-    }
-  } else if (marketType === "언더오버") {
-    if (homeScore + awayScore > oddsLine) {
-      result = 1;
-    } else if (homeScore + awayScore < oddsLine) {
-      result = 0;
-    } else {
-      result = 2;
-    }
-  }
+  // 0: 패, 1: 승, 2: 무
+  const result = this.getResultByScore(
+    marketType,
+    homeScore,
+    awayScore,
+    oddsLine
+  );
 
   return {
     result,
@@ -105,9 +78,6 @@ exports.soccerResult = (odds, score) => {
 
 exports.baseballResult = (odds, score) => {
   const resultJson = JSON.parse(score);
-
-  // 0: 패, 1: 승, 2: 무
-  let result;
 
   let homeScore = parseInt(resultJson.home.ft);
   let awayScore = parseInt(resultJson.away.ft);
@@ -187,41 +157,13 @@ exports.baseballResult = (odds, score) => {
       parseInt(resultJson.away["7"]);
   }
 
-  if (marketType === "승패" || marketType === "승무패") {
-    // 승패, 승무패
-    if (homeScore > awayScore) {
-      result = 1;
-    } else if (homeScore < awayScore) {
-      result = 0;
-    } else if (homeScore === awayScore) {
-      result = 2;
-    }
-  } else if (marketType === "핸디캡") {
-    // 핸디캡
-    if (homeScore + oddsLine > awayScore) {
-      result = 1;
-    } else if (homeScore + oddsLine < awayScore) {
-      result = 0;
-    } else {
-      result = 2;
-    }
-  } else if (marketType === "언더오버") {
-    // 언더오버
-    if (homeScore + awayScore > oddsLine) {
-      result = 1;
-    } else if (homeScore + awayScore < oddsLine) {
-      result = 0;
-    } else {
-      result = 2;
-    }
-  } else if (marketType === "득점") {
-    // 득점
-    if (homeScore + awayScore > 0) {
-      result = 1;
-    } else {
-      result = 0;
-    }
-  }
+  // 0: 패, 1: 승, 2: 무
+  const result = this.getResultByScore(
+    marketType,
+    homeScore,
+    awayScore,
+    oddsLine
+  );
 
   return {
     result,
@@ -231,9 +173,6 @@ exports.baseballResult = (odds, score) => {
 
 exports.icehockeyResult = (odds, score) => {
   const resultJson = JSON.parse(score);
-
-  // 0: 패, 1: 승, 2: 무
-  let result;
 
   let homeScore = parseInt(resultJson.home.ft);
   let awayScore = parseInt(resultJson.away.ft);
@@ -256,31 +195,13 @@ exports.icehockeyResult = (odds, score) => {
     awayScore = parseInt(resultJson.away["3"]);
   }
 
-  if (marketType === "승패" || marketType === "승무패") {
-    if (homeScore > awayScore) {
-      result = 1;
-    } else if (homeScore < awayScore) {
-      result = 0;
-    } else if (homeScore === awayScore) {
-      result = 2;
-    }
-  } else if (marketType === "핸디캡") {
-    if (homeScore + oddsLine > awayScore) {
-      result = 1;
-    } else if (homeScore + oddsLine < awayScore) {
-      result = 0;
-    } else {
-      result = 2;
-    }
-  } else if (marketType === "언더오버") {
-    if (homeScore + awayScore > oddsLine) {
-      result = 1;
-    } else if (homeScore + awayScore < oddsLine) {
-      result = 0;
-    } else {
-      result = 2;
-    }
-  }
+  // 0: 패, 1: 승, 2: 무
+  const result = this.getResultByScore(
+    marketType,
+    homeScore,
+    awayScore,
+    oddsLine
+  );
 
   return {
     result,
@@ -290,9 +211,6 @@ exports.icehockeyResult = (odds, score) => {
 
 exports.basketballResult = (odds, score) => {
   const resultJson = JSON.parse(score);
-
-  // 0: 패, 1: 승, 2: 무
-  let result;
 
   let homeScore = parseInt(resultJson.home.ft);
   let awayScore = parseInt(resultJson.away.ft);
@@ -321,31 +239,13 @@ exports.basketballResult = (odds, score) => {
     awayScore = parseInt(resultJson.away["4"]);
   }
 
-  if (marketType === "승패" || marketType === "승무패") {
-    if (homeScore > awayScore) {
-      result = 1;
-    } else if (homeScore < awayScore) {
-      result = 0;
-    } else if (homeScore === awayScore) {
-      result = 2;
-    }
-  } else if (marketType === "핸디캡") {
-    if (homeScore + oddsLine > awayScore) {
-      result = 1;
-    } else if (homeScore + oddsLine < awayScore) {
-      result = 0;
-    } else {
-      result = 2;
-    }
-  } else if (marketType === "언더오버") {
-    if (homeScore + awayScore > oddsLine) {
-      result = 1;
-    } else if (homeScore + awayScore < oddsLine) {
-      result = 0;
-    } else {
-      result = 2;
-    }
-  }
+  // 0: 패, 1: 승, 2: 무
+  const result = this.getResultByScore(
+    marketType,
+    homeScore,
+    awayScore,
+    oddsLine
+  );
 
   return {
     result,
@@ -356,8 +256,12 @@ exports.basketballResult = (odds, score) => {
 exports.volleyballResult = (odds, score) => {
   const resultJson = JSON.parse(score);
 
-  // 0: 패, 1: 승, 2: 무
-  let result;
+  const marketType = odds.sports_market.type;
+  const marketPeriod = odds.sports_market.period;
+  const marketId = odds.market_id;
+  const oddsLine = parseFloat(odds.odds_line);
+  const isSet =
+    marketType === "승패" || marketType === "승무패" || marketId === 18002;
 
   let homeScore =
     parseInt(resultJson.home["1"] ?? "0") +
@@ -371,108 +275,82 @@ exports.volleyballResult = (odds, score) => {
     parseInt(resultJson.away["3"] ?? "0") +
     parseInt(resultJson.away["4"] ?? "0") +
     parseInt(resultJson.away["5"] ?? "0");
-  let homeSetScore =
-    parseInt(resultJson.home["1_set"] ?? "0") +
-    parseInt(resultJson.home["2_set"] ?? "0") +
-    parseInt(resultJson.home["3_set"] ?? "0") +
-    parseInt(resultJson.home["4_set"] ?? "0") +
-    parseInt(resultJson.home["5_set"] ?? "0");
-  let awaySetScore =
-    parseInt(resultJson.away["1_set"] ?? "0") +
-    parseInt(resultJson.away["2_set"] ?? "0") +
-    parseInt(resultJson.away["3_set"] ?? "0") +
-    parseInt(resultJson.away["4_set"] ?? "0") +
-    parseInt(resultJson.away["5_set"] ?? "0");
 
-  const marketType = odds.sports_market.type;
-  const marketPeriod = odds.sports_market.period;
-  const marketId = odds.market_id;
-  const oddsLine = parseFloat(odds.odds_line);
+  if (isSet) {
+    homeScore =
+      parseInt(resultJson.home["1_set"] ?? "0") +
+      parseInt(resultJson.home["2_set"] ?? "0") +
+      parseInt(resultJson.home["3_set"] ?? "0") +
+      parseInt(resultJson.home["4_set"] ?? "0") +
+      parseInt(resultJson.home["5_set"] ?? "0");
+    awayScore =
+      parseInt(resultJson.away["1_set"] ?? "0") +
+      parseInt(resultJson.away["2_set"] ?? "0") +
+      parseInt(resultJson.away["3_set"] ?? "0") +
+      parseInt(resultJson.away["4_set"] ?? "0") +
+      parseInt(resultJson.away["5_set"] ?? "0");
+  }
 
   if (marketPeriod === "연장포함") {
     homeScore = parseInt(resultJson.home.score);
     awayScore = parseInt(resultJson.away.score);
-    homeSetScore = parseInt(resultJson.home.score_set);
-    awaySetScore = parseInt(resultJson.away.score_set);
+    if (isSet) {
+      homeScore = parseInt(resultJson.home.score_set);
+      awayScore = parseInt(resultJson.away.score_set);
+    }
   } else if (marketPeriod === "1세트") {
     homeScore = parseInt(resultJson.home["1"]);
     awayScore = parseInt(resultJson.away["1"]);
-    homeSetScore = parseInt(resultJson.home["1_set"]);
-    awaySetScore = parseInt(resultJson.away["1_set"]);
+    if (isSet) {
+      homeScore = parseInt(resultJson.home["1_set"]);
+      awayScore = parseInt(resultJson.away["1_set"]);
+    }
   } else if (marketPeriod === "2세트") {
     homeScore = parseInt(resultJson.home["2"]);
     awayScore = parseInt(resultJson.away["2"]);
-    homeSetScore = parseInt(resultJson.home["2_set"]);
-    awaySetScore = parseInt(resultJson.away["2_set"]);
+    if (isSet) {
+      homeScore = parseInt(resultJson.home["2_set"]);
+      awayScore = parseInt(resultJson.away["2_set"]);
+    }
   } else if (marketPeriod === "3세트") {
     homeScore = parseInt(resultJson.home["3"]);
     awayScore = parseInt(resultJson.away["3"]);
-    homeSetScore = parseInt(resultJson.home["3_set"]);
-    awaySetScore = parseInt(resultJson.away["3_set"]);
+    if (isSet) {
+      homeScore = parseInt(resultJson.home["3_set"]);
+      awayScore = parseInt(resultJson.away["3_set"]);
+    }
   } else if (marketPeriod === "4세트") {
     homeScore = parseInt(resultJson.home["4"]);
     awayScore = parseInt(resultJson.away["4"]);
-    homeSetScore = parseInt(resultJson.home["4_set"]);
-    awaySetScore = parseInt(resultJson.away["4_set"]);
+    if (isSet) {
+      homeScore = parseInt(resultJson.home["4_set"]);
+      awayScore = parseInt(resultJson.away["4_set"]);
+    }
   } else if (marketPeriod === "5세트") {
     homeScore = parseInt(resultJson.home["5"]);
     awayScore = parseInt(resultJson.away["5"]);
-    homeSetScore = parseInt(resultJson.home["5_set"]);
-    awaySetScore = parseInt(resultJson.away["5_set"]);
+    if (isSet) {
+      homeScore = parseInt(resultJson.home["5_set"]);
+      awayScore = parseInt(resultJson.away["5_set"]);
+    }
   }
 
-  if (marketType === "승패" || marketType === "승무패") {
-    if (homeSetScore > awaySetScore) {
-      result = 1;
-    } else if (homeSetScore < awaySetScore) {
-      result = 0;
-    } else {
-      result = 2;
-    }
-  } else if (marketType === "핸디캡") {
-    if (marketId === 18002) {
-      // 세트 핸디캡
-      if (homeSetScore + oddsLine > awaySetScore) {
-        result = 1;
-      } else if (homeSetScore + oddsLine < awaySetScore) {
-        result = 0;
-      } else {
-        result = 2;
-      }
-    } else {
-      if (homeScore + oddsLine > awayScore) {
-        result = 1;
-      } else if (homeScore + oddsLine < awayScore) {
-        result = 0;
-      } else {
-        result = 2;
-      }
-    }
-  } else if (marketType === "언더오버") {
-    // 언더오버
-    if (homeScore + awayScore > oddsLine) {
-      result = 1;
-    } else if (homeScore + awayScore < oddsLine) {
-      result = 0;
-    } else {
-      result = 2;
-    }
-  }
+  // 0: 패, 1: 승, 2: 무
+  const result = this.getResultByScore(
+    marketType,
+    homeScore,
+    awayScore,
+    oddsLine
+  );
 
   return {
     result,
-    score:
-      marketType === "승패" || marketType === "승무패" || marketId === 18002
-        ? `${homeSetScore}:${awaySetScore}`
-        : `${homeScore}:${awayScore}`,
+    score: `${homeScore}:${awayScore}`,
   };
 };
 
 exports.tabletennisResult = (odds, score) => {
   const resultJson = JSON.parse(score);
-
-  // 0: 패, 1: 승, 2: 무
-  let result;
 
   let homeScore =
     parseInt(resultJson.home["1_set"] ?? "0") +
@@ -499,15 +377,8 @@ exports.tabletennisResult = (odds, score) => {
     awayScore = parseInt(resultJson.away.score_set);
   }
 
-  if (marketType === "승패") {
-    if (homeScore > awayScore) {
-      result = 1;
-    } else if (homeScore < awayScore) {
-      result = 0;
-    } else if (homeScore === awayScore) {
-      result = 2;
-    }
-  }
+  // 0: 패, 1: 승, 2: 무
+  const result = this.getResultByScore(marketType, homeScore, awayScore);
 
   return {
     result,
@@ -518,8 +389,10 @@ exports.tabletennisResult = (odds, score) => {
 exports.tennisResult = (odds, score) => {
   const resultJson = JSON.parse(score);
 
-  // 0: 패, 1: 승, 2: 무
-  let result;
+  const marketType = odds.sports_market.type;
+  const marketPeriod = odds.sports_market.period;
+  const oddsLine = parseFloat(odds.odds_line);
+  const isSet = marketType === "승패";
 
   let homeScore =
     parseInt(resultJson.home["1"] ?? "0") +
@@ -534,70 +407,46 @@ exports.tennisResult = (odds, score) => {
     parseInt(resultJson.away["4"] ?? "0") +
     parseInt(resultJson.away["5"] ?? "0");
 
-  let homeSetScore =
-    parseInt(resultJson.home["1_set"] ?? "0") +
-    parseInt(resultJson.home["2_set"] ?? "0") +
-    parseInt(resultJson.home["3_set"] ?? "0") +
-    parseInt(resultJson.home["4_set"] ?? "0") +
-    parseInt(resultJson.home["5_set"] ?? "0");
-  let awaySetScore =
-    parseInt(resultJson.away["1_set"] ?? "0") +
-    parseInt(resultJson.away["2_set"] ?? "0") +
-    parseInt(resultJson.away["3_set"] ?? "0") +
-    parseInt(resultJson.away["4_set"] ?? "0") +
-    parseInt(resultJson.away["5_set"] ?? "0");
-
-  const marketType = odds.sports_market.type;
-  const marketPeriod = odds.sports_market.period;
-  const oddsLine = parseFloat(odds.odds_line);
+  if (isSet) {
+    homeScore =
+      parseInt(resultJson.home["1_set"] ?? "0") +
+      parseInt(resultJson.home["2_set"] ?? "0") +
+      parseInt(resultJson.home["3_set"] ?? "0") +
+      parseInt(resultJson.home["4_set"] ?? "0") +
+      parseInt(resultJson.home["5_set"] ?? "0");
+    awayScore =
+      parseInt(resultJson.away["1_set"] ?? "0") +
+      parseInt(resultJson.away["2_set"] ?? "0") +
+      parseInt(resultJson.away["3_set"] ?? "0") +
+      parseInt(resultJson.away["4_set"] ?? "0") +
+      parseInt(resultJson.away["5_set"] ?? "0");
+  }
 
   if (marketPeriod === "연장포함") {
     homeScore = parseInt(resultJson.home.score);
     awayScore = parseInt(resultJson.away.score);
-    homeSetScore = parseInt(resultJson.home.score_set);
-    awaySetScore = parseInt(resultJson.away.score_set);
+    if (isSet) {
+      homeScore = parseInt(resultJson.home.score_set);
+      awayScore = parseInt(resultJson.away.score_set);
+    }
   }
 
-  if (marketType === "승패") {
-    if (homeSetScore > awaySetScore) {
-      result = 1;
-    } else if (homeSetScore < awaySetScore) {
-      result = 0;
-    } else if (homeSetScore === awaySetScore) {
-      result = 2;
-    }
-  } else if (marketType === "핸디캡") {
-    if (homeScore + oddsLine > awayScore) {
-      result = 1;
-    } else if (homeScore + oddsLine < awayScore) {
-      result = 0;
-    } else {
-      result = 2;
-    }
-  } else if (marketType === "언더오버") {
-    if (homeScore + awayScore > oddsLine) {
-      result = 1;
-    } else if (homeScore + awayScore < oddsLine) {
-      result = 0;
-    } else {
-      result = 2;
-    }
-  }
+  // 0: 패, 1: 승, 2: 무
+  const result = this.getResultByScore(
+    marketType,
+    homeScore,
+    awayScore,
+    oddsLine
+  );
 
   return {
     result,
-    score:
-      marketType === "승패"
-        ? `${homeSetScore}:${awaySetScore}`
-        : `${homeScore}:${awayScore}`,
+    score: `${homeScore}:${awayScore}`,
   };
 };
 
 exports.americanfootballResult = (odds, score) => {
   const resultJson = JSON.parse(score);
-
-  // 0: 패, 1: 승, 2: 무
-  let result;
 
   let homeScore = parseInt(resultJson.home.ft);
   let awayScore = parseInt(resultJson.away.ft);
@@ -617,31 +466,13 @@ exports.americanfootballResult = (odds, score) => {
     awayScore = parseInt(resultJson.away["1"]) + parseInt(resultJson.away["2"]);
   }
 
-  if (marketType === "승패") {
-    if (homeScore > awayScore) {
-      result = 1;
-    } else if (homeScore < awayScore) {
-      result = 0;
-    } else if (homeScore === awayScore) {
-      result = 2;
-    }
-  } else if (marketType === "핸디캡") {
-    if (homeScore + oddsLine > awayScore) {
-      result = 1;
-    } else if (homeScore + oddsLine < awayScore) {
-      result = 0;
-    } else {
-      result = 2;
-    }
-  } else if (marketType === "언더오버") {
-    if (homeScore + awayScore > oddsLine) {
-      result = 1;
-    } else if (homeScore + awayScore < oddsLine) {
-      result = 0;
-    } else {
-      result = 2;
-    }
-  }
+  // 0: 패, 1: 승, 2: 무
+  const result = this.getResultByScore(
+    marketType,
+    homeScore,
+    awayScore,
+    oddsLine
+  );
 
   return {
     result,
@@ -652,23 +483,13 @@ exports.americanfootballResult = (odds, score) => {
 exports.boxingResult = (odds, score) => {
   const resultJson = JSON.parse(score);
 
-  // 0: 패, 1: 승, 2: 무
-  let result;
-
   let homeScore = parseInt(resultJson.home.score);
   let awayScore = parseInt(resultJson.away.score);
 
   const marketType = odds.sports_market.type;
 
-  if (marketType === "승패") {
-    if (homeScore > awayScore) {
-      result = 1;
-    } else if (homeScore < awayScore) {
-      result = 0;
-    } else if (homeScore === awayScore) {
-      result = 2;
-    }
-  }
+  // 0: 패, 1: 승, 2: 무
+  const result = this.getResultByScore(marketType, homeScore, awayScore);
 
   return {
     result,
@@ -679,8 +500,6 @@ exports.boxingResult = (odds, score) => {
 exports.esportsResult = (odds, score) => {
   const resultJson = JSON.parse(score);
 
-  // 0: 패, 1: 승, 2: 무
-  let result;
   let homeScore = parseInt(resultJson.home.score);
   let awayScore = parseInt(resultJson.away.score);
 
@@ -749,17 +568,43 @@ exports.esportsResult = (odds, score) => {
     awayScore = parseInt(resultJson.away["k5"]);
   }
 
+  // 0: 패, 1: 승, 2: 무
+  const result = this.getResultByScore(
+    marketType,
+    homeScore,
+    awayScore,
+    oddsLine
+  );
+
+  return {
+    result,
+    score: `${homeScore}:${awayScore}`,
+  };
+};
+
+exports.getResultByScore = (marketType, homeScore, awayScore, oddsLine) => {
+  let result;
+
   if (
-    ["승패", "첫용", "첫바론", "첫타워", "첫킬", "킬 합계"].includes(marketType)
+    [
+      "승패",
+      "승무패",
+      "더블찬스",
+      "첫용",
+      "첫바론",
+      "첫타워",
+      "첫킬",
+      "킬 합계",
+    ].includes(marketType)
   ) {
     if (homeScore > awayScore) {
       result = 1;
-    } else if (homeScore < awayScore) {
-      result = 0;
     } else if (homeScore === awayScore) {
       result = 2;
+    } else if (homeScore < awayScore) {
+      result = 0;
     }
-  } else if (marketType === "핸디캡" || marketType === "킬 핸디캡") {
+  } else if (["핸디캡", "킬 핸디캡"].includes(marketType)) {
     if (homeScore + oddsLine > awayScore) {
       result = 1;
     } else if (homeScore + oddsLine < awayScore) {
@@ -767,7 +612,7 @@ exports.esportsResult = (odds, score) => {
     } else {
       result = 2;
     }
-  } else if (marketType === "언더오버" || marketType === "킬 언더오버") {
+  } else if (["언더오버", "킬 언더오버"].includes(marketType)) {
     if (homeScore + awayScore > oddsLine) {
       result = 1;
     } else if (homeScore + awayScore < oddsLine) {
@@ -775,10 +620,19 @@ exports.esportsResult = (odds, score) => {
     } else {
       result = 2;
     }
+  } else if (marketType === "양팀모두득점") {
+    if (homeScore > 0 && awayScore > 0) {
+      result = 1;
+    } else {
+      result = 0;
+    }
+  } else if (marketType === "득점") {
+    if (homeScore + awayScore > 0) {
+      result = 1;
+    } else {
+      result = 0;
+    }
   }
 
-  return {
-    result,
-    score: `${homeScore}:${awayScore}`,
-  };
+  return result;
 };

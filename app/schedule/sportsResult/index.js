@@ -137,7 +137,7 @@ const soccerResultProcess = async (match) => {
     const getResult = soccerResult(odds, match.score);
 
     // 배당 결과값 수정
-    await updateOddsResult(odds, getResult);
+    await this.updateOddsResult(odds, getResult);
   }
 
   // 경기 결과처리 수정
@@ -184,7 +184,7 @@ const baseballResultProcess = async (match) => {
     const getResult = baseballResult(odds, match.score);
 
     // 배당 결과값 수정
-    await updateOddsResult(odds, getResult);
+    await this.updateOddsResult(odds, getResult);
   }
 
   // 경기 결과처리 수정
@@ -216,7 +216,7 @@ const icehockeyResultProcess = async (match) => {
     const getResult = icehockeyResult(odds, match.score);
 
     // 배당 결과값 수정
-    await updateOddsResult(odds, getResult);
+    await this.updateOddsResult(odds, getResult);
   }
 
   // 경기 결과처리 수정
@@ -251,7 +251,7 @@ const basketballResultProcess = async (match) => {
     const getResult = basketballResult(odds, match.score);
 
     // 배당 결과값 수정
-    await updateOddsResult(odds, getResult);
+    await this.updateOddsResult(odds, getResult);
   }
 
   // 경기 결과처리 수정
@@ -286,7 +286,7 @@ const volleyballResultProcess = async (match) => {
     const getResult = volleyballResult(odds, match.score);
 
     // 배당 결과값 수정
-    await updateOddsResult(odds, getResult);
+    await this.updateOddsResult(odds, getResult);
   }
 
   // 경기 결과처리 수정
@@ -299,7 +299,7 @@ const tabletennisResultProcess = async (match) => {
     const getResult = tabletennisResult(odds, match.score);
 
     // 배당 결과값 수정
-    await updateOddsResult(odds, getResult);
+    await this.updateOddsResult(odds, getResult);
   }
 
   // 경기 결과처리 수정
@@ -312,7 +312,7 @@ const tennisResultProcess = async (match) => {
     const getResult = tennisResult(odds, match.score);
 
     // 배당 결과값 수정
-    await updateOddsResult(odds, getResult);
+    await this.updateOddsResult(odds, getResult);
   }
 
   // 경기 결과처리 수정
@@ -342,7 +342,7 @@ const americanfootballResultProcess = async (match) => {
     const getResult = americanfootballResult(odds, match.score);
 
     // 배당 결과값 수정
-    await updateOddsResult(odds, getResult);
+    await this.updateOddsResult(odds, getResult);
   }
 
   // 경기 결과처리 수정
@@ -355,7 +355,7 @@ const boxingResultProcess = async (match) => {
     const getResult = boxingResult(odds, match.score);
 
     // 배당 결과값 수정
-    await updateOddsResult(odds, getResult);
+    await this.updateOddsResult(odds, getResult);
   }
 
   // 경기 결과처리 수정
@@ -368,7 +368,7 @@ const esportsResultProcess = async (match) => {
     const getResult = esportsResult(odds, match.score);
 
     // 배당 결과값 수정
-    await updateOddsResult(odds, getResult);
+    await this.updateOddsResult(odds, getResult);
   }
 
   // 경기 결과처리 수정
@@ -376,7 +376,7 @@ const esportsResultProcess = async (match) => {
 };
 
 // 배당 결과값 수정
-const updateOddsResult = async (odds, getResult) => {
+exports.updateOddsResult = async (odds, getResult) => {
   await SportsOdds.update(
     {
       result: getResult.result,
