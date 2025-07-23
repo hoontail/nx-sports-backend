@@ -148,6 +148,7 @@ const soccerResultProcess = async (match) => {
 const baseballResultProcess = async (match) => {
   for await (const odds of match.sports_odds) {
     const marketPeriod = odds.sports_market.period;
+    const marketType = odds.sports_market.type;
 
     if (match.status_kr !== "경기종료") {
       let endMarketArr = [];
@@ -181,7 +182,26 @@ const baseballResultProcess = async (match) => {
       }
     }
 
-    const getResult = baseballResult(odds, match.score);
+    // - 5회 말 3아웃을 채우지 못할 경우 : 승패 핸디캡 언더오버 모두 적중특례 처리
+    // - 5회 말 3아웃을 채울 경우 : 승패 = 정상 마감 / 핸디캡 언더오버 적중특례 처리
+
+    let getResult = {
+      result: "",
+      score: "",
+    };
+
+    if (match.status_kr === "경기종료" && match.period_id <= 205) {
+      getResult.result = 2;
+    } else if (
+      match.status_kr === "경기종료" &&
+      match.period_id >= 206 &&
+      match.period_id <= 208 &&
+      (marketType === "언더오버" || marketType === "핸디캡")
+    ) {
+      getResult.result = 2;
+    } else {
+      getResult = baseballResult(odds, match.score);
+    }
 
     // 배당 결과값 수정
     await this.updateOddsResult(odds, getResult);

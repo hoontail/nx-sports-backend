@@ -73,7 +73,7 @@ exports.bettingSports = async (req, res) => {
       rollingPercentage =
         findLevelConfig[`sports_${betType}_rolling_percentage`];
     } else if (rollingType === "AGENT") {
-      const findAgent = await findUser.findOne({
+      const findAgent = await Users.findOne({
         where: {
           username: findUser.agent_username,
         },
