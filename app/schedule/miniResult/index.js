@@ -354,7 +354,7 @@ exports.powerballCalc = async (game, minute, data) => {
               status: 2,
               bet_result: winAmount,
               net_loss: history.bet_amount - winAmount,
-              updated_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS +0000"),
+              updated_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
             },
             {
               where: {
@@ -383,8 +383,8 @@ exports.powerballCalc = async (game, minute, data) => {
             amount: winAmount,
             system_note: `MINI ${history.key}`,
             admin_id: "시스템",
-            created_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS +0000"),
-            updated_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS +0000"),
+            created_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
+            updated_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
             record_type: "베팅당첨",
             prev_balance: history.up_user.balance,
             after_balance: history.up_user.balance + winAmount,
@@ -486,7 +486,7 @@ exports.ladderCalc = async (game, minute, data) => {
               status: 2,
               bet_result: winAmount,
               net_loss: history.bet_amount - winAmount,
-              updated_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS +0000"),
+              updated_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
             },
             {
               where: {
@@ -515,8 +515,8 @@ exports.ladderCalc = async (game, minute, data) => {
             amount: winAmount,
             system_note: `MINI ${history.key}`,
             admin_id: "시스템",
-            created_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS +0000"),
-            updated_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS +0000"),
+            created_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
+            updated_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
             record_type: "베팅당첨",
             prev_balance: history.up_user.balance,
             after_balance: history.up_user.balance + winAmount,
