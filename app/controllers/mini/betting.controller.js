@@ -100,6 +100,12 @@ exports.bettingForUser = async (req, res) => {
       });
     }
 
+    if (findUser.balance < amount) {
+      return res.status(400).send({
+        message: "보유금액이 부족합니다",
+      });
+    }
+
     const findHistoryCount = await MiniBetHistory.count({
       where: {
         username: req.username,
