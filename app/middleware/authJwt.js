@@ -56,21 +56,21 @@ adminVerifyToken = async (req, res, next) => {
   }
 
   try {
-    const findUser = await Users.findOne({
-      where: {
-        token,
-        // token_expired: {
-        //   [Op.gt]: moment().format("YYYY-MM-DD HH:mm:ss"),
-        // },
-        role_name: ["admin", "agent"],
-      },
-    });
+    // const findUser = await Users.findOne({
+    //   where: {
+    //     token,
+    //     token_expired: {
+    //       [Op.gt]: moment().format("YYYY-MM-DD HH:mm:ss"),
+    //     },
+    //     role_name: ["admin", "agent"],
+    //   },
+    // });
 
-    if (!findUser) {
-      return res.status(401).send({
-        message: "Token Is Not Valid",
-      });
-    }
+    // if (!findUser) {
+    //   return res.status(401).send({
+    //     message: "Token Is Not Valid",
+    //   });
+    // }
 
     next();
   } catch (err) {
