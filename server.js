@@ -12,6 +12,8 @@ const sportsDataSchedule = require("./app/schedule/sportsData");
 const sportsResultSchedule = require("./app/schedule/sportsResult");
 const miniDataSchedule = require("./app/schedule/miniData");
 const miniResultSchedule = require("./app/schedule/miniResult");
+const vrDataSchedule = require("./app/schedule/vrData");
+const vrResultSchedule = require("./app/schedule/vrResult");
 
 const app = express();
 const server = http.createServer(app);
@@ -38,6 +40,9 @@ if (process.env.INSTANCE_ID == 0) {
   sportsDataSchedule.getPrematchData(true);
   sportsDataSchedule.getSpecialData();
   sportsDataSchedule.getInplayData();
+
+  vrDataSchedule.getVrData();
+  vrResultSchedule.vrResultProcess();
 
   schedule.scheduleJob("00 * * * * *", function () {
     sportsResultSchedule.sportsResultProcess();

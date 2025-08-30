@@ -16,6 +16,14 @@ var _mini_bet_history = require("./mini_bet_history");
 var _mini_bet_type = require("./mini_bet_type");
 var _mini_configs = require("./mini_configs");
 var _mini_games = require("./mini_games");
+var _vr_bet_detail = require("./vr_bet_detail");
+var _vr_bet_history = require("./vr_bet_history");
+var _vr_bonus_odds = require("./vr_bonus_odds");
+var _vr_combine = require("./vr_combine");
+var _vr_configs = require("./vr_configs");
+var _vr_market = require("./vr_market");
+var _vr_odds = require("./vr_odds");
+var _vr_sports_configs = require("./vr_sports_configs");
 
 function initModels(sequelize) {
   var balance_logs = _balance_logs(sequelize, DataTypes);
@@ -35,6 +43,14 @@ function initModels(sequelize) {
   var mini_bet_type = _mini_bet_type(sequelize, DataTypes);
   var mini_configs = _mini_configs(sequelize, DataTypes);
   var mini_games = _mini_games(sequelize, DataTypes);
+  var vr_bet_detail = _vr_bet_detail(sequelize, DataTypes);
+  var vr_bet_history = _vr_bet_history(sequelize, DataTypes);
+  var vr_bonus_odds = _vr_bonus_odds(sequelize, DataTypes);
+  var vr_combine = _vr_combine(sequelize, DataTypes);
+  var vr_configs = _vr_configs(sequelize, DataTypes);
+  var vr_market = _vr_market(sequelize, DataTypes);
+  var vr_odds = _vr_odds(sequelize, DataTypes);
+  var vr_sports_configs = _vr_sports_configs(sequelize, DataTypes);
 
   return {
     balance_logs,
@@ -54,6 +70,14 @@ function initModels(sequelize) {
     mini_bet_type,
     mini_configs,
     mini_games,
+    vr_bet_detail,
+    vr_bet_history,
+    vr_bonus_odds,
+    vr_combine,
+    vr_configs,
+    vr_market,
+    vr_odds,
+    vr_sports_configs,
   };
 }
 module.exports = initModels;

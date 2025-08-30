@@ -96,4 +96,65 @@ db.mini_bet_history.hasOne(db.up_users, {
   sourceKey: "username",
 });
 
+db.vr_market.hasOne(db.vr_sports_configs, {
+  foreignKey: "id",
+  sourceKey: "vr_sports_configs_id",
+});
+
+db.vr_bet_history.hasMany(db.vr_bet_detail, {
+  foreignKey: "vr_bet_history_id",
+  sourceKey: "id",
+});
+
+db.vr_bet_detail.belongsTo(db.vr_bet_history, {
+  foreignKey: "vr_bet_history_id",
+  targetKey: "id",
+});
+
+db.vr_odds.hasOne(db.vr_market, {
+  foreignKey: "id",
+  sourceKey: "vr_market_id",
+});
+
+db.vr_odds.hasOne(db.vr_sports_configs, {
+  foreignKey: "id",
+  sourceKey: "vr_sports_configs_id",
+});
+
+db.vr_sports_configs.hasMany(db.vr_league, {
+  foreignKey: "vr_sports_configs_id",
+  sourceKey: "id",
+});
+
+db.vr_league.belongsTo(db.vr_sports_configs, {
+  foreignKey: "vr_sports_configs_id",
+  targetKey: "id",
+});
+
+db.vr_odds.hasMany(db.vr_odds, {
+  foreignKey: "match_id",
+  sourceKey: "match_id",
+  as: "odds",
+});
+
+db.up_users.hasMany(db.vr_bet_history, {
+  foreignKey: "username",
+  sourceKey: "username",
+});
+
+db.vr_bet_history.belongsTo(db.up_users, {
+  foreignKey: "username",
+  targetKey: "username",
+});
+
+db.vr_bet_detail.hasOne(db.vr_market, {
+  foreignKey: "id",
+  sourceKey: "vr_market_id",
+});
+
+db.vr_bet_detail.hasOne(db.vr_sports_configs, {
+  foreignKey: "id",
+  sourceKey: "vr_sports_configs_id",
+});
+
 module.exports = db;

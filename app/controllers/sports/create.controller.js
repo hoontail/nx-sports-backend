@@ -9,7 +9,15 @@ const { v4: uuidv4 } = require("uuid");
 const moment = require("moment");
 
 exports.createBonusForAdmin = async (req, res) => {
-  const { folderCount, odds, minOdds, errorMessage, status } = req.body;
+  const {
+    folderCount,
+    odds,
+    minOdds,
+    errorMessage,
+    status,
+    homeName,
+    awayName,
+  } = req.body;
   try {
     if (!folderCount || folderCount === "") {
       return res.status(400).send({
@@ -35,6 +43,18 @@ exports.createBonusForAdmin = async (req, res) => {
       });
     }
 
+    if (homeName === "") {
+      return res.status(400).send({
+        message: "홈팀명을 입력해주세요",
+      });
+    }
+
+    if (awayName === "") {
+      return res.status(400).send({
+        message: "원정팀명을 입력해주세요",
+      });
+    }
+
     const findSamefolder = await SportsBonusOdds.findOne({
       where: {
         folder_count: folderCount,
@@ -52,6 +72,8 @@ exports.createBonusForAdmin = async (req, res) => {
       odds,
       min_odds: minOdds,
       error_message: errorMessage,
+      home_name: homeName,
+      away_name: awayName,
       status,
     });
 
