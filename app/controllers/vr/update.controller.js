@@ -10,6 +10,7 @@ const VrBetDetail = db.vr_bet_detail;
 const Users = db.up_users;
 const BalanceLogs = db.balance_logs;
 const KoscaLogs = db.kosca_logs;
+const VrRateConfigs = db.vr_rate_configs;
 
 const moment = require("moment");
 
@@ -509,6 +510,61 @@ exports.updateVrBetDetailForAdmin = async (req, res) => {
 
     return res.status(200).send({
       message: "베팅 상세 내역이 수정되었습니다",
+    });
+  } catch {
+    return res.status(500).send({
+      message: "Server Error",
+    });
+  }
+};
+
+exports.updateVrRateConfigForAdmin = async (req, res) => {
+  const {
+    id,
+    winloseRate,
+    winloseSum,
+    winloseStatus,
+    handicapRate,
+    handicapSum,
+    handicapStatus,
+    underoverRate,
+    underoverSum,
+    underoverStatus,
+  } = req.body;
+
+  try {
+    const findConfig = await VrRateConfigs.findOne({
+      where: {
+        id,
+      },
+    });
+
+    if (!findConfig) {
+      return res.status(400).send({
+        message: "존재하지 않는 설정입니다",
+      });
+    }
+
+    await VrRateConfigs.update(
+      {
+        winlose_rate: winloseRate,
+        winlose_sum: winloseSum,
+        winlose_status: winloseStatus,
+        handicap_rate: handicapRate,
+        handicap_sum: handicapSum,
+        handicap_status: handicapStatus,
+        underover_rate: underoverRate,
+        underover_sum: underoverSum,
+        underover_status: underoverStatus,
+        updated_at: moment().format("YYYY-MM-DD HH:mm:ss"),
+      },
+      {
+        where: { id },
+      }
+    );
+
+    return res.status(200).send({
+      message: "환수율 설정이 수정되었습니다",
     });
   } catch {
     return res.status(500).send({

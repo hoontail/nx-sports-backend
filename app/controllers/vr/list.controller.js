@@ -11,6 +11,7 @@ const VrOdds = db.vr_odds;
 const Users = db.up_users;
 const VrBetHistory = db.vr_bet_history;
 const VrBetDetail = db.vr_bet_detail;
+const VrRateConfigs = db.vr_rate_configs;
 
 const helpers = require("../../helpers");
 const moment = require("moment");
@@ -649,6 +650,23 @@ exports.getVrBetHistoryForUser = async (req, res) => {
     const data = helpers.getPagingData(findHistory, page, limit);
 
     return res.status(200).send(data);
+  } catch {
+    return res.status(500).send({
+      message: "Server Error",
+    });
+  }
+};
+
+exports.getVrRateConfigForAdmin = async (req, res) => {
+  try {
+    const findSportsRateConfig = await VrRateConfigs.findAll({
+      include: {
+        model: VrSportsConfigs,
+      },
+      order: [["id", "asc"]],
+    });
+
+    return res.status(200).send(findSportsRateConfig);
   } catch {
     return res.status(500).send({
       message: "Server Error",

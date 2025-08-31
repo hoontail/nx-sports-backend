@@ -157,4 +157,9 @@ db.vr_bet_detail.hasOne(db.vr_sports_configs, {
   sourceKey: "vr_sports_configs_id",
 });
 
+db.vr_rate_configs.hasOne(db.vr_sports_configs, {
+  foreignKey: "id",
+  sourceKey: "vr_sports_configs_id",
+});
+
 module.exports = db;

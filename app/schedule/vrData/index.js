@@ -1,8 +1,7 @@
 const axios = require("axios");
 const db = require("../../models");
-const Op = db.Sequelize.Op;
-const literal = db.Sequelize.literal;
 const VrSportsConfigs = db.vr_sports_configs;
+const VrRateConfigs = db.vr_rate_configs;
 
 const moment = require("moment");
 
@@ -11,6 +10,7 @@ exports.getVrData = async () => {
 
   try {
     const findVrSportsConfigList = await VrSportsConfigs.findAll();
+    const findVrRateConfigList = await VrRateConfigs.findAll();
 
     const updatePromises = findVrSportsConfigList.map(async (data) => {
       const endPoint = `${process.env.VR_URL}/list?cate=${data.sports_name}`;
@@ -19,16 +19,83 @@ exports.getVrData = async () => {
         timeout: 10000,
       });
 
+      const rateConfig = findVrRateConfigList.find(
+        (x) => x.vr_sports_configs_id === data.id
+      );
+
       const createData = [];
 
       await axiosInstance.get(endPoint).then((res) => {
         for (const data of res.data[1].gamelist) {
           const marketId = getVrMarketId(data.cate2, data.cate1, data.home);
+          const marketType = data.cate1;
 
           if (marketId) {
-            const vrSportsConfigId = findVrSportsConfigList.find(
-              (sports) => sports.sports_name === data.cate2
-            ).id;
+            let homeOdds = data.ratio1 === "" ? 0 : data.ratio1;
+            let drawOdds = data.ratio2 === "" ? 0 : data.ratio2;
+            let awayOdds = data.ratio3 === "" ? 0 : data.ratio3;
+            const isTwoWay =
+              marketType === "handicap" ||
+              marketType === "underover" ||
+              (marketType === "wintielose" && !drawOdds);
+
+            // 환수율 조정
+            let rate = 0;
+            let sum = 0;
+            if (marketType !== "wintielose") {
+              if (rateConfig.winlose_status === 1) {
+                rate = rateConfig.winlose_rate;
+                sum = rateConfig.winlose_sum;
+              }
+            } else if (marketType === "handicap") {
+              if (rateConfig.handicap_status === 1) {
+                rate = rateConfig.handicap_rate;
+                sum = rateConfig.handicap_sum;
+              }
+            } else if (marketType === "underover") {
+              if (rateConfig.underover_status === 1) {
+                rate = rateConfig.underover_rate;
+                sum = rateConfig.underover_sum;
+              }
+            }
+
+            if (rate > 0) {
+              homeOdds = (parseFloat(homeOdds) * rate) / 100;
+              awayOdds = (parseFloat(awayOdds) * rate) / 100;
+              if (marketType === "wintielose" && drawOdds) {
+                drawOdds = (parseFloat(drawOdds) * rate) / 100;
+
+                if (drawOdds < 1.03) drawOdds = 1.03;
+              }
+
+              if (homeOdds < 1.03) homeOdds = 1.03;
+
+              if (awayOdds < 1.03) awayOdds = 1.03;
+            }
+
+            if (isTwoWay && sum > 0) {
+              const homeValue = parseFloat(homeOdds);
+              const awayValue = parseFloat(awayOdds);
+              const oddsSum = homeValue + awayValue;
+
+              if (oddsSum > sum) {
+                const diff = oddsSum - sum;
+
+                if (homeValue > awayValue) {
+                  homeOdds = homeValue - diff;
+                } else {
+                  awayOdds = awayValue - diff;
+                }
+              } else if (oddsSum < sum) {
+                const diff = sum - oddsSum;
+
+                if (homeValue < awayValue) {
+                  homeOdds = homeValue + diff;
+                } else {
+                  awayOdds = awayValue + diff;
+                }
+              }
+            }
 
             const oddsData = {
               odds_key: `${data.idx}_${data.seq}_${marketId}_${data.home}${
@@ -37,16 +104,16 @@ exports.getVrData = async () => {
                   : ""
               }`,
               match_id: data.idx,
-              vr_sports_configs_id: vrSportsConfigId,
+              vr_sports_configs_id: data.id,
               league_name: data.title,
               league_id: data.seq,
               vr_market_id: marketId,
               market_type: data.cate1,
               home_name: data.home,
               away_name: data.away,
-              home_odds: data.ratio1 === "" ? 0 : data.ratio1,
-              draw_odds: data.ratio2 === "" ? 0 : data.ratio2,
-              away_odds: data.ratio3 === "" ? 0 : data.ratio3,
+              home_odds: homeOdds,
+              draw_odds: drawOdds,
+              away_odds: awayOdds,
               home_image: data.country1,
               away_image: data.country2,
               status: data.flag,

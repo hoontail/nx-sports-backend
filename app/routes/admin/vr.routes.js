@@ -175,4 +175,18 @@ router.patch(
   vrUpdateController.updateVrBetDetailForAdmin
 );
 
+// 환수율 설정
+router.get(
+  "/config/rate",
+  [rateLimit.apiLimiter, authJwt.adminVerifyToken],
+  vrListController.getVrRateConfigForAdmin
+);
+
+// 환수율 수정
+router.patch(
+  "/config/rate",
+  [rateLimit.apiLimiter, authJwt.adminVerifyToken],
+  vrUpdateController.updateVrRateConfigForAdmin
+);
+
 module.exports = router;
