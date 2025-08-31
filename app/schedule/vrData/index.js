@@ -31,6 +31,10 @@ exports.getVrData = async () => {
           const marketType = data.cate1;
 
           if (marketId) {
+            const vrSportsConfigId = findVrSportsConfigList.find(
+              (sports) => sports.sports_name === data.cate2
+            ).id;
+
             let homeOdds = data.ratio1 === "" ? 0 : data.ratio1;
             let drawOdds = data.ratio2 === "" ? 0 : data.ratio2;
             let awayOdds = data.ratio3 === "" ? 0 : data.ratio3;
@@ -104,7 +108,7 @@ exports.getVrData = async () => {
                   : ""
               }`,
               match_id: data.idx,
-              vr_sports_configs_id: data.id,
+              vr_sports_configs_id: vrSportsConfigId,
               league_name: data.title,
               league_id: data.seq,
               vr_market_id: marketId,
