@@ -46,7 +46,7 @@ exports.getVrData = async () => {
             // 환수율 조정
             let rate = 0;
             let sum = 0;
-            if (marketType !== "wintielose") {
+            if (marketType === "wintielose") {
               if (rateConfig.winlose_status === 1) {
                 rate = rateConfig.winlose_rate;
                 sum = rateConfig.winlose_sum;
