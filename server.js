@@ -47,16 +47,12 @@ if (process.env.INSTANCE_ID == 0) {
   schedule.scheduleJob("00 * * * * *", function () {
     sportsResultSchedule.sportsResultProcess();
   });
-}
 
-if (process.env.INSTANCE_ID == 1) {
   schedule.scheduleJob({ hour: 00, minute: 00 }, function () {
     sportsDataSchedule.deleteOldSportsOdds();
     miniDataSchedule.deleteOldMiniGames();
   });
-}
 
-if (process.env.INSTANCE_ID == 2) {
   schedule.scheduleJob({ hour: 23, minute: 59 }, function () {
     miniDataSchedule.addCoinPowerball();
     miniDataSchedule.addCoinLadder();

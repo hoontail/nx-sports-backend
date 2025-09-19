@@ -338,7 +338,7 @@ exports.bettingVr = async (req, res) => {
             status: 1,
             rolling_point: rollingAmount,
             rolling_point_percentage: rollingPercentage,
-            game_category: "vr",
+            game_category: "minigame",
             bet_date: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
             save_log_date: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
             is_live: 0,
