@@ -5,7 +5,6 @@ const MiniBetType = db.mini_bet_type;
 const MiniConfigs = db.mini_configs;
 const Users = db.up_users;
 const BalanceLogs = db.balance_logs;
-const KoscaLogs = db.kosca_logs;
 
 const axios = require("axios");
 const moment = require("moment");
@@ -338,33 +337,6 @@ exports.powerballCalc = async (game, minute, data) => {
           transaction: t,
         });
 
-        const findKoscaLogs = await KoscaLogs.findOne({
-          where: {
-            username: history.username,
-            game_id: "mini",
-            transaction_id: history.key,
-            status: 1,
-          },
-          transaction: t,
-        });
-
-        if (findKoscaLogs) {
-          await KoscaLogs.update(
-            {
-              status: 2,
-              bet_result: winAmount,
-              net_loss: history.bet_amount - winAmount,
-              updated_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
-            },
-            {
-              where: {
-                id: findKoscaLogs.id,
-              },
-              transaction: t,
-            }
-          );
-        }
-
         if (isWin) {
           await Users.increment(
             {
@@ -469,33 +441,6 @@ exports.ladderCalc = async (game, minute, data) => {
           },
           transaction: t,
         });
-
-        const findKoscaLogs = await KoscaLogs.findOne({
-          where: {
-            username: history.username,
-            game_id: "mini",
-            transaction_id: history.key,
-            status: 1,
-          },
-          transaction: t,
-        });
-
-        if (findKoscaLogs) {
-          await KoscaLogs.update(
-            {
-              status: 2,
-              bet_result: winAmount,
-              net_loss: history.bet_amount - winAmount,
-              updated_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
-            },
-            {
-              where: {
-                id: findKoscaLogs.id,
-              },
-              transaction: t,
-            }
-          );
-        }
 
         if (isWin) {
           await Users.increment(

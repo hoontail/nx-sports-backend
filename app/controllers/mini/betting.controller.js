@@ -254,33 +254,29 @@ exports.bettingForUser = async (req, res) => {
       });
 
       // 롤링
-      if (rollingPercentage > 0) {
-        const rollingAmount = amount * rollingPercentage;
+      const rollingAmount = amount * rollingPercentage;
 
-        if (rollingAmount > 0) {
-          const createKoscaLogData = {
-            user_id: findUser.username,
-            username: findUser.username,
-            game_id: "mini",
-            amount,
-            transaction_id: key,
-            created_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
-            status: 1,
-            rolling_point: rollingAmount,
-            rolling_point_percentage: rollingPercentage,
-            game_category: "minigame",
-            bet_date: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
-            save_log_date: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
-            is_live: 0,
-            odds_total: findMiniBetType.odds,
-            expected_amount: Math.floor(amount * findMiniBetType.odds),
-          };
+      const createKoscaLogData = {
+        user_id: findUser.username,
+        username: findUser.username,
+        game_id: "mini",
+        amount,
+        transaction_id: key,
+        created_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
+        status: 0,
+        rolling_point: rollingAmount,
+        rolling_point_percentage: rollingPercentage,
+        game_category: "minigame",
+        bet_date: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
+        save_log_date: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
+        is_live: 0,
+        odds_total: findMiniBetType.odds,
+        expected_amount: Math.floor(amount * findMiniBetType.odds),
+      };
 
-          await KoscaLogs.create(createKoscaLogData, {
-            transaction: t,
-          });
-        }
-      }
+      await KoscaLogs.create(createKoscaLogData, {
+        transaction: t,
+      });
     });
 
     return res.status(200).send({

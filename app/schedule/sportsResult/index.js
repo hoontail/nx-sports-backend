@@ -8,6 +8,7 @@ const SportsBetDetail = db.sports_bet_detail;
 const SportsConfigs = db.sports_configs;
 const BalanceLogs = db.balance_logs;
 const KoscaLogs = db.kosca_logs;
+const LevelConfigs = db.level_configs;
 
 const moment = require("moment");
 const {
@@ -184,23 +185,30 @@ const baseballResultProcess = async (match) => {
 
     // - 5회 말 3아웃을 채우지 못할 경우 : 승패 핸디캡 언더오버 모두 적중특례 처리
     // - 5회 말 3아웃을 채울 경우 : 승패 = 정상 마감 / 핸디캡 언더오버 적중특례 처리
+    // 스포비즈는 9회 못채우면 대기
 
     let getResult = {
       result: "",
       score: "",
     };
 
-    if (match.status_kr === "경기종료" && match.period_id <= 205) {
-      getResult.result = 2;
-    } else if (
-      match.status_kr === "경기종료" &&
-      match.period_id >= 206 &&
-      match.period_id <= 208 &&
-      (marketType === "언더오버" || marketType === "핸디캡")
-    ) {
-      getResult.result = 2;
+    if (process.env.SITE_NAME === "spobz") {
+      if (match.status_kr === "경기종료" && match.period_id <= 208) {
+        continue;
+      }
     } else {
-      getResult = baseballResult(odds, match.score);
+      if (match.status_kr === "경기종료" && match.period_id <= 205) {
+        getResult.result = 2;
+      } else if (
+        match.status_kr === "경기종료" &&
+        match.period_id >= 206 &&
+        match.period_id <= 208 &&
+        (marketType === "언더오버" || marketType === "핸디캡")
+      ) {
+        getResult.result = 2;
+      } else {
+        getResult = baseballResult(odds, match.score);
+      }
     }
 
     // 배당 결과값 수정
@@ -573,11 +581,57 @@ exports.betHistoryResultProcess = async (historyId) => {
 
   const findSportsConfig = await SportsConfigs.findOne();
 
-  const findKoscaLogs = await KoscaLogs.findOne({
+  let totalOdds = 1;
+
+  let rollingPercentage = 0;
+
+  const findLevelConfig = await LevelConfigs.findOne({
     where: {
-      transaction_id: findSportsBetHistory.key,
+      level: findSportsBetHistory.up_user.user_level,
     },
   });
+
+  const isSingle = findSportsBetDetail.length === 1;
+  const betType = isSingle ? "single" : "multi";
+  const rollingType = findSportsBetHistory.up_user.rolling_point_type;
+  if (rollingType === "LEVEL") {
+    rollingPercentage = findLevelConfig[`sports_${betType}_rolling_percentage`];
+  } else if (rollingType === "AGENT") {
+    const findAgent = await Users.findOne({
+      where: {
+        username: findSportsBetHistory.up_user.agent_username,
+      },
+    });
+
+    if (findAgent) {
+      rollingPercentage = findAgent[`sports_${betType}_rolling_percentage`];
+    }
+  } else if (rollingType === "INDIVIDUAL") {
+    rollingPercentage =
+      findSportsBetHistory.up_user[`sports_${betType}_rolling_percentage`];
+  }
+
+  const rollingAmount = findSportsBetHistory.bet_amount * rollingPercentage;
+
+  const createKoscaLogData = {
+    user_id: findSportsBetHistory.username,
+    username: findSportsBetHistory.username,
+    game_id: "ksports",
+    amount: findSportsBetHistory.bet_amount,
+    transaction_id: findSportsBetHistory.key,
+    created_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
+    status: 0,
+    rolling_point: rollingAmount,
+    rolling_point_percentage: rollingPercentage,
+    game_category: "sports",
+    bet_date: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
+    save_log_date: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
+    is_live: findSportsBetHistory.game_type === "라이브" ? 1 : 0,
+    odds_total: findSportsBetHistory.total_odds,
+    expected_amount: Math.floor(
+      findSportsBetHistory.bet_amount * findSportsBetHistory.total_odds
+    ),
+  };
 
   // 낙첨처리
   if (findSportsBetDetail.some((x) => x.status === 2)) {
@@ -631,35 +685,11 @@ exports.betHistoryResultProcess = async (historyId) => {
       }
     }
 
-    // 롤링 로그 업데이트
-    if (findKoscaLogs) {
-      await KoscaLogs.update(
-        {
-          status: 2,
-          bet_result: 0,
-          updated_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
-          net_loss: findSportsBetHistory.bet_amount,
-        },
-        {
-          where: {
-            transaction_id: findKoscaLogs.transaction_id,
-          },
-        }
-      );
-    }
+    await KoscaLogs.create(createKoscaLogData);
 
     return console.log(
       `${findSportsBetHistory.key} 스포츠 배팅내역 결과처리 완료`
     );
-  }
-
-  let totalOdds = 1;
-  let betType;
-
-  if (findSportsBetDetail.length === 1) {
-    betType = "single";
-  } else if (findSportsBetDetail.length > 1) {
-    betType = "multi";
   }
 
   // 취소처리
@@ -814,22 +844,7 @@ exports.betHistoryResultProcess = async (historyId) => {
 
     await BalanceLogs.create(createBalanceLogData);
 
-    // 롤링 로그 업데이트
-    if (findKoscaLogs) {
-      await KoscaLogs.update(
-        {
-          status: 2,
-          bet_result: winAmount,
-          updated_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
-          net_loss: findSportsBetHistory.bet_amount - winAmount,
-        },
-        {
-          where: {
-            transaction_id: findKoscaLogs.transaction_id,
-          },
-        }
-      );
-    }
+    await KoscaLogs.create(createKoscaLogData);
 
     console.log(`${findSportsBetHistory.key} 스포츠 배팅내역 결과처리 완료`);
   }

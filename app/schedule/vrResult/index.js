@@ -7,7 +7,6 @@ const VrOdds = db.vr_odds;
 const VrMarket = db.vr_market;
 const Users = db.up_users;
 const VrConfigs = db.vr_configs;
-const KoscaLogs = db.kosca_logs;
 const BalanceLogs = db.balance_logs;
 
 const moment = require("moment");
@@ -263,12 +262,6 @@ const betHistoryResultProcess = async (historyId) => {
 
   const findVrConfig = await VrConfigs.findOne();
 
-  const findKoscaLogs = await KoscaLogs.findOne({
-    where: {
-      transaction_id: findVrBetHistory.key,
-    },
-  });
-
   // 낙첨처리
   if (findVrBetDetail.some((x) => x.status === 2)) {
     await VrBetHistory.update(
@@ -284,23 +277,6 @@ const betHistoryResultProcess = async (historyId) => {
         },
       }
     );
-
-    // 롤링 로그 업데이트
-    if (findKoscaLogs) {
-      await KoscaLogs.update(
-        {
-          status: 2,
-          bet_result: 0,
-          updated_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
-          net_loss: findVrBetHistory.bet_amount,
-        },
-        {
-          where: {
-            transaction_id: findKoscaLogs.transaction_id,
-          },
-        }
-      );
-    }
 
     return console.log(
       `${findVrBetHistory.key} 가상게임 배팅내역 결과처리 완료`
@@ -383,23 +359,6 @@ const betHistoryResultProcess = async (historyId) => {
     };
 
     await BalanceLogs.create(createBalanceLogData);
-
-    // 롤링 로그 업데이트
-    if (findKoscaLogs) {
-      await KoscaLogs.update(
-        {
-          status: 2,
-          bet_result: winAmount,
-          updated_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
-          net_loss: findVrBetHistory.bet_amount - winAmount,
-        },
-        {
-          where: {
-            transaction_id: findKoscaLogs.transaction_id,
-          },
-        }
-      );
-    }
 
     console.log(`${findVrBetHistory.key} 가상게임 배팅내역 결과처리 완료`);
   }
