@@ -1,7 +1,6 @@
 const db = require("../../models");
 const Op = db.Sequelize.Op;
 const Users = db.up_users;
-const LevelConfigs = db.level_configs;
 const SportsConfigs = db.sports_configs;
 const SportsBonusOdds = db.sports_bonus_odds;
 const SportsMatches = db.sports_matches;
@@ -11,7 +10,6 @@ const SportsBetHistory = db.sports_bet_history;
 const SportsBetDetail = db.sports_bet_detail;
 const SportsCombine = db.sports_combine;
 const BalanceLogs = db.balance_logs;
-const KoscaLogs = db.kosca_logs;
 const socketIO = require("socket.io-client");
 const ioSocket = socketIO("http://localhost:10020");
 
@@ -29,7 +27,6 @@ exports.bettingSports = async (req, res) => {
     let minBetAmount;
     let maxBetAmount;
     let maxWinOdds;
-    let rollingPercentage = 0;
     let totalOdds = 1;
 
     if (
@@ -58,33 +55,10 @@ exports.bettingSports = async (req, res) => {
       },
     });
 
-    const findLevelConfig = await LevelConfigs.findOne({
-      where: {
-        level: findUser.user_level,
-      },
-    });
-
     const findSportsConfig = await SportsConfigs.findOne();
 
     const isSingle = bettingArrParse.length === 1;
     const betType = isSingle ? "single" : "multi";
-    const rollingType = findUser.rolling_point_type;
-    if (rollingType === "LEVEL") {
-      rollingPercentage =
-        findLevelConfig[`sports_${betType}_rolling_percentage`];
-    } else if (rollingType === "AGENT") {
-      const findAgent = await Users.findOne({
-        where: {
-          username: findUser.agent_username,
-        },
-      });
-
-      if (findAgent) {
-        rollingPercentage = findAgent[`sports_${betType}_rolling_percentage`];
-      }
-    } else if (rollingType === "INDIVIDUAL") {
-      rollingPercentage = findUser[`sports_${betType}_rolling_percentage`];
-    }
 
     minBetAmount =
       findUser[`sports_${betType}_min_bet_amount`] ??
@@ -462,35 +436,6 @@ exports.bettingSports = async (req, res) => {
       await BalanceLogs.create(createBalanceLogData, {
         transaction: t,
       });
-
-      // 롤링
-      if (rollingPercentage > 0) {
-        const rollingAmount = amount * rollingPercentage;
-
-        if (rollingAmount > 0) {
-          const createKoscaLogData = {
-            user_id: findUser.username,
-            username: findUser.username,
-            game_id: "ksports",
-            amount,
-            transaction_id: key,
-            created_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
-            status: 1,
-            rolling_point: rollingAmount,
-            rolling_point_percentage: rollingPercentage,
-            game_category: "sports",
-            bet_date: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
-            save_log_date: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
-            is_live: gameType === "라이브" ? 1 : 0,
-            odds_total: totalOdds,
-            expected_amount: Math.floor(amount * totalOdds),
-          };
-
-          await KoscaLogs.create(createKoscaLogData, {
-            transaction: t,
-          });
-        }
-      }
     });
 
     if (amount >= findSportsConfig.alert_bet_amount) {
@@ -706,34 +651,6 @@ exports.cancelBetHistoryForUser = async (req, res) => {
       await BalanceLogs.create(createBalanceLogData, {
         transaction: t,
       });
-
-      // 롤링로그 체크
-      const findKoscaLogs = await KoscaLogs.findOne({
-        where: {
-          username: req.username,
-          transaction_id: key,
-          game_id: "ksports",
-          status: 1,
-        },
-        transaction: t,
-      });
-
-      if (findKoscaLogs) {
-        await KoscaLogs.update(
-          {
-            status: 3,
-            bet_result: findHistory.bet_amount,
-            net_loss: 0,
-            updated_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
-          },
-          {
-            where: {
-              id: findKoscaLogs.id,
-            },
-            transaction: t,
-          }
-        );
-      }
     });
 
     return res.status(200).send({
