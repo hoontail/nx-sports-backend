@@ -421,7 +421,7 @@ exports.getVrOddsListForUser = async (req, res) => {
 
     const matchIdArr = findMatches.map((m) => m.match_id);
 
-    const findOdds = await VrOdds.findAll({
+    let findOdds = await VrOdds.findAll({
       include: [
         {
           attributes: ["sports_name"],
@@ -458,6 +458,12 @@ exports.getVrOddsListForUser = async (req, res) => {
         ["away_name", "ASC"],
       ],
     });
+
+    if (sports === "Soccer") {
+      findOdds = findOdds.filter(
+        (odds) => odds.vr_market.type !== "오버언더" || odds.draw_odds === 2.5
+      );
+    }
 
     return res.status(200).send(findOdds);
   } catch (err) {

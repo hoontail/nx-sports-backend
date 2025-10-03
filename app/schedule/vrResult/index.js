@@ -8,6 +8,8 @@ const VrMarket = db.vr_market;
 const Users = db.up_users;
 const VrConfigs = db.vr_configs;
 const BalanceLogs = db.balance_logs;
+const KoscaLogs = db.kosca_logs;
+const LevelConfigs = db.level_configs;
 
 const moment = require("moment");
 
@@ -262,6 +264,63 @@ const betHistoryResultProcess = async (historyId) => {
 
   const findVrConfig = await VrConfigs.findOne();
 
+  const findLevelConfig = await LevelConfigs.findOne({
+    where: {
+      level: findVrBetHistory.up_user.user_level,
+    },
+  });
+
+  let rollingPercentage = 0;
+
+  const isSingle = findVrBetDetail.length === 1;
+  const betType = isSingle ? "single" : "multi";
+  const rollingType = findVrBetHistory.up_user.rolling_point_type;
+  if (rollingType === "LEVEL") {
+    rollingPercentage =
+      findLevelConfig[`vr_${betType}_rolling_percentage`] || 0;
+  } else if (rollingType === "AGENT") {
+    const findAgent = await Users.findOne({
+      where: {
+        username: findVrBetHistory.up_user.agent_username,
+      },
+    });
+
+    if (findAgent) {
+      rollingPercentage = findAgent[`vr_${betType}_rolling_percentage`] || 0;
+    }
+  } else if (rollingType === "INDIVIDUAL") {
+    rollingPercentage =
+      findVrBetHistory.up_user[`vr_${betType}_rolling_percentage`] || 0;
+  }
+
+  const rollingAmount = findVrBetHistory.bet_amount * rollingPercentage;
+
+  let betData = findVrBetHistory.toJSON();
+  delete betData.up_user;
+
+  let createKoscaLogData = {
+    user_id: findVrBetHistory.username,
+    username: findVrBetHistory.username,
+    game_id: "vr",
+    amount: findVrBetHistory.bet_amount,
+    bet_data: JSON.stringify(betData),
+    transaction_id: findVrBetHistory.key,
+    created_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
+    status: 0,
+    bet_result: 0,
+    net_loss: 0,
+    rolling_point: rollingAmount,
+    rolling_point_percentage: rollingPercentage,
+    game_category: "minigame",
+    bet_date: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
+    save_log_date: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
+    is_live: 0,
+    odds_total: findVrBetHistory.total_odds,
+    expected_amount: Math.floor(
+      findVrBetHistory.bet_amount * findVrBetHistory.total_odds
+    ),
+  };
+
   // 낙첨처리
   if (findVrBetDetail.some((x) => x.status === 2)) {
     await VrBetHistory.update(
@@ -278,19 +337,18 @@ const betHistoryResultProcess = async (historyId) => {
       }
     );
 
+    createKoscaLogData.status = -1;
+    createKoscaLogData.bet_result = 0;
+    createKoscaLogData.net_loss = findVrBetHistory.bet_amount;
+
+    await KoscaLogs.create(createKoscaLogData);
+
     return console.log(
       `${findVrBetHistory.key} 가상게임 배팅내역 결과처리 완료`
     );
   }
 
   let totalOdds = 1;
-  let betType;
-
-  if (findVrBetDetail.length === 1) {
-    betType = "single";
-  } else if (findVrBetDetail.length > 1) {
-    betType = "multi";
-  }
 
   // 대기상태의 배당이 없을 때 결과처리
   if (!findVrBetDetail.some((x) => x.status === 0)) {
@@ -359,6 +417,12 @@ const betHistoryResultProcess = async (historyId) => {
     };
 
     await BalanceLogs.create(createBalanceLogData);
+
+    createKoscaLogData.status = 2;
+    createKoscaLogData.bet_result = winAmount;
+    createKoscaLogData.net_loss = findVrBetHistory.bet_amount - winAmount;
+
+    await KoscaLogs.create(createKoscaLogData);
 
     console.log(`${findVrBetHistory.key} 가상게임 배팅내역 결과처리 완료`);
   }

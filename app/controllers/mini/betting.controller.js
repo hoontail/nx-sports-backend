@@ -6,8 +6,6 @@ const MiniBetType = db.mini_bet_type;
 const MiniBetHistory = db.mini_bet_history;
 const Users = db.up_users;
 const BalanceLogs = db.balance_logs;
-const LevelConfigs = db.level_configs;
-const KoscaLogs = db.kosca_logs;
 
 const utils = require("../../utils");
 const moment = require("moment");
@@ -19,7 +17,6 @@ exports.bettingForUser = async (req, res) => {
   const ip = utils.getIp(req);
   let minBetAmount = 0;
   let maxBetAmount = 0;
-  let rollingPercentage = 0;
 
   try {
     if (!game || !minute) {
@@ -176,29 +173,6 @@ exports.bettingForUser = async (req, res) => {
       });
     }
 
-    const findLevelConfig = await LevelConfigs.findOne({
-      where: {
-        level: findUser.user_level,
-      },
-    });
-
-    const rollingType = findUser.rolling_point_type;
-    if (rollingType === "LEVEL") {
-      rollingPercentage = findLevelConfig[`rolling_mini_game_percentage`];
-    } else if (rollingType === "AGENT") {
-      const findAgent = await findUser.findOne({
-        where: {
-          username: findUser.agent_username,
-        },
-      });
-
-      if (findAgent) {
-        rollingPercentage = findAgent[`rolling_mini_game_percentage`];
-      }
-    } else if (rollingType === "INDIVIDUAL") {
-      rollingPercentage = findUser[`rolling_mini_game_percentage`];
-    }
-
     await db.sequelize.transaction(async (t) => {
       // -보유머니 + 총배팅
       await Users.decrement(
@@ -250,31 +224,6 @@ exports.bettingForUser = async (req, res) => {
       };
 
       await BalanceLogs.create(createBalanceLogData, {
-        transaction: t,
-      });
-
-      // 롤링
-      const rollingAmount = amount * rollingPercentage;
-
-      const createKoscaLogData = {
-        user_id: findUser.username,
-        username: findUser.username,
-        game_id: "mini",
-        amount,
-        transaction_id: key,
-        created_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
-        status: 0,
-        rolling_point: rollingAmount,
-        rolling_point_percentage: rollingPercentage,
-        game_category: "minigame",
-        bet_date: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
-        save_log_date: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
-        is_live: 0,
-        odds_total: findMiniBetType.odds,
-        expected_amount: Math.floor(amount * findMiniBetType.odds),
-      };
-
-      await KoscaLogs.create(createKoscaLogData, {
         transaction: t,
       });
     });

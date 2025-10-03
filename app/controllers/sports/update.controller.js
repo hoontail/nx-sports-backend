@@ -1395,6 +1395,15 @@ exports.updateBetHistoryResultPerMarketScore = async (req, res) => {
       });
     }
 
+    const home = Number(homeScore);
+    const away = Number(awayScore);
+
+    if (!Number.isFinite(home) || !Number.isFinite(away)) {
+      return res.status(400).send({
+        message: "스코어는 숫자만 입력해주세요",
+      });
+    }
+
     const findSportsBetDetail = await SportsBetDetail.findAll({
       where: {
         odds_key: oddsKey,
@@ -1410,14 +1419,14 @@ exports.updateBetHistoryResultPerMarketScore = async (req, res) => {
 
     const result = getResultByScore(
       findOdds.sports_market.type,
-      parseInt(homeScore),
-      parseInt(awayScore),
+      home,
+      away,
       parseFloat(findOdds.odds_line)
     );
 
     await updateOddsResult(findOdds, {
       result,
-      score: `${homeScore}:${awayScore}`,
+      score: `${home}:${away}`,
     });
 
     return res.status(200).send({

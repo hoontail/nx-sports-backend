@@ -26,6 +26,7 @@ const updateSportsData = async (endPoint, marketArr, rateConfig) => {
     const createMatchData = [];
     const createOddsData = [];
     const deleteSameLineOdds = [];
+    const stopMarkets = [];
     if (res.data.success === 1) {
       for (const match of res.data.result.list) {
         createMatchData.push({
@@ -191,6 +192,13 @@ const updateSportsData = async (endPoint, marketArr, rateConfig) => {
                 match_id: match.id,
                 market_id: market.market_id,
                 odds_line: odds.name,
+              });
+            }
+
+            if (market.stop) {
+              stopMarkets.push({
+                match_id: match.id,
+                market_id: market.market_id,
               });
             }
           }
@@ -372,6 +380,23 @@ const updateSportsData = async (endPoint, marketArr, rateConfig) => {
 
         await SportsOdds.update(
           { is_delete: 1 },
+          {
+            where: literal(whereConditions.join(" OR ")),
+          }
+        );
+      }
+
+      // 마켓이 정지인 경우 동일 마켓 모두 정지
+      if (stopMarkets.length > 0) {
+        const whereConditions = stopMarkets.map(
+          (o) =>
+            `(match_id = ${o.match_id} AND market_id = ${o.market_id} AND is_auto = 1)`
+        );
+
+        await SportsOdds.update(
+          {
+            is_market_stop: 1,
+          },
           {
             where: literal(whereConditions.join(" OR ")),
           }

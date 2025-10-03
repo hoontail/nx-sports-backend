@@ -5,6 +5,8 @@ const MiniBetType = db.mini_bet_type;
 const MiniConfigs = db.mini_configs;
 const Users = db.up_users;
 const BalanceLogs = db.balance_logs;
+const KoscaLogs = db.kosca_logs;
+const LevelConfigs = db.level_configs;
 
 const axios = require("axios");
 const moment = require("moment");
@@ -312,6 +314,32 @@ exports.powerballCalc = async (game, minute, data) => {
     for await (const history of findHistory) {
       const type = history.mini_bet_type.type;
       const checkFn = conditionMap[type];
+      let rollingPercentage = 0;
+
+      const findLevelConfig = await LevelConfigs.findOne({
+        where: {
+          level: history.up_user.user_level,
+        },
+      });
+
+      const rollingType = history.up_user.rolling_point_type;
+      if (rollingType === "LEVEL") {
+        rollingPercentage =
+          findLevelConfig[`rolling_mini_game_percentage`] || 0;
+      } else if (rollingType === "AGENT") {
+        const findAgent = await Users.findOne({
+          where: {
+            username: history.up_user.agent_username,
+          },
+        });
+
+        if (findAgent) {
+          rollingPercentage = findAgent[`rolling_mini_game_percentage`] || 0;
+        }
+      } else if (rollingType === "INDIVIDUAL") {
+        rollingPercentage =
+          history.up_user[`rolling_mini_game_percentage`] || 0;
+      }
 
       const isWin = checkFn ? checkFn() : false;
       let winAmount = isWin ? Math.floor(history.bet_amount * history.odds) : 0;
@@ -322,6 +350,32 @@ exports.powerballCalc = async (game, minute, data) => {
       if (winAmount > maxWinAmount) {
         winAmount = maxWinAmount;
       }
+
+      const rollingAmount = history.bet_amount * rollingPercentage;
+
+      let betData = history.toJSON();
+      delete betData.up_user;
+
+      const createKoscaLogData = {
+        user_id: history.username,
+        username: history.username,
+        game_id: "mini",
+        amount: history.bet_amount,
+        bet_data: JSON.stringify(betData),
+        transaction_id: history.key,
+        created_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
+        status: isWin ? 2 : -1,
+        bet_result: winAmount,
+        net_loss: history.bet_amount - winAmount,
+        rolling_point: rollingAmount,
+        rolling_point_percentage: rollingPercentage,
+        game_category: "minigame",
+        bet_date: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
+        save_log_date: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
+        is_live: 0,
+        odds_total: history.odds,
+        expected_amount: Math.floor(history.bet_amount * history.odds),
+      };
 
       const updateHistoryData = {
         status: isWin ? 1 : 2,
@@ -363,6 +417,10 @@ exports.powerballCalc = async (game, minute, data) => {
           };
 
           await BalanceLogs.create(createBalanceLogData, {
+            transaction: t,
+          });
+
+          await KoscaLogs.create(createKoscaLogData, {
             transaction: t,
           });
         }

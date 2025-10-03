@@ -1,8 +1,6 @@
 const db = require("../../models");
 const Users = db.up_users;
-const LevelConfigs = db.level_configs;
 const BalanceLogs = db.balance_logs;
-const KoscaLogs = db.kosca_logs;
 const VrConfigs = db.vr_configs;
 const VrBonusOdds = db.vr_bonus_odds;
 const VrMarket = db.vr_market;
@@ -26,7 +24,6 @@ exports.bettingVr = async (req, res) => {
     let minBetAmount;
     let maxBetAmount;
     let maxWinOdds;
-    let rollingPercentage = 0;
     let totalOdds = 1;
 
     if (!bettingArr || bettingArrParse.length === 0) {
@@ -47,32 +44,10 @@ exports.bettingVr = async (req, res) => {
       },
     });
 
-    const findLevelConfig = await LevelConfigs.findOne({
-      where: {
-        level: findUser.user_level,
-      },
-    });
-
     const findVrConfig = await VrConfigs.findOne();
 
     const isSingle = bettingArrParse.length === 1;
     const betType = isSingle ? "single" : "multi";
-    const rollingType = findUser.rolling_point_type;
-    if (rollingType === "LEVEL") {
-      rollingPercentage = findLevelConfig[`vr_${betType}_rolling_percentage`];
-    } else if (rollingType === "AGENT") {
-      const findAgent = await Users.findOne({
-        where: {
-          username: findUser.agent_username,
-        },
-      });
-
-      if (findAgent) {
-        rollingPercentage = findAgent[`vr_${betType}_rolling_percentage`];
-      }
-    } else if (rollingType === "INDIVIDUAL") {
-      rollingPercentage = findUser[`vr_${betType}_rolling_percentage`];
-    }
 
     minBetAmount =
       findUser[`vr_${betType}_min_bet_amount`] ??
@@ -320,31 +295,6 @@ exports.bettingVr = async (req, res) => {
       };
 
       await BalanceLogs.create(createBalanceLogData, {
-        transaction: t,
-      });
-
-      // 롤링
-      const rollingAmount = amount * rollingPercentage;
-
-      const createKoscaLogData = {
-        user_id: findUser.username,
-        username: findUser.username,
-        game_id: "vr",
-        amount,
-        transaction_id: key,
-        created_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
-        status: 0,
-        rolling_point: rollingAmount,
-        rolling_point_percentage: rollingPercentage,
-        game_category: "minigame",
-        bet_date: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
-        save_log_date: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
-        is_live: 0,
-        odds_total: totalOdds,
-        expected_amount: Math.floor(amount * totalOdds),
-      };
-
-      await KoscaLogs.create(createKoscaLogData, {
         transaction: t,
       });
     });
