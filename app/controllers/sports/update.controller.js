@@ -353,7 +353,6 @@ exports.updateMatchForAdmin = async (req, res) => {
       !startTime ||
       status === "" ||
       period === "" ||
-      !countryKr ||
       !leagueName ||
       !homeName ||
       !awayName
