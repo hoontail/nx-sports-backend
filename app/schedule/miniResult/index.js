@@ -364,6 +364,7 @@ exports.powerballCalc = async (game, minute, data) => {
         bet_data: JSON.stringify(betData),
         transaction_id: history.key,
         created_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
+        updated_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
         status: isWin ? 2 : -1,
         bet_result: winAmount,
         net_loss: history.bet_amount - winAmount,

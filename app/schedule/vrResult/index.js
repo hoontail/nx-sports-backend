@@ -306,6 +306,7 @@ const betHistoryResultProcess = async (historyId) => {
     bet_data: JSON.stringify(betData),
     transaction_id: findVrBetHistory.key,
     created_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
+    updated_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
     status: 0,
     bet_result: 0,
     net_loss: 0,
