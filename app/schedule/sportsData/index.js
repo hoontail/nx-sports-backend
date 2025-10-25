@@ -358,7 +358,7 @@ const updateSportsData = async (endPoint, marketArr, rateConfig) => {
                 ${oddsValues}
                 ) AS source (
                 odds_key, match_id, market_id, is_market_stop, is_odds_stop,
-                odds_line, home_odds, draw_odds, away_odds, updated_at
+                odds_line, home_odds, draw_odds, away_odds, init_home_odds, init_draw_odds, init_away_odds, updated_at
                 )
                 ON target.odds_key = source.odds_key
                 WHEN MATCHED AND target.is_auto = 1 THEN

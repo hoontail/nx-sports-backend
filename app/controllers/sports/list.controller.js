@@ -680,26 +680,6 @@ exports.getSportsMatchListForAdmin = async (req, res) => {
     condition.is_delete = isDelete;
   }
 
-  const homeBetAmountQuery = literal(`(
-    SELECT ISNULL(SUM(distinct_bets.bet_amount), 0)
-    FROM (
-      SELECT DISTINCT bh.id, bh.bet_amount
-      FROM sports_bet_detail bd
-      JOIN sports_bet_history bh ON bd.sports_bet_history_id = bh.id
-      WHERE bd.match_id = sports_matches.match_id AND bd.bet_type = 1 AND bh.status NOT IN (4, 5)
-    ) AS distinct_bets
-  )`);
-
-  const awayBetAmountQuery = literal(`(
-    SELECT ISNULL(SUM(distinct_bets.bet_amount), 0)
-    FROM (
-      SELECT DISTINCT bh.id, bh.bet_amount
-      FROM sports_bet_detail bd
-      JOIN sports_bet_history bh ON bd.sports_bet_history_id = bh.id
-      WHERE bd.match_id = sports_matches.match_id AND bd.bet_type = 0 AND bh.status NOT IN (4, 5)
-    ) AS distinct_bets
-  )`);
-
   const betAmountQuery = literal(`(
     SELECT ISNULL(SUM(distinct_bets.bet_amount), 0)
     FROM (
@@ -729,13 +709,53 @@ exports.getSportsMatchListForAdmin = async (req, res) => {
       orderInit = [sort, order];
     }
   }
+  const makeBetAmountQuery = (betType, types, isEtc = false) => {
+    const typeCondition = isEtc
+      ? `sm.type NOT IN ('승패','승무패','핸디캡','언더오버')`
+      : Array.isArray(types)
+      ? `sm.type IN (${types.map((t) => `'${t}'`).join(",")})`
+      : `sm.type = '${types}'`;
+
+    return literal(`(
+        SELECT ISNULL(SUM(distinct_bets.bet_amount), 0)
+        FROM (
+          SELECT DISTINCT bh.id, bh.bet_amount
+          FROM sports_bet_detail bd
+          JOIN sports_bet_history bh ON bd.sports_bet_history_id = bh.id
+          JOIN sports_market sm ON bd.market_id = sm.market_id
+          WHERE bd.match_id = sports_matches.match_id
+            AND bd.bet_type = ${betType}
+            AND ${typeCondition}
+            AND bh.status NOT IN (4, 5)
+        ) AS distinct_bets
+      )`);
+  };
+
+  const betQueries = {
+    home_winlose: makeBetAmountQuery(1, ["승패", "승무패"]),
+    home_handicap: makeBetAmountQuery(1, "핸디캡"),
+    home_underover: makeBetAmountQuery(1, "언더오버"),
+    home_etc: makeBetAmountQuery(1, null, true),
+    away_winlose: makeBetAmountQuery(0, ["승패", "승무패"]),
+    away_handicap: makeBetAmountQuery(0, "핸디캡"),
+    away_underover: makeBetAmountQuery(0, "언더오버"),
+    away_etc: makeBetAmountQuery(0, null, true),
+    draw_winlose: makeBetAmountQuery(2, "승무패"),
+  };
 
   try {
     const findSportsMatches = await SportsMatches.findAndCountAll({
       attributes: {
         include: [
-          [homeBetAmountQuery, "home_bet_amount"],
-          [awayBetAmountQuery, "away_bet_amount"],
+          [betQueries.home_winlose, "home_winlose_bet_amount"],
+          [betQueries.home_handicap, "home_handicap_bet_amount"],
+          [betQueries.home_underover, "home_underover_bet_amount"],
+          [betQueries.home_etc, "home_etc_bet_amount"],
+          [betQueries.away_winlose, "away_winlose_bet_amount"],
+          [betQueries.away_handicap, "away_handicap_bet_amount"],
+          [betQueries.away_underover, "away_underover_bet_amount"],
+          [betQueries.away_etc, "away_etc_bet_amount"],
+          [betQueries.draw_winlose, "draw_winlose_bet_amount"],
           [betAmountQuery, "bet_amount"],
           [winAmountQuery, "win_amount"],
         ],
@@ -869,6 +889,7 @@ exports.getSportsBetHistoryForAdmin = async (req, res) => {
     sort,
     order,
     matchId,
+    betType,
   } = req.query;
   const { offset, limit } = helpers.getPagination(page, size);
   const condition = {};
@@ -903,6 +924,10 @@ exports.getSportsBetHistoryForAdmin = async (req, res) => {
 
   if (matchId) {
     detailCondition.match_id = matchId;
+  }
+
+  if (betType) {
+    detailCondition.bet_type = betType;
   }
 
   try {
