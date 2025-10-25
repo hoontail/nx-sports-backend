@@ -83,6 +83,18 @@ module.exports = function (sequelize, DataTypes) {
         type: DataTypes.STRING(100),
         allowNull: true,
       },
+      init_home_odds: {
+        type: DataTypes.STRING(50),
+        allowNull: true,
+      },
+      init_draw_odds: {
+        type: DataTypes.STRING(50),
+        allowNull: true,
+      },
+      init_away_odds: {
+        type: DataTypes.STRING(50),
+        allowNull: true,
+      },
     },
     {
       sequelize,

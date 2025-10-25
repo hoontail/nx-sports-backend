@@ -58,6 +58,13 @@ const updateSportsData = async (endPoint, marketArr, rateConfig) => {
         });
 
         for (const market of match.market) {
+          if (market.stop) {
+            stopMarkets.push({
+              match_id: match.id,
+              market_id: market.market_id,
+            });
+          }
+
           if (!market.list) continue;
           const matchedMarket = marketArr.find(
             (x) => x.market_id === market.market_id
@@ -166,7 +173,7 @@ const updateSportsData = async (endPoint, marketArr, rateConfig) => {
               } else if (oddsSum < sum) {
                 const diff = sum - oddsSum;
 
-                if (homeValue < awayValue) {
+                if (homeValue > awayValue) {
                   homeOdds = (homeValue + diff).toFixed(2);
                 } else {
                   awayOdds = (awayValue + diff).toFixed(2);
@@ -184,6 +191,9 @@ const updateSportsData = async (endPoint, marketArr, rateConfig) => {
               home_odds: homeOdds,
               draw_odds: drawOdds,
               away_odds: awayOdds,
+              init_home_odds: homeOdds,
+              init_draw_odds: drawOdds,
+              init_away_odds: awayOdds,
               updated_at: moment().format("YYYY-MM-DD HH:mm:ss"),
             });
 
@@ -192,13 +202,6 @@ const updateSportsData = async (endPoint, marketArr, rateConfig) => {
                 match_id: match.id,
                 market_id: market.market_id,
                 odds_line: odds.name,
-              });
-            }
-
-            if (market.stop) {
-              stopMarkets.push({
-                match_id: match.id,
-                market_id: market.market_id,
               });
             }
           }
@@ -329,6 +332,21 @@ const updateSportsData = async (endPoint, marketArr, rateConfig) => {
                         ? o.away_odds
                         : "NULL"
                     },
+                     ${
+                       o.init_home_odds != null && o.init_home_odds !== ""
+                         ? o.init_home_odds
+                         : "NULL"
+                     },
+                    ${
+                      o.init_draw_odds != null && o.init_draw_odds !== ""
+                        ? o.init_draw_odds
+                        : "NULL"
+                    },
+                    ${
+                      o.init_away_odds != null && o.init_away_odds !== ""
+                        ? o.init_away_odds
+                        : "NULL"
+                    },
                     '${o.updated_at}'
                   )`
           )
@@ -358,13 +376,14 @@ const updateSportsData = async (endPoint, marketArr, rateConfig) => {
                 WHEN NOT MATCHED THEN
                 INSERT (
                     odds_key, match_id, market_id, is_market_stop, is_odds_stop,
-                    odds_line, home_odds, draw_odds, away_odds, updated_at
+                    odds_line, home_odds, draw_odds, away_odds, init_home_odds, init_draw_odds, init_away_odds, updated_at
                 )
                 VALUES (
                     source.odds_key, source.match_id, source.market_id,
                     source.is_market_stop, source.is_odds_stop,
                     source.odds_line, source.home_odds,
-                    source.draw_odds, source.away_odds, source.updated_at
+                    source.draw_odds, source.away_odds, source.init_home_odds,
+                    source.init_draw_odds, source.init_away_odds, source.updated_at
                 );
                 `;
 

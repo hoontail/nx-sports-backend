@@ -382,7 +382,7 @@ exports.getMySportsConfigForUser = async (req, res) => {
     config.two_minus_odds = findSportsConfig.two_minus_odds;
 
     return res.status(200).send(config);
-  } catch  {
+  } catch {
     return res.status(500).send({
       message: "Server Error",
     });
@@ -646,7 +646,7 @@ exports.getSportsMatchListForAdmin = async (req, res) => {
   }
 
   if (statusId) {
-    condition.status_id = JSON.parse(statusId);
+    condition.status_id = statusId.split(",").map(Number);
   }
 
   if (teamName) {
@@ -679,6 +679,26 @@ exports.getSportsMatchListForAdmin = async (req, res) => {
   if (isDelete) {
     condition.is_delete = isDelete;
   }
+
+  const homeBetAmountQuery = literal(`(
+    SELECT ISNULL(SUM(distinct_bets.bet_amount), 0)
+    FROM (
+      SELECT DISTINCT bh.id, bh.bet_amount
+      FROM sports_bet_detail bd
+      JOIN sports_bet_history bh ON bd.sports_bet_history_id = bh.id
+      WHERE bd.match_id = sports_matches.match_id AND bd.bet_type = 1 AND bh.status NOT IN (4, 5)
+    ) AS distinct_bets
+  )`);
+
+  const awayBetAmountQuery = literal(`(
+    SELECT ISNULL(SUM(distinct_bets.bet_amount), 0)
+    FROM (
+      SELECT DISTINCT bh.id, bh.bet_amount
+      FROM sports_bet_detail bd
+      JOIN sports_bet_history bh ON bd.sports_bet_history_id = bh.id
+      WHERE bd.match_id = sports_matches.match_id AND bd.bet_type = 0 AND bh.status NOT IN (4, 5)
+    ) AS distinct_bets
+  )`);
 
   const betAmountQuery = literal(`(
     SELECT ISNULL(SUM(distinct_bets.bet_amount), 0)
@@ -714,6 +734,8 @@ exports.getSportsMatchListForAdmin = async (req, res) => {
     const findSportsMatches = await SportsMatches.findAndCountAll({
       attributes: {
         include: [
+          [homeBetAmountQuery, "home_bet_amount"],
+          [awayBetAmountQuery, "away_bet_amount"],
           [betAmountQuery, "bet_amount"],
           [winAmountQuery, "win_amount"],
         ],
@@ -903,7 +925,7 @@ exports.getSportsBetHistoryForAdmin = async (req, res) => {
     const findSportsBetHistory = await SportsBetHistory.findAndCountAll({
       include: [
         {
-          attributes: ["id"],
+          attributes: ["id", "user_real_name"],
           model: Users,
         },
         {

@@ -222,19 +222,19 @@ exports.basketballResult = (odds, score) => {
   if (marketPeriod === "연장포함") {
     homeScore = parseInt(resultJson.home.score);
     awayScore = parseInt(resultJson.away.score);
-  } else if (marketType === "전반전") {
+  } else if (marketPeriod === "전반전") {
     homeScore = parseInt(resultJson.home["1"]) + parseInt(resultJson.home["2"]);
     awayScore = parseInt(resultJson.away["1"]) + parseInt(resultJson.away["2"]);
-  } else if (marketType === "1쿼터") {
+  } else if (marketPeriod === "1쿼터") {
     homeScore = parseInt(resultJson.home["1"]);
     awayScore = parseInt(resultJson.away["1"]);
-  } else if (marketType === "2쿼터") {
+  } else if (marketPeriod === "2쿼터") {
     homeScore = parseInt(resultJson.home["2"]);
     awayScore = parseInt(resultJson.away["2"]);
-  } else if (marketType === "3쿼터") {
+  } else if (marketPeriod === "3쿼터") {
     homeScore = parseInt(resultJson.home["3"]);
     awayScore = parseInt(resultJson.away["3"]);
-  } else if (marketType === "4쿼터") {
+  } else if (marketPeriod === "4쿼터") {
     homeScore = parseInt(resultJson.home["4"]);
     awayScore = parseInt(resultJson.away["4"]);
   }
