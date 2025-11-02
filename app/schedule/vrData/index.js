@@ -35,9 +35,12 @@ exports.getVrData = async () => {
               (sports) => sports.sports_name === data.cate2
             ).id;
 
-            let homeOdds = data.ratio1 === "" ? 0 : data.ratio1;
-            let drawOdds = data.ratio2 === "" ? 0 : data.ratio2;
-            let awayOdds = data.ratio3 === "" ? 0 : data.ratio3;
+            let homeOdds =
+              data.ratio1 === "" || data.ratio1 === "0" ? 0 : data.ratio1;
+            let drawOdds =
+              data.ratio2 === "" || data.ratio2 === "0" ? 0 : data.ratio2;
+            let awayOdds =
+              data.ratio3 === "" || data.ratio3 === "0" ? 0 : data.ratio3;
             const isTwoWay =
               marketType === "handicap" ||
               marketType === "underover" ||
@@ -66,7 +69,7 @@ exports.getVrData = async () => {
             if (rate > 0) {
               homeOdds = (parseFloat(homeOdds) * rate) / 100;
               awayOdds = (parseFloat(awayOdds) * rate) / 100;
-              if (marketType === "wintielose" && drawOdds) {
+              if (!isTwoWay) {
                 drawOdds = (parseFloat(drawOdds) * rate) / 100;
 
                 if (drawOdds < 1.03) drawOdds = 1.03;

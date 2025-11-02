@@ -459,7 +459,7 @@ exports.getVrOddsListForUser = async (req, res) => {
       ],
     });
 
-    if (sports === "Soccer") {
+    if (sports === "Soccer" || sports === "soccer") {
       findOdds = findOdds.filter(
         (odds) => odds.vr_market.type !== "오버언더" || odds.draw_odds === 2.5
       );
