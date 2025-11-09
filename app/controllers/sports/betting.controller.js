@@ -102,6 +102,7 @@ exports.bettingSports = async (req, res) => {
     const bonusOdds = bettingArrParse.find(
       (x) => x.match.match_id === "보너스"
     );
+
     let findSportsBonusOdds;
     if (bonusOdds) {
       findSportsBonusOdds = await SportsBonusOdds.findOne({
@@ -300,6 +301,42 @@ exports.bettingSports = async (req, res) => {
         return res.status(400).send({
           message: findSportsBonusOdds.error_message,
         });
+      }
+
+      // 한 경기 최대 베팅금액 체크
+      if (findUser.sports_match_max_bet_amount > 0) {
+        const findSportsBetDetail = await SportsBetDetail.findAll({
+          include: {
+            model: SportsBetHistory,
+            where: {
+              username: findUser.username,
+              status: [0, 1, 2],
+            },
+          },
+          where: {
+            match_id: odds.match_id,
+          },
+        });
+
+        const seenHistoryIds = new Set();
+        const matchBetAmount = findSportsBetDetail.reduce((sum, d) => {
+          const historyId = d.sports_bet_history_id;
+
+          if (seenHistoryIds.has(historyId)) {
+            return sum;
+          }
+
+          seenHistoryIds.add(historyId);
+          return sum + (d.sports_bet_history.bet_amount || 0);
+        }, 0);
+
+        if (matchBetAmount + amount >= findUser.sports_match_max_bet_amount) {
+          return res.status(400).send({
+            message: `동일 경기 최대 베팅금액은 ${commaNumber(
+              findUser.sports_match_max_bet_amount
+            )}원 입니다`,
+          });
+        }
       }
 
       totalOdds = totalOdds * selectedOdds;
