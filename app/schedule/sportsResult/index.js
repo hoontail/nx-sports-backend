@@ -699,6 +699,8 @@ exports.betHistoryResultProcess = async (historyId) => {
       record_type: "베팅취소",
       prev_balance: findSportsBetHistory.up_user.balance,
       after_balance: findSportsBetHistory.up_user.balance + winAmount,
+      game_id: "ksports",
+      game_category: "sports",
     };
 
     await BalanceLogs.create(createBalanceLogData);
@@ -789,6 +791,8 @@ exports.betHistoryResultProcess = async (historyId) => {
       record_type: "베팅당첨",
       prev_balance: findSportsBetHistory.up_user.balance,
       after_balance: findSportsBetHistory.up_user.balance + winAmount,
+      game_id: "ksports",
+      game_category: "sports",
     };
 
     await BalanceLogs.create(createBalanceLogData);

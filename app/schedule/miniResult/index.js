@@ -415,6 +415,8 @@ exports.powerballCalc = async (game, minute, data) => {
             record_type: "베팅당첨",
             prev_balance: history.up_user.balance,
             after_balance: history.up_user.balance + winAmount,
+            game_id: "mini",
+            game_category: "minigame",
           };
 
           await BalanceLogs.create(createBalanceLogData, {
@@ -524,6 +526,8 @@ exports.ladderCalc = async (game, minute, data) => {
             record_type: "베팅당첨",
             prev_balance: history.up_user.balance,
             after_balance: history.up_user.balance + winAmount,
+            game_id: "mini",
+            game_category: "minigame",
           };
 
           await BalanceLogs.create(createBalanceLogData, {

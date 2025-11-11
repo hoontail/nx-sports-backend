@@ -777,6 +777,8 @@ exports.updateBetHistoryForAdmin = async (req, res) => {
           record_type: "베팅취소",
           prev_balance: findHistory.up_user.balance,
           after_balance: findHistory.up_user.balance + updateWinAmount,
+          game_id: 'ksports',
+          game_category: 'sports'
         };
 
         await BalanceLogs.create(createBalanceLogData, {
@@ -839,6 +841,8 @@ exports.updateBetHistoryForAdmin = async (req, res) => {
             record_type: "베팅당첨",
             prev_balance: findHistory.up_user.balance,
             after_balance: findHistory.up_user.balance + updateWinAmount,
+            game_id: 'ksports',
+            game_category: 'sports'
           };
 
           await BalanceLogs.create(createBalanceLogData, {

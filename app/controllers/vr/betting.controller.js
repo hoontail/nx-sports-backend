@@ -292,6 +292,8 @@ exports.bettingVr = async (req, res) => {
         record_type: "베팅",
         prev_balance: findUser.balance,
         after_balance: findUser.balance - amount,
+        game_id: 'vr',
+        game_category: 'minigame'
       };
 
       await BalanceLogs.create(createBalanceLogData, {

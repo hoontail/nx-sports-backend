@@ -468,6 +468,8 @@ exports.bettingSports = async (req, res) => {
         record_type: "베팅",
         prev_balance: findUser.balance,
         after_balance: findUser.balance - amount,
+        game_id: 'ksports',
+        game_category: 'sports'
       };
 
       await BalanceLogs.create(createBalanceLogData, {
@@ -683,6 +685,8 @@ exports.cancelBetHistoryForUser = async (req, res) => {
         record_type: "베팅취소",
         prev_balance: findHistory.up_user.balance,
         after_balance: findHistory.up_user.balance + findHistory.bet_amount,
+        game_id: 'ksports',
+        game_category: 'sports'
       };
 
       await BalanceLogs.create(createBalanceLogData, {

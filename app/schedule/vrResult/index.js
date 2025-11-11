@@ -415,6 +415,8 @@ const betHistoryResultProcess = async (historyId) => {
       record_type: "베팅당첨",
       prev_balance: findVrBetHistory.up_user.balance,
       after_balance: findVrBetHistory.up_user.balance + winAmount,
+      game_id: "vr",
+      game_category: "minigame",
     };
 
     await BalanceLogs.create(createBalanceLogData);
