@@ -310,8 +310,11 @@ exports.bettingSports = async (req, res) => {
             model: SportsBetHistory,
             where: {
               username: findUser.username,
-              status: [0, 1, 2],
+              status: {
+                [Op.in]: [0, 1, 2],
+              },
             },
+            required: true,
           },
           where: {
             match_id: odds.match_id,
@@ -327,7 +330,7 @@ exports.bettingSports = async (req, res) => {
           }
 
           seenHistoryIds.add(historyId);
-          return sum + (d.sports_bet_history.bet_amount || 0);
+          return sum + (d.sports_bet_history?.bet_amount || 0);
         }, 0);
 
         if (matchBetAmount + amount >= findUser.sports_match_max_bet_amount) {
@@ -468,8 +471,8 @@ exports.bettingSports = async (req, res) => {
         record_type: "베팅",
         prev_balance: findUser.balance,
         after_balance: findUser.balance - amount,
-        game_id: 'ksports',
-        game_category: 'sports'
+        game_id: "ksports",
+        game_category: "sports",
       };
 
       await BalanceLogs.create(createBalanceLogData, {
@@ -490,6 +493,10 @@ exports.bettingSports = async (req, res) => {
       message: "배팅이 완료되었습니다",
     });
   } catch (err) {
+    console.error("배팅오류:", {
+      username,
+      errorMessage: err.message,
+    });
     return res.status(500).send({
       message: "Server Error",
     });
@@ -685,8 +692,8 @@ exports.cancelBetHistoryForUser = async (req, res) => {
         record_type: "베팅취소",
         prev_balance: findHistory.up_user.balance,
         after_balance: findHistory.up_user.balance + findHistory.bet_amount,
-        game_id: 'ksports',
-        game_category: 'sports'
+        game_id: "ksports",
+        game_category: "sports",
       };
 
       await BalanceLogs.create(createBalanceLogData, {

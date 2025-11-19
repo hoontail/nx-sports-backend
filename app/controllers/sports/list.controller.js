@@ -890,6 +890,7 @@ exports.getSportsBetHistoryForAdmin = async (req, res) => {
     order,
     matchId,
     betType,
+    marketType,
   } = req.query;
   const { offset, limit } = helpers.getPagination(page, size);
   const condition = {};
@@ -928,6 +929,27 @@ exports.getSportsBetHistoryForAdmin = async (req, res) => {
 
   if (betType) {
     detailCondition.bet_type = betType;
+  }
+  if (marketType) {
+    const marketTypes = Array.isArray(marketType)
+      ? marketType
+      : marketType.split(",");
+
+    const findMarkets = await SportsMarket.findAll({
+      attributes: ["market_id"],
+      where: {
+        type: {
+          [Op.in]: marketTypes,
+        },
+      },
+    });
+
+    const marketIds = findMarkets.map((m) => m.market_id);
+    if (marketIds.length > 0) {
+      detailCondition.market_id = {
+        [Op.in]: marketIds,
+      };
+    }
   }
 
   try {
