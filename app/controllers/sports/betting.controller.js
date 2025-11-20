@@ -333,7 +333,7 @@ exports.bettingSports = async (req, res) => {
           return sum + (d.sports_bet_history?.bet_amount || 0);
         }, 0);
 
-        if (matchBetAmount + amount >= findUser.sports_match_max_bet_amount) {
+        if (matchBetAmount + amount > findUser.sports_match_max_bet_amount) {
           return res.status(400).send({
             message: `동일 경기 최대 베팅금액은 ${commaNumber(
               findUser.sports_match_max_bet_amount
