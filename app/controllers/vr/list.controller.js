@@ -450,6 +450,7 @@ exports.getVrOddsListForUser = async (req, res) => {
       ],
       where: {
         match_id: matchIdArr,
+        vr_sports_configs_id: findVrSportsConfig.id,
       },
       order: [
         ["start_datetime", "ASC"],
