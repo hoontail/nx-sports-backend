@@ -16,6 +16,7 @@ const ioSocket = socketIO("http://localhost:10020");
 const utils = require("../../utils");
 const moment = require("moment");
 const commaNumber = require("comma-number");
+const round = (num) => Math.round(num * 100) / 100;
 
 exports.bettingSports = async (req, res) => {
   try {
@@ -439,8 +440,8 @@ exports.bettingSports = async (req, res) => {
         bet_amount: amount,
         total_odds: totalOdds,
         bonus_odds: findSportsBonusOdds ? findSportsBonusOdds.odds : null,
-        prev_balance: findUser.balance,
-        after_balance: findUser.balance - amount,
+        prev_balance: round(findUser.balance),
+        after_balance: round(findUser.balance - amount),
         created_ip: ip,
       };
 
@@ -469,8 +470,8 @@ exports.bettingSports = async (req, res) => {
         created_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
         updated_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
         record_type: "베팅",
-        prev_balance: findUser.balance,
-        after_balance: findUser.balance - amount,
+        prev_balance: round(findUser.balance),
+        after_balance: round(findUser.balance - amount),
         game_id: "ksports",
         game_category: "sports",
       };
@@ -690,8 +691,8 @@ exports.cancelBetHistoryForUser = async (req, res) => {
         created_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
         updated_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
         record_type: "베팅취소",
-        prev_balance: findHistory.up_user.balance,
-        after_balance: findHistory.up_user.balance + findHistory.bet_amount,
+        prev_balance: round(findHistory.up_user.balance),
+        after_balance: round(findHistory.up_user.balance + findHistory.bet_amount),
         game_id: "ksports",
         game_category: "sports",
       };
