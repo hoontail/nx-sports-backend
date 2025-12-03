@@ -413,8 +413,8 @@ const betHistoryResultProcess = async (historyId) => {
       created_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
       updated_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
       record_type: "베팅당첨",
-      prev_balance: findVrBetHistory.up_user.balance,
-      after_balance: findVrBetHistory.up_user.balance + winAmount,
+prev_balance: Number(findVrBetHistory.up_user.balance.toFixed(2)),
+after_balance: Number((findVrBetHistory.up_user.balance + winAmount).toFixed(2)),
       game_id: "vr",
       game_category: "minigame",
     };

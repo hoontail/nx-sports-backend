@@ -263,8 +263,8 @@ exports.bettingVr = async (req, res) => {
         bet_amount: amount,
         total_odds: totalOdds,
         bonus_odds: findVrBonusOdds ? findVrBonusOdds.odds : null,
-        prev_balance: findUser.balance,
-        after_balance: findUser.balance - amount,
+  prev_balance: Number(findUser.balance.toFixed(2)),
+  after_balance: Number((findUser.balance - amount).toFixed(2)),
         created_ip: ip,
       };
 
@@ -290,8 +290,8 @@ exports.bettingVr = async (req, res) => {
         created_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
         updated_at: moment().format("YYYY-MM-DD HH:mm:ss.SSS"),
         record_type: "베팅",
-        prev_balance: findUser.balance,
-        after_balance: findUser.balance - amount,
+  prev_balance: Number(findUser.balance.toFixed(2)),
+  after_balance: Number((findUser.balance - amount).toFixed(2)),
         game_id: 'vr',
         game_category: 'minigame'
       };
