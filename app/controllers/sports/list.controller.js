@@ -814,8 +814,233 @@ exports.getSportsMatchListForAdmin = async (req, res) => {
       message: "Server Error",
     });
   }
-};
+};exports.getSportsMatchListWithOddsForAdmin = async (req, res) => {
+  const {
+    page,
+    size,
+    from,
+    to,
+    statusId,
+    sportsName,
+    teamName,
+    leagueName,
+    country,
+    isDelete,
+    sort,
+    order,
+  } = req.query;
+  const { offset, limit } = helpers.getPagination(page, size);
+  const condition = {};
+  let orderInit = ["start_datetime", "desc"];
 
+  if (from && to) {
+    condition.start_datetime = {
+      [Op.between]: [from, to],
+    };
+  }
+
+  if (sportsName) {
+    condition.sports_name = sportsName;
+  }
+
+  if (statusId) {
+    condition.status_id = statusId.split(",").map(Number);
+  }
+
+  if (teamName) {
+    condition[Op.or] = [
+      { home_name: { [Op.like]: `%${teamName}%` } },
+      { away_name: { [Op.like]: `%${teamName}%` } },
+    ];
+  }
+
+  if (leagueName) {
+    condition.league_name = { [Op.like]: `%${leagueName}%` };
+  }
+
+  if (country) {
+    condition.country_kr = { [Op.like]: `%${country}%` };
+  }
+
+  if (isDelete) {
+    condition.is_delete = isDelete;
+  }
+
+  const betAmountQuery = literal(`(
+    SELECT ISNULL(SUM(distinct_bets.bet_amount), 0)
+    FROM (
+      SELECT DISTINCT bh.id, bh.bet_amount
+      FROM sports_bet_detail bd
+      JOIN sports_bet_history bh ON bd.sports_bet_history_id = bh.id
+      WHERE bd.match_id = sports_matches.match_id AND bh.status NOT IN (4, 5)
+    ) AS distinct_bets
+  )`);
+
+  const winAmountQuery = literal(`(
+    SELECT ISNULL(SUM(distinct_bets.win_amount), 0)
+    FROM (
+      SELECT DISTINCT bh.id, bh.win_amount
+      FROM sports_bet_detail bd
+      JOIN sports_bet_history bh ON bd.sports_bet_history_id = bh.id
+      WHERE bd.match_id = sports_matches.match_id AND bh.status NOT IN (4, 5)
+    ) AS distinct_bets
+  )`);
+
+  const expectedWinAmountQuery = literal(`(
+    SELECT ISNULL(SUM(distinct_bets.expected_win), 0)
+    FROM (
+      SELECT DISTINCT bh.id, 
+        CAST(bh.bet_amount * CAST(bh.total_odds AS DECIMAL(10,2)) AS INT) as expected_win
+      FROM sports_bet_detail bd
+      JOIN sports_bet_history bh ON bd.sports_bet_history_id = bh.id
+      WHERE bd.match_id = sports_matches.match_id AND bh.status NOT IN (4, 5)
+    ) AS distinct_bets
+  )`);
+
+  if (sort && order) {
+    if (sort === "bet_amount") {
+      orderInit = [betAmountQuery, order];
+    } else if (sort === "win_amount") {
+      orderInit = [winAmountQuery, order];
+    } else if (sort === "expected_win_amount") {
+      orderInit = [expectedWinAmountQuery, order];
+    } else {
+      orderInit = [sort, order];
+    }
+  }
+
+  const makeBetAmountQuery = (betType, types, isEtc = false) => {
+    const typeCondition = isEtc
+      ? `sm.type NOT IN ('승패','승무패','핸디캡','언더오버')`
+      : Array.isArray(types)
+      ? `sm.type IN (${types.map((t) => `'${t}'`).join(",")})`
+      : `sm.type = '${types}'`;
+
+    return literal(`(
+      SELECT ISNULL(SUM(distinct_bets.bet_amount), 0)
+      FROM (
+        SELECT DISTINCT bh.id, bh.bet_amount
+        FROM sports_bet_detail bd
+        JOIN sports_bet_history bh ON bd.sports_bet_history_id = bh.id
+        JOIN sports_market sm ON bd.market_id = sm.market_id
+        WHERE bd.match_id = sports_matches.match_id
+          AND bd.bet_type = ${betType}
+          AND ${typeCondition}
+          AND bh.status NOT IN (4, 5)
+      ) AS distinct_bets
+    )`);
+  };
+
+  const handicapLineQuery = literal(`(
+    SELECT TOP 1 so.odds_line
+    FROM sports_odds so
+    JOIN sports_market sm ON so.market_id = sm.market_id
+    WHERE so.match_id = sports_matches.match_id
+      AND sm.type = '핸디캡'
+      AND so.is_delete = 0
+    ORDER BY so.id ASC
+  )`);
+
+  const underoverLineQuery = literal(`(
+    SELECT TOP 1 so.odds_line
+    FROM sports_odds so
+    JOIN sports_market sm ON so.market_id = sm.market_id
+    WHERE so.match_id = sports_matches.match_id
+      AND sm.type = '언더오버'
+      AND so.is_delete = 0
+    ORDER BY so.id ASC
+  )`);
+
+  const betQueries = {
+    home_winlose: makeBetAmountQuery(1, ["승패", "승무패"]),
+    home_handicap: makeBetAmountQuery(1, "핸디캡"),
+    home_underover: makeBetAmountQuery(1, "언더오버"),
+    home_etc: makeBetAmountQuery(1, null, true),
+    away_winlose: makeBetAmountQuery(0, ["승패", "승무패"]),
+    away_handicap: makeBetAmountQuery(0, "핸디캡"),
+    away_underover: makeBetAmountQuery(0, "언더오버"),
+    away_etc: makeBetAmountQuery(0, null, true),
+    draw_winlose: makeBetAmountQuery(2, "승무패"),
+  };
+
+  try {
+    // 병렬로 메인 쿼리와 matchIds 조회 실행
+    const [findSportsMatches, matchIdsResult] = await Promise.all([
+      SportsMatches.findAndCountAll({
+        attributes: {
+          include: [
+            [betQueries.home_winlose, "home_winlose_bet_amount"],
+            [betQueries.home_handicap, "home_handicap_bet_amount"],
+            [betQueries.home_underover, "home_underover_bet_amount"],
+            [betQueries.home_etc, "home_etc_bet_amount"],
+            [betQueries.away_winlose, "away_winlose_bet_amount"],
+            [betQueries.away_handicap, "away_handicap_bet_amount"],
+            [betQueries.away_underover, "away_underover_bet_amount"],
+            [betQueries.away_etc, "away_etc_bet_amount"],
+            [betQueries.draw_winlose, "draw_winlose_bet_amount"],
+            [betAmountQuery, "bet_amount"],
+            [winAmountQuery, "win_amount"],
+            [expectedWinAmountQuery, "expected_win_amount"],
+            [handicapLineQuery, "handicap_line"],
+            [underoverLineQuery, "underover_line"],
+          ],
+        },
+        where: condition,
+        offset,
+        limit,
+        order: [orderInit],
+      }),
+      SportsMatches.findAll({
+        where: condition,
+        attributes: ["match_id"],
+      }),
+    ]);
+
+    const matchIds = matchIdsResult.map((row) => row.match_id);
+
+    const totalSummary = {
+      total_bet_amount: 0,
+      total_win_amount: 0,
+    };
+
+    if (matchIds.length > 0) {
+      const findDetails = await SportsBetDetail.findAll({
+        attributes: ["sports_bet_history_id"],
+        include: {
+          attributes: ["id", "bet_amount", "win_amount", "total_odds"],
+          model: SportsBetHistory,
+          where: {
+            status: {
+              [Op.notIn]: [4, 5],
+            },
+          },
+        },
+        where: {
+          match_id: matchIds,
+        },
+      });
+
+      const historyIds = [];
+      findDetails.forEach((x) => {
+        if (!historyIds.includes(x.sports_bet_history_id)) {
+          historyIds.push(x.sports_bet_history_id);
+          totalSummary.total_bet_amount += x.sports_bet_history.bet_amount;
+          totalSummary.total_win_amount += x.sports_bet_history.win_amount || 0;
+        }
+      });
+    }
+
+    const data = helpers.getPagingData(findSportsMatches, page, limit);
+    data.total_bet_amount = totalSummary.total_bet_amount || 0;
+    data.total_win_amount = totalSummary.total_win_amount || 0;
+    return res.status(200).send(data);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).send({
+      message: "Server Error",
+    });
+  }
+};
 exports.getSportsMatchViewForAdmin = async (req, res) => {
   const { id } = req.query;
 

@@ -132,6 +132,12 @@ router.get(
   [rateLimit.apiLimiter, authJwt.adminVerifyToken],
   sportsListController.getSportsMatchListForAdmin
 );
+// 경기 목록
+router.get(
+  "/matchbet",
+  [rateLimit.apiLimiter, authJwt.adminVerifyToken],
+  sportsListController.getSportsMatchListWithOddsForAdmin
+);
 
 // 경기 상세
 router.get(
