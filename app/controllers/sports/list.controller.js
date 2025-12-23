@@ -831,7 +831,7 @@ exports.getSportsMatchListForAdmin = async (req, res) => {
   } = req.query;
   const { offset, limit } = helpers.getPagination(page, size);
   const condition = {};
-  let orderInit = ["start_datetime", "desc"];
+
 
   if (from && to) {
     condition.start_datetime = {
@@ -896,6 +896,8 @@ exports.getSportsMatchListForAdmin = async (req, res) => {
       WHERE bd.match_id = sports_matches.match_id AND bh.status NOT IN (4, 5)
     ) AS distinct_bets
   )`);
+
+  let orderInit = [betAmountQuery, "desc"];
 
   if (sort && order) {
     if (sort === "bet_amount") {
