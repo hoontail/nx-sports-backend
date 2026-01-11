@@ -293,7 +293,7 @@ exports.bettingVr = async (req, res) => {
   prev_balance: Number(findUser.balance.toFixed(2)),
   after_balance: Number((findUser.balance - amount).toFixed(2)),
         game_id: 'vr',
-        game_category: 'minigame'
+        game_category: 'sports'
       };
 
       await BalanceLogs.create(createBalanceLogData, {

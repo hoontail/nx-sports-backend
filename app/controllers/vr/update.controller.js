@@ -421,7 +421,7 @@ exports.updateVrBetHistoryForAdmin = async (req, res) => {
             prev_balance: findHistory.up_user.balance,
             after_balance: findHistory.up_user.balance + updateWinAmount,
             game_id: "vr",
-            game_category: "minigame",
+            game_category: "sports",
           };
 
           await BalanceLogs.create(createBalanceLogData, {
